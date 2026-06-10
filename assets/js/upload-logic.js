@@ -145,7 +145,7 @@ document.getElementById('uploadForm').addEventListener('submit', async function(
 const START_DATE = new Date("2026-06-10T18:30:00").getTime(); // Example: Next Month
 
 // Set your exact event closing time (Format: YYYY-MM-DDTHH:MM:SS)
-const DEADLINE_DATE = new Date("2026-07-27T19:00:00").getTime();
+const DEADLINE_DATE = new Date("2026-06-10T19:00:00").getTime();
 
 const runTimelineEngine = () => {
     const now = new Date().getTime();
