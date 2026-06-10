@@ -95,3 +95,123 @@ if(regForm) {
         });
     });
 }
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    const scopeSelect = document.getElementById("regCompetitionScope");
+    
+    const innerSchoolWrapper = document.getElementById("innerSchoolWrapper");
+    const innerSchoolSelect = document.getElementById("innerSchoolSelect");
+    
+    const standardSchoolDetailsWrapper = document.getElementById("standardSchoolDetailsWrapper");
+    const schoolNameInput = document.getElementById("schoolName");
+    const schoolAddressInput = document.getElementById("schoolAddress");
+    
+    // School Details Labels
+    const schoolNameLabel = document.getElementById("schoolNameLabel");
+    const schoolAddressLabel = document.getElementById("schoolAddressLabel");
+    
+    // Advanced Contacts Elements
+    const aispaDetailsWrapper = document.getElementById("aispaDetailsWrapper");
+    const ticNameInput = document.getElementById("ticName");
+    const ticContactInput = document.getElementById("ticContact");
+    const presidentNameInput = document.getElementById("presidentName");
+    const presidentContactInput = document.getElementById("presidentContact");
+    
+    // Advanced Contacts Labels
+    const ticNameLabel = document.getElementById("ticNameLabel");
+    const ticContactLabel = document.getElementById("ticContactLabel");
+    const presidentNameLabel = document.getElementById("presidentNameLabel");
+    const presidentContactLabel = document.getElementById("presidentContactLabel");
+
+    if (!scopeSelect) return;
+
+    // Helper function to rewrite full labels and toggle requirements
+    const updateFormLabelsAndRequirements = (statusMode) => {
+        const optionalBadge = ' <span style="color: #94a3b8; font-size: 0.8rem; font-weight: normal;">(Optional)</span>';
+        const requiredBadge = ' <span class="text-danger">*</span>';
+
+        if (statusMode === "INTER_SCHOOL") {
+            // Set Inputs
+            schoolNameInput.required = true;
+            schoolAddressInput.required = true;
+            ticNameInput.required = true;
+            ticContactInput.required = true;
+            presidentNameInput.required = true;
+            presidentContactInput.required = true;
+
+            // Set Labels
+            if (schoolNameLabel) schoolNameLabel.innerHTML = 'School Name' + requiredBadge;
+            if (schoolAddressLabel) schoolAddressLabel.innerHTML = 'School Address' + requiredBadge;
+            if (ticNameLabel) ticNameLabel.innerHTML = 'Teacher-in-Charge (TIC) Name' + requiredBadge;
+            if (ticContactLabel) ticContactLabel.innerHTML = 'TIC Contact Number' + requiredBadge;
+            if (presidentNameLabel) presidentNameLabel.innerHTML = 'Association President Name' + requiredBadge;
+            if (presidentContactLabel) presidentContactLabel.innerHTML = 'President Contact Number' + requiredBadge;
+        } 
+        else if (statusMode === "INNER_SCHOOL") {
+            // Set Inputs (Standard inputs hidden, but turned off from validation)
+            schoolNameInput.required = false;
+            schoolAddressInput.required = false;
+            ticNameInput.required = true;
+            ticContactInput.required = true;
+            presidentNameInput.required = true;
+            presidentContactInput.required = true;
+
+            // Set Labels
+            if (ticNameLabel) ticNameLabel.innerHTML = 'Teacher-in-Charge (TIC) Name' + requiredBadge;
+            if (ticContactLabel) ticContactLabel.innerHTML = 'TIC Contact Number' + requiredBadge;
+            if (presidentNameLabel) presidentNameLabel.innerHTML = 'Association President Name' + requiredBadge;
+            if (presidentContactLabel) presidentContactLabel.innerHTML = 'President Contact Number' + requiredBadge;
+        } 
+        else if (statusMode === "AISPA") {
+            // Set Inputs
+            schoolNameInput.required = false;
+            schoolAddressInput.required = false;
+            ticNameInput.required = false;
+            ticContactInput.required = false;
+            presidentNameInput.required = false;
+            presidentContactInput.required = false;
+
+            // Set Labels to Optional
+            if (schoolNameLabel) schoolNameLabel.innerHTML = 'School Name' + optionalBadge;
+            if (schoolAddressLabel) schoolAddressLabel.innerHTML = 'School Address' + optionalBadge;
+            if (ticNameLabel) ticNameLabel.innerHTML = 'Teacher-in-Charge (TIC) Name' + optionalBadge;
+            if (ticContactLabel) ticContactLabel.innerHTML = 'TIC Contact Number' + optionalBadge;
+            if (presidentNameLabel) presidentNameLabel.innerHTML = 'Association President Name' + optionalBadge;
+            if (presidentContactLabel) presidentContactLabel.innerHTML = 'President Contact Number' + optionalBadge;
+        }
+    };
+
+    scopeSelect.addEventListener("change", function() {
+        const selectedScope = this.value;
+
+        // Clean slate resets for container wrappers
+        innerSchoolWrapper.classList.add("d-none");
+        innerSchoolSelect.required = false;
+        innerSchoolSelect.value = "";
+        
+        standardSchoolDetailsWrapper.classList.remove("d-none");
+        aispaDetailsWrapper.classList.add("d-none");
+
+        // CONDITION 1: INTER-SCHOOL
+        if (selectedScope === "Inter-School") {
+            aispaDetailsWrapper.classList.remove("d-none");
+            updateFormLabelsAndRequirements("INTER_SCHOOL");
+        } 
+        // CONDITION 2: INNER-SCHOOL
+        else if (selectedScope === "Inner-School") {
+            innerSchoolWrapper.classList.remove("d-none");
+            innerSchoolSelect.required = true;
+            standardSchoolDetailsWrapper.classList.add("d-none"); 
+            
+            aispaDetailsWrapper.classList.remove("d-none");
+            updateFormLabelsAndRequirements("INNER_SCHOOL");
+        } 
+        // CONDITION 3: AISPA MEMBERS
+        else if (selectedScope === "AISPA-Member") {
+            aispaDetailsWrapper.classList.remove("d-none");
+            updateFormLabelsAndRequirements("AISPA");
+        }
+    });
+});
