@@ -71,82 +71,101 @@
                 
                 <h4 class="form-group-title text-warning mb-3"><i class="fas fa-school me-2"></i>School Information</h4>
                 <div class="mb-3">
-                    <label class="form-label">Email Address</label>
+                    <label class="form-label">Email Address (Personal mail)</label>
                     <input type="email" class="form-control glass-input" name="email" placeholder="example@gmail.com" required>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Competition Scope</label>
-                    <select class="form-select glass-input" name="schoolScope" required>
-                        <option value="" disabled selected>Select scope option</option>
-                        <option value="Inter-School">Inter-School (Competing against other schools)</option>
-                        <option value="Inner-School">Inner-School (Internal school event category)</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">School Name</label>
-                    <input type="text" class="form-control glass-input" name="schoolName" placeholder="Enter official school name" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">School Address</label>
-                    <textarea class="form-control glass-input" name="schoolAddress" rows="2" placeholder="Enter complete mailing address" required></textarea>
-                </div>
+<div class="mb-4">
+    <label class="form-label fw-bold text-warning">Competition Scope <span class="text-danger">*</span></label>
+    <select class="form-select glass-input text-white" id="regCompetitionScope" name="competitionScope" style="background-color: #1e293b;" required>
+        <option value="" disabled selected hidden>Select Competition Type</option>
+        <option value="Inter-School">Inter-School (Open Schools Competition)</option>
+        <option value="Inner-School">Inner-School [Organizing Schools (SCC,GCC,SBV,PC,St.Al) Competition]</option>
+        <option value="AISPA-Member">AISPA Member (All Island School Photographers Association)</option>
+    </select>
+</div>
 
-                <h4 class="form-group-title text-warning mt-4 mb-3"><i class="fas fa-user-shield me-2"></i>Contacts & Leadership</h4>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Teacher in Charge Name</label>
-                        <input type="text" class="form-control glass-input" name="teacherName" placeholder="Mr. / Mrs. / Miss Name" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Teacher Contact Number</label>
-                        <input type="tel" class="form-control glass-input" name="teacherContact" placeholder="07xxxxxxxx" required>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Photography Society President</label>
-                        <input type="text" class="form-control glass-input" name="presidentName" placeholder="Full name of president" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">President Contact Number</label>
-                        <input type="tel" class="form-control glass-input" name="presidentContact" placeholder="07xxxxxxxx" required>
-                    </div>
-                </div>
+<div id="innerSchoolWrapper" class="mb-4 d-none">
+    <label class="form-label fw-bold text-warning">Select Internal School Name <span id="innerSchoolStar" class="text-danger">*</span></label>
+    <select class="form-select glass-input text-white" id="innerSchoolSelect" name="innerSchoolName" style="background-color: #1e293b;">
+        <option value="" disabled selected hidden>Choose School</option>
+        <option value="Sivali Central College">Sivali Central College</option>
+        <option value="Gankanda Central College">Gankanda Central College</option>
+        <option value="St. Aloysius College">St. Aloysius College</option>
+        <option value="Sumana Balika Vidyalaya">Sumana Balika Vidyalaya</option>
+        <option value="Prince College">Prince College</option>
+    </select>
+</div>
+
+<div id="standardSchoolDetailsWrapper">
+    <div class="mb-3">
+        <label class="form-label fw-bold text-warning" id="schoolNameLabel">School Name</label>
+        <input type="text" class="form-control glass-input" id="schoolName" name="schoolName" placeholder="Enter school name">
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label fw-bold text-warning" id="schoolAddressLabel">School Address</label>
+        <input type="text" class="form-control glass-input" id="schoolAddress" name="schoolAddress" placeholder="Enter school address">
+    </div>
+</div>
+
+<div id="aispaDetailsWrapper" class="d-none">
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold text-warning" id="ticNameLabel">Teacher-in-Charge (TIC) Name</label>
+            <input type="text" class="form-control glass-input" id="ticName" name="ticName" placeholder="Enter TIC name">
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold text-warning" id="ticContactLabel">TIC Contact Number</label>
+            <input type="tel" class="form-control glass-input" id="ticContact" name="ticContact" placeholder="Enter TIC contact number">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold text-warning" id="presidentNameLabel">Association President Name</label>
+            <input type="text" class="form-control glass-input" id="presidentName" name="presidentName" placeholder="Enter president name">
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold text-warning" id="presidentContactLabel">President Contact Number</label>
+            <input type="tel" class="form-control glass-input" id="presidentContact" name="presidentContact" placeholder="Enter president contact number">
+        </div>
+    </div>
+</div>
 
                 <h4 class="form-group-title text-warning mt-4 mb-3"><i class="fas fa-users me-2"></i>Event Logistics</h4>
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Do you require an Official Invitation Letter?</label>
+                        <label class="form-label">Do you require an Official Invitation Letter?<span class="text-danger">*</span></label>
                         <select class="form-select glass-input" name="invitationRequired" required>
-                            <option value="Yes">Yes, require an official letter</option>
+                            <option value="" disabled selected>Select option</option>
                             <option value="No">No, digital confirmation is fine</option>
+                            <option value="Yes">Yes, require an official letter</option>
                         </select>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Total Number of Participants</label>
+                        <label class="form-label">Total Number of Participants</label><span class="text-danger">*</span></label>
                         <input type="number" class="form-control glass-input" name="participantCount" min="1" max="3" placeholder="e.g. 3" required>
                     </div>
                 </div>
 
                 <h4 class="form-group-title text-warning mt-4 mb-3"><i class="fas fa-id-card me-2"></i>Nominated Delegates (1st, 2nd, 3rd)</h4>
                 <div class="mb-3">
-                    <label class="form-label">Full Names (In Order: 1st, 2nd, 3rd)</label>
+                    <label class="form-label">Full Names (In Order: 1st, 2nd, 3rd)</label><span class="text-danger">*</span></label>
                     <textarea class="form-control glass-input" name="participantNames" rows="2" placeholder="1. Kasun Perera&#10;2. Amal Silva&#10;3. Nimali Fernando" required></textarea>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Dates of Birth (In Order: 1st, 2nd, 3rd)</label>
+                    <label class="form-label">Dates of Birth (In Order: 1st, 2nd, 3rd)</label><span class="text-danger">*</span></label>
                     <input type="text" class="form-control glass-input" name="datesOfBirth" placeholder="e.g. 2008.05.12 / 2007.11.02 / 2009.01.20" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Contact Numbers (In Order: 1st, 2nd, 3rd)</label>
+                    <label class="form-label">Contact Numbers (In Order: 1st, 2nd, 3rd)</label><span class="text-danger">*</span></label>
                     <input type="text" class="form-control glass-input" name="participantContacts" placeholder="e.g. 0771111111 / 0712222222 / 0753333333" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Exact Names for Certificates (In Order: 1st, 2nd, 3rd)</label>
+                    <label class="form-label">Exact Names for Certificates (In Order: 1st, 2nd, 3rd)</label><span class="text-danger">*</span></label>
                     <textarea class="form-control glass-input" name="certificateNames" rows="2" placeholder="Provide full initials + last name explicitly" required></textarea>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Dietary Requirements (Delegation Roster)</label>
+                    <label class="form-label">Dietary Requirements (Delegation Roster)</label><span class="text-danger">*</span></label>
                     <select class="form-select glass-input" name="dietaryPreference" required>
                         <option value="" disabled selected>Select option</option>
                         <option value="All Veg">All Vegetarian</option>
