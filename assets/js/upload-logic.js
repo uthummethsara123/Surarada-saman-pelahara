@@ -142,10 +142,10 @@ document.getElementById('uploadForm').addEventListener('submit', async function(
 // MARATHON TIMELINE ENGINE (STRICT STATUS GATE FIX)
 // ==========================================================
 // Set your exact event opening time (Format: YYYY-MM-DDTHH:MM:SS)
-const START_DATE = new Date("2026-07-26T24:00:00").getTime(); // Example: Next Month
+const START_DATE = new Date("2026-06-10T18:30:00").getTime(); // Example: Next Month
 
 // Set your exact event closing time (Format: YYYY-MM-DDTHH:MM:SS)
-const DEADLINE_DATE = new Date("2026-07-27T02:00:00").getTime();
+const DEADLINE_DATE = new Date("2026-07-27T19:00:00").getTime();
 
 const runTimelineEngine = () => {
     const now = new Date().getTime();
