@@ -26,6 +26,26 @@ const countdownInterval = setInterval(function() {
     const minsEl = document.getElementById("minutes");
     const secsEl = document.getElementById("seconds");
 
+    // Food Preference Roster Management Variables
+    const dietarySelect = document.getElementById("dietaryPreference");
+    const mixedDietaryWrapper = document.getElementById("mixedDietaryWrapper");
+    const mixedDietaryNotes = document.getElementById("mixedDietaryNotes");
+
+    if (dietarySelect && mixedDietaryWrapper && mixedDietaryNotes) {
+        dietarySelect.addEventListener("change", function() {
+            if (this.value === "Mixed") {
+                // Reveal requirement structures immediately
+                mixedDietaryWrapper.classList.remove("d-none");
+                mixedDietaryNotes.required = true;
+            } else {
+                // Wipe data values clean and remove validation flags
+                mixedDietaryWrapper.classList.add("d-none");
+                mixedDietaryNotes.required = false;
+                mixedDietaryNotes.value = "";
+            }
+        });
+    }
+
     // Only update if the elements actually exist on the page
     if (daysEl && hoursEl && minsEl && secsEl) {
         daysEl.innerText = days.toString().padStart(2, '0');
