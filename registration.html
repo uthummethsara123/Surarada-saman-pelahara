@@ -164,15 +164,19 @@
                     <label class="form-label">Exact Names for Certificates (In Order: 1st, 2nd, 3rd)</label><span class="text-danger">*</span></label>
                     <textarea class="form-control glass-input" name="certificateNames" rows="2" placeholder="Provide full initials + last name explicitly" required></textarea>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Dietary Requirements (Delegation Roster)</label><span class="text-danger">*</span></label>
-                    <select class="form-select glass-input" name="dietaryPreference" required>
-                        <option value="" disabled selected>Select option</option>
-                        <option value="All Veg">All Vegetarian</option>
-                        <option value="All Non-Veg">All Non-Vegetarian</option>
-                        <option value="Mixed">Mixed (Will specify later)</option>
-                    </select>
-                </div>
+                <label class="form-label fw-bold text-warning">Delegation Dietary Preference <span class="text-danger">*</span></label>
+    <select class="form-select glass-input text-white" id="dietaryPreference" name="dietaryPreference" style="background-color: #1e293b;" required>
+        <option value="" disabled selected hidden>Choose Preference Baseline</option>
+        <option value="All-Veg">All Vegetarian (100% Veg)</option>
+        <option value="All-NonVeg">All Non-Vegetarian (100% Non-Veg)</option>
+        <option value="Mixed">Mixed Preference Delegation</option>
+    </select>
+</div>
+
+<div id="mixedDietaryWrapper" class="mb-4 d-none">
+    <label class="form-label fw-bold text-warning" id="mixedDietaryLabel">Dietary Distribution Specifications <span class="text-danger">*</span></label>
+    <textarea class="form-control glass-input text-white" id="mixedDietaryNotes" name="mixedDietaryNotes" rows="3" placeholder="Example: 2 Veg / 1 Non-Veg. Please specify details cleanly..."></textarea>
+</div>
 
                 <button type="submit" class="btn btn-light submit-btn w-100 mt-3" id="submitBtn">
                     Submit Delegation Entry
