@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Portal 2026</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="icon" type="image/png" href="/assets/img/logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+<body>
+
+    <!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg fixed-top glass-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="#">
+    <img src="assets/img/logo.png" alt="Surarada Saman Pelahara" height="100">
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  
+  <div class="collapse navbar-collapse" id="navMenu">
+  <ul class="navbar-nav ms-auto nav-pill align-items-center">
+    <li class="nav-item"><a class="nav-link" href="#">Photo Submission Portal 👉</a></li>
+  <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
+          <div class="nav-tooltip-wrapper">
+            <a class="nav-upload-icon-btn" href="/upload.html" aria-label="Photo Submission Portal">
+              <i class="fas fa-cloud-upload-alt"></i>
+            </a>
+            <span class="nav-custom-tooltip">Photo Submission Portal</span>
+          </div>
+        </li>
+    </ul>
+    </div>
+    </div>
+</nav>
+
+
+    <!-- 2026 Registration -->
+
+<section id="registration" class="registration-section">
+    <div class="container">
+
+        <div class="mb-4">
+            <a href="index.html" class="btn btn-outline-light back-btn">
+                <i class="fas fa-arrow-left me-2"></i> Back to Home
+            </a>
+        </div>
+        
+        <div class="section-title text-center">
+            <h2>2026 Registration Portal</h2>
+            <p>Complete the official delegation roster for the 2nd Surarada Saman Pelahara.</p>
+            <p>Deadline: July 19</p>
+        </div>
+
+        <div class="timer-wrapper text-center">
+            <p class="timer-label">Registration Window Closes In:</p>
+            <div id="countdown-timer">
+                <span id="days">00</span>d : <span id="hours">00</span>h : <span id="minutes">00</span>m : <span id="seconds">00</span>s
+            </div>
+        </div>
+
+        <div class="form-wrapper" id="formContainer">
+            <form id="regForm">
+                
+                <h4 class="form-group-title text-warning mb-3"><i class="fas fa-school me-2"></i>School Information</h4>
+                <div class="mb-3">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-control glass-input" name="email" placeholder="example@gmail.com" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Competition Scope</label>
+                    <select class="form-select glass-input" name="schoolScope" required>
+                        <option value="" disabled selected>Select scope option</option>
+                        <option value="Inter-School">Inter-School (Competing against other schools)</option>
+                        <option value="Inner-School">Inner-School (Internal school event category)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">School Name</label>
+                    <input type="text" class="form-control glass-input" name="schoolName" placeholder="Enter official school name" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">School Address</label>
+                    <textarea class="form-control glass-input" name="schoolAddress" rows="2" placeholder="Enter complete mailing address" required></textarea>
+                </div>
+
+                <h4 class="form-group-title text-warning mt-4 mb-3"><i class="fas fa-user-shield me-2"></i>Contacts & Leadership</h4>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Teacher in Charge Name</label>
+                        <input type="text" class="form-control glass-input" name="teacherName" placeholder="Mr. / Mrs. / Miss Name" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Teacher Contact Number</label>
+                        <input type="tel" class="form-control glass-input" name="teacherContact" placeholder="07xxxxxxxx" required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Photography Society President</label>
+                        <input type="text" class="form-control glass-input" name="presidentName" placeholder="Full name of president" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">President Contact Number</label>
+                        <input type="tel" class="form-control glass-input" name="presidentContact" placeholder="07xxxxxxxx" required>
+                    </div>
+                </div>
+
+                <h4 class="form-group-title text-warning mt-4 mb-3"><i class="fas fa-users me-2"></i>Event Logistics</h4>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Do you require an Official Invitation Letter?</label>
+                        <select class="form-select glass-input" name="invitationRequired" required>
+                            <option value="Yes">Yes, require an official letter</option>
+                            <option value="No">No, digital confirmation is fine</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Total Number of Participants</label>
+                        <input type="number" class="form-control glass-input" name="participantCount" min="1" max="3" placeholder="e.g. 3" required>
+                    </div>
+                </div>
+
+                <h4 class="form-group-title text-warning mt-4 mb-3"><i class="fas fa-id-card me-2"></i>Nominated Delegates (1st, 2nd, 3rd)</h4>
+                <div class="mb-3">
+                    <label class="form-label">Full Names (In Order: 1st, 2nd, 3rd)</label>
+                    <textarea class="form-control glass-input" name="participantNames" rows="2" placeholder="1. Kasun Perera&#10;2. Amal Silva&#10;3. Nimali Fernando" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Dates of Birth (In Order: 1st, 2nd, 3rd)</label>
+                    <input type="text" class="form-control glass-input" name="datesOfBirth" placeholder="e.g. 2008.05.12 / 2007.11.02 / 2009.01.20" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Contact Numbers (In Order: 1st, 2nd, 3rd)</label>
+                    <input type="text" class="form-control glass-input" name="participantContacts" placeholder="e.g. 0771111111 / 0712222222 / 0753333333" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Exact Names for Certificates (In Order: 1st, 2nd, 3rd)</label>
+                    <textarea class="form-control glass-input" name="certificateNames" rows="2" placeholder="Provide full initials + last name explicitly" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Dietary Requirements (Delegation Roster)</label>
+                    <select class="form-select glass-input" name="dietaryPreference" required>
+                        <option value="" disabled selected>Select option</option>
+                        <option value="All Veg">All Vegetarian</option>
+                        <option value="All Non-Veg">All Non-Vegetarian</option>
+                        <option value="Mixed">Mixed (Will specify later)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-light submit-btn w-100 mt-3" id="submitBtn">
+                    Submit Delegation Entry
+                </button>
+            </form>
+            
+            <div id="formFeedback" class="text-center mt-3 d-none"></div>
+        </div>
+
+        <div id="closedMessage" class="text-center d-none">
+            <div class="closed-box">
+                <i class="fas fa-lock mb-3" style="font-size: 3rem; color: #ef4444;"></i>
+                <h3>Registrations are Closed!</h3>
+                <p>The system has automatically locked entries for the 2026 session. Please contact the leadership board for issues.</p>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- Footer -->
+
+<footer class="site-footer">
+
+    © 2026 Surarada Saman Pelahara
+
+    <br>
+
+    Organized by Sivali Central College,
+    Prince College,
+    St. Aloysius College,
+    Gankanda Central College &
+    Sumana Balika Vidyalaya.
+
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/js/register.js"></script>
+</body>
+</html>

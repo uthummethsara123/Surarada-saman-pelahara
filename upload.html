@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surarada 2026 - Submission Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="icon" type="image/png" href="/assets/img/logo.png">
+</head>
+<body style="background: #0f172a;">
+
+        <!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg fixed-top glass-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="#">
+    <img src="assets/img/logo.png" alt="Surarada Saman Pelahara" height="100">
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  
+  <div class="collapse navbar-collapse" id="navMenu">
+  <ul class="navbar-nav ms-auto nav-pill align-items-center">
+    <li class="nav-item"><a class="nav-link" href="#">Register now 👉</a></li>
+    <li class="nav-item"><a class="nav-link nav-cta-btn" href="/registration.html">Register Now</a></li>
+    </ul>
+    </div>
+    </div>
+</nav>
+
+<section class="registration-section">
+    <div class="container">
+        
+        <div class="mb-4">
+            <a href="index.html" class="btn btn-outline-light back-btn">
+                <i class="fas fa-arrow-left me-2"></i> Back to Home
+            </a>
+        </div>
+        
+        <div class="section-title text-center">
+            <h2>Submission Portal</h2>
+            <p>Upload your edited masterpieces. Maximum 3 files per category.</p>
+            <p class="text-warning small"><i class="fas fa-info-circle me-1"></i> Please export your edited entries as compressed JPEGs (*Size: Under 4MB per image*).</p>
+        </div>
+
+        <div class="countdown-container mt-3 mb-4">
+    <div class="timer-title small text-uppercase text-warning-50 font-monospace mb-2">Marathon Submission Deadline</div>
+    <div class="d-flex justify-content-center align-items-center gap-3">
+        <div class="time-block">
+            <span id="hours" class="time-num">00</span>
+            <span class="time-label">Hrs</span>
+        </div>
+        <div class="time-divider">:</div>
+        <div class="time-block">
+            <span id="minutes" class="time-num">00</span>
+            <span class="time-label">Min</span>
+        </div>
+        <div class="time-divider">:</div>
+        <div class="time-block">
+            <span id="seconds" class="time-num">00</span>
+            <span class="time-label">Sec</span>
+        </div>
+    </div>
+</div>
+
+        <div class="form-wrapper" style="max-width: 750px;">
+            <form id="uploadForm" class="d-none">
+                
+                <h4 class="form-group-title text-warning mb-3"><i class="fas fa-user me-2"></i>Participant Identity</h4>
+                <div class="mb-4">
+                    <label class="form-label">Participant's Name</label>
+                    <input type="text" class="form-control glass-input" id="participantName" name="participantName" placeholder="Enter your full name" required>
+                </div>
+                <div class="mb-4">
+        <label class="form-label">School Name</label>
+        <input type="text" class="form-control glass-input" id="schoolName" name="schoolName" placeholder="Enter your official school name" required>
+        </div>
+        <div class="mb-4">
+    <label class="form-label">Competition Scope</label>
+    <select class="form-select glass-input text-white" id="competitionScope" name="competitionScope" style="background-color: #1e293b;" required>
+        <option value="" disabled selected hidden>Select Competition Type</option>
+        <option value="Inter-School">Inter-School</option>
+        <option value="Inner-School">Inner-School</option>
+    </select>
+</div>
+
+
+
+<h5 class="form-group-title text-warning mt-4 mb-3">*Maximum 4MB File Size</h5>
+<h4 class="form-group-title text-warning mt-4 mb-3"><i class="fas fa-palette me-2"></i>Colour Category Submissions</h4>
+<div class="mb-4">
+    <label class="form-label font-monospace small text-white-50">IMAGE 01</label>
+    <input type="file" class="form-control glass-input preview-trigger" name="color_1" accept="image/*">
+    <div id="wrapper_color_1" class="preview-control-box d-none mt-2">
+        <img id="prev_color_1" class="img-preview" alt="Preview">
+        <div class="preview-actions ms-3 w-100">
+            <input type="text" id="title_color_1" class="form-control form-control-sm glass-input mb-2 text-white title-field" placeholder="Name your photograph">
+            <button type="button" class="btn btn-sm btn-danger remove-btn" data-target="color_1">
+                <i class="fas fa-trash-alt me-1"></i> Remove
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="mb-4">
+    <label class="form-label font-monospace small text-white-50">IMAGE 02</label>
+    <input type="file" class="form-control glass-input preview-trigger" name="color_2" accept="image/*">
+    <div id="wrapper_color_2" class="preview-control-box d-none mt-2">
+        <img id="prev_color_2" class="img-preview" alt="Preview">
+        <div class="preview-actions ms-3 w-100">
+            <input type="text" id="title_color_2" class="form-control form-control-sm glass-input mb-2 text-white title-field" placeholder="Name your photograph">
+            <button type="button" class="btn btn-sm btn-danger remove-btn" data-target="color_2">
+                <i class="fas fa-trash-alt me-1"></i> Remove
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="mb-4">
+    <label class="form-label font-monospace small text-white-50">IMAGE 03</label>
+    <input type="file" class="form-control glass-input preview-trigger" name="color_3" accept="image/*">
+    <div id="wrapper_color_3" class="preview-control-box d-none mt-2">
+        <img id="prev_color_3" class="img-preview" alt="Preview">
+        <div class="preview-actions ms-3 w-100">
+            <input type="text" id="title_color_3" class="form-control form-control-sm glass-input mb-2 text-white title-field" placeholder="Name your photograph">
+            <button type="button" class="btn btn-sm btn-danger remove-btn" data-target="color_3">
+                <i class="fas fa-trash-alt me-1"></i> Remove
+            </button>
+        </div>
+    </div>
+</div>
+
+<h4 class="form-group-title text-warning mt-4 mb-3"><i class="fas fa-adjust me-2"></i>Monochrome Category Submissions</h4>
+<div class="mb-4">
+    <label class="form-label font-monospace small text-white-50">IMAGE 01</label>
+    <input type="file" class="form-control glass-input preview-trigger" name="mono_1" accept="image/*">
+    <div id="wrapper_mono_1" class="preview-control-box d-none mt-2">
+        <img id="prev_mono_1" class="img-preview" alt="Preview">
+        <div class="preview-actions ms-3 w-100">
+            <input type="text" id="title_mono_1" class="form-control form-control-sm glass-input mb-2 text-white title-field" placeholder="Name your photograph">
+            <button type="button" class="btn btn-sm btn-danger remove-btn" data-target="mono_1">
+                <i class="fas fa-trash-alt me-1"></i> Remove
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="mb-4">
+    <label class="form-label font-monospace small text-white-50">IMAGE 02</label>
+    <input type="file" class="form-control glass-input preview-trigger" name="mono_2" accept="image/*">
+    <div id="wrapper_mono_2" class="preview-control-box d-none mt-2">
+        <img id="prev_mono_2" class="img-preview" alt="Preview">
+        <div class="preview-actions ms-3 w-100">
+            <input type="text" id="title_mono_2" class="form-control form-control-sm glass-input mb-2 text-white title-field" placeholder="Name your photograph">
+            <button type="button" class="btn btn-sm btn-danger remove-btn" data-target="mono_2">
+                <i class="fas fa-trash-alt me-1"></i> Remove
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="mb-4">
+    <label class="form-label font-monospace small text-white-50">IMAGE 03</label>
+    <input type="file" class="form-control glass-input preview-trigger" name="mono_3" accept="image/*">
+    <div id="wrapper_mono_3" class="preview-control-box d-none mt-2">
+        <img id="prev_mono_3" class="img-preview" alt="Preview">
+        <div class="preview-actions ms-3 w-100">
+            <input type="text" id="title_mono_3" class="form-control form-control-sm glass-input mb-2 text-white title-field" placeholder="Name your photograph">
+            <button type="button" class="btn btn-sm btn-danger remove-btn" data-target="mono_3">
+                <i class="fas fa-trash-alt me-1"></i> Remove
+            </button>
+        </div>
+    </div>
+</div>
+
+<h4 class="form-group-title text-warning mt-4 mb-3"><i class="fas fa-images me-2"></i>Storytelling Category Submissions</h4>
+<div class="mb-4">
+    <label class="form-label font-monospace small text-white-50">IMAGE 01</label>
+    <input type="file" class="form-control glass-input preview-trigger" name="story_1" accept="image/*">
+    <div id="wrapper_story_1" class="preview-control-box d-none mt-2">
+        <img id="prev_story_1" class="img-preview" alt="Preview">
+        <div class="preview-actions ms-3 w-100">
+            <input type="text" id="title_story_1" class="form-control form-control-sm glass-input mb-2 text-white title-field" placeholder="Name your photograph">
+            <button type="button" class="btn btn-sm btn-danger remove-btn" data-target="story_1">
+                <i class="fas fa-trash-alt me-1"></i> Remove
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="mb-4">
+    <label class="form-label font-monospace small text-white-50">IMAGE 02</label>
+    <input type="file" class="form-control glass-input preview-trigger" name="story_2" accept="image/*">
+    <div id="wrapper_story_2" class="preview-control-box d-none mt-2">
+        <img id="prev_story_2" class="img-preview" alt="Preview">
+        <div class="preview-actions ms-3 w-100">
+            <input type="text" id="title_story_2" class="form-control form-control-sm glass-input mb-2 text-white title-field" placeholder="Name your photograph">
+            <button type="button" class="btn btn-sm btn-danger remove-btn" data-target="story_2">
+                <i class="fas fa-trash-alt me-1"></i> Remove
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="mb-4">
+    <label class="form-label font-monospace small text-white-50">IMAGE 03</label>
+    <input type="file" class="form-control glass-input preview-trigger" name="story_3" accept="image/*">
+    <div id="wrapper_story_3" class="preview-control-box d-none mt-2">
+        <img id="prev_story_3" class="img-preview" alt="Preview">
+        <div class="preview-actions ms-3 w-100">
+            <input type="text" id="title_story_3" class="form-control form-control-sm glass-input mb-2 text-white title-field" placeholder="Name your photograph">
+            <button type="button" class="btn btn-sm btn-danger remove-btn" data-target="story_3">
+                <i class="fas fa-trash-alt me-1"></i> Remove
+            </button>
+        </div>
+    </div>
+</div>
+
+                <button type="submit" class="btn btn-light submit-btn w-100 mt-4" id="uploadSubmitBtn">
+                    Upload & Submit Portfolio
+                </button>
+            </form>
+            
+            <div id="uploadFeedback" class="text-center mt-3 d-none"></div>
+        </div>
+
+    </div>
+</section>
+
+<script src="/assets/js/upload-logic.js"></script>
+</body>
+</html>
