@@ -523,15 +523,28 @@ html{
     display: flex;
     justify-content: center;
     margin-bottom: 20px;
+    gap: 10px;
 }
 
+/* ==========================================================================
+   UPDATED YEAR SELECTOR BUTTON STATES
+   ========================================================================== */
 .year-btn {
     border: none;
-    background: #111827;
-    color: white;
+    background: white; /* Inactive color state */
+    color: #111827; /* Dark text for contrast */
     padding: 12px 30px;
     border-radius: 999px;
     font-weight: 600;
+    box-shadow: 0 5px 20px rgba(0,0,0,.08); /* Matches category buttons style */
+    transition: .3s;
+    cursor: pointer;
+}
+
+/* Only the active year button gets the immersive dark blue highlight */
+.year-btn.active {
+    background: #111827; 
+    color: white;
 }
 
 .category-selector {
