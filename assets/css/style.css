@@ -685,6 +685,122 @@ html{
 }
 
 
+
+/* ==========================================================================
+   SPACED CORNER HEADLINE SCROLL CONFIGURATION
+   ========================================================================== */
+.gallery-header-inline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    /* Increased padding creates a much larger structural gap to push the button right */
+    padding-right: 0px; 
+    margin-bottom: 10px;
+}
+
+.gallery-header-inline h2 {
+    margin-bottom: 0 !important; /* Disables default heading breaks */
+}
+
+.scroll-target-wrapper {
+    position: absolute;
+    /* Anchors the button right inside the expanded boundary edge */
+    right: 20px; 
+    top: 20%;
+    left: 80%;
+    transform: translateY(-50%);
+    display: inline-block;
+}
+
+.gallery-scroll-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: #111827;
+    color: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    margin-right: -200px;
+}
+
+.gallery-scroll-btn:hover {
+    background: #ffffff;
+    color: #111827;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.gallery-scroll-btn .arrow-icon {
+    font-size: 0.85rem;
+    transition: transform 0.3s ease;
+}
+
+.gallery-scroll-btn:hover .arrow-icon {
+    transform: translateY(2px);
+}
+
+/* Custom CSS Tooltip Construction */
+.custom-tooltip {
+    position: absolute;
+    bottom: -45px; 
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: #111827;
+    color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 0 5px 5px 5px;
+    border-style: solid;
+    border-color: transparent transparent #111827 transparent;
+}
+
+.gallery-scroll-btn:hover .custom-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Fallback transitions for mobile screens */
+@media (max-width: 768px) {
+    .gallery-header-inline {
+        display: flex;
+        flex-direction: column;
+        padding-right: 0;
+        gap: 15px;
+    }
+    .scroll-target-wrapper {
+        position: relative;
+        right: auto;
+        top: auto;
+        transform: none;
+    }
+}
+
+
+
+
 /* ==========================================================================
    7. PHOTO PREVIEW FULLSCREEN LIGHTBOX MODAL
    ========================================================================== */
@@ -765,6 +881,116 @@ html{
     font-size:50px;
     cursor:pointer;
 }
+
+/* ==========================================================================
+   VIDEO HIGHLIGHTS SLIDESHOW DESIGNS
+   ========================================================================== */
+.video-slideshow-container {
+    max-width: 900px;
+    margin: 50px auto;
+    padding: 0 20px;
+}
+
+.video-slider-wrapper {
+    position: relative;
+    width: 100%;
+    background: #000000;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.video-slide {
+    display: none;
+    width: 100%;
+    position: relative;
+}
+
+/* Force active slide display gracefully */
+.video-slide.active-slide {
+    display: block;
+}
+
+.video-slide video {
+    width: 100%;
+    height: auto;
+    max-height: 500px;
+    display: block;
+    object-fit: contain;
+}
+
+.video-caption {
+    background: rgba(17, 24, 39, 0.85);
+    color: #ffffff;
+    text-align: center;
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Slider Controls Configuration */
+.slider-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    border: none;
+    font-size: 24px;
+    padding: 12px 18px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: 0.3s;
+    z-index: 10;
+    user-select: none;
+}
+
+.slider-arrow:hover {
+    background: rgba(255, 255, 255, 0.8);
+    color: #111827;
+}
+
+.prev-arrow { left: 15px; }
+.next-arrow { right: 15px; }
+
+/* Hide standard arrows on mobile views to prevent cluttering video touch targets */
+@media (max-width: 576px) {
+    .slider-arrow {
+        padding: 8px 12px;
+        font-size: 16px;
+    }
+}
+
+/* Audio Controller Overlay Button - Shifted to the Left Side */
+.audio-control-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px; /* Changed from right to left */
+    background: rgba(17, 24, 39, 0.8);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.audio-control-btn:hover {
+    background: rgba(17, 24, 39, 0.95);
+    transform: scale(1.05);
+}
+
+.audio-icon {
+    font-size: 1.1rem;
+}
+
+
 
 /* ==========================================================================
    8. PORTAL JUDGES MATRIX SECTION (VIBRANT RED-GOLD GRADIENT FLUIDITY)
