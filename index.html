@@ -193,16 +193,25 @@
 
 
 <section id="gallery" class="gallery-section">
-    <div class="container">
+    
+    <div class="container" style="position: relative;">
+        
+        <div class="scroll-target-wrapper">
+            <a href="#video-exhibition-section" class="gallery-scroll-btn" aria-label="Scroll to highlights">
+                <span class="arrow-icon">▼</span>
+                <div class="custom-tooltip">2025 Highlight clips</div>
+            </a>
+        </div>
+
         <div class="section-heading text-center">
             <h2>Year Gallery</h2>
             <p>Winning photographs from Surarada Saman Pelahara.</p>
         </div>
 
         <div class="year-selector">
-    <button class="year-btn active" data-year-select="2025">2025</button>
-    <button class="year-btn" data-year-select="2026">2026</button>
-</div>
+            <button class="year-btn active" data-year-select="2025">2025</button>
+            <button class="year-btn" data-year-select="2026">2026</button>
+        </div>
 
         <div class="competition-selector d-none text-center mb-4" id="sub-competition-tier" style="display: flex; justify-content: center; gap: 12px;">
             <button class="category-btn active" data-comp-tier="inter" style="box-shadow: 0 3px 10px rgba(0,0,0,.05); font-size: 0.95rem; padding: 8px 20px;">
@@ -286,18 +295,112 @@
 
         <div id="wrapper-year-2026" class="year-content-group d-none">
             <div class="gallery-content active-gallery" id="colour-gallery-2026">
-                <div class="text-center py-5 text-muted"><p>Not ready.</p></div>
+                <div class="text-center py-5 text-muted"><p>Coming soon...</p></div>
             </div>
             <div class="gallery-content" id="mono-gallery-2026">
-                <div class="text-center py-5 text-muted"><p>Not ready.</p></div>
+                <div class="text-center py-5 text-muted"><p>Coming soon...</p></div>
             </div>
             <div class="gallery-content" id="storytelling-gallery-2026">
-                <div class="text-center py-5 text-muted"><p>Not ready.</p></div>
+                <div class="text-center py-5 text-muted"><p>Coming soon...</p></div>
             </div>
         </div>
 
     </div>
 </section>
+
+<!-- -------------------------------Video Slidshow--------------------------------------- -->
+
+
+<div class="video-slideshow-container" id="video-exhibition-section">
+
+    
+    <div class="section-heading text-center mb-4">
+        <h3 style="color: #111827; font-weight: 700;">Perahera Event Highlights</h3>
+        <p style="color: #64748b;">Relive the moments and cultural essence captured throughout the exhibition.</p>
+    </div>
+
+        <div class="year-selector" style="margin-top: 15px; display: flex; justify-content: center; gap: 10px;">
+            <button class="year-btn active" data-video-year="2025">2025</button>
+            <button class="year-btn" data-video-year="2026">2026</button>
+        </div>
+
+    <div class="video-slider-wrapper">
+        <button id="video-audio-toggle" class="audio-control-btn">
+            <span class="audio-icon">🔇</span> Mute
+        </button>
+
+        <div class="video-slide active-slide">
+            <video playsinline preload="metadata">
+                <source src="/assets/videos/2025/suraradasamanpelahara__2025-08-30T173913.000Z.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div class="video-caption">Opening Ceremony & Exhibition Initialization</div>
+        </div>
+
+        <div class="video-slide">
+            <video playsinline preload="metadata">
+                <source src="/assets/videos/2025/suraradasamanpelahara__2025-09-03T062637.000Z.mp4" type="video/mp4">
+            </video>
+            <div class="video-caption">Day 1 Review - Cultural Highlights</div>
+        </div>
+
+        <div class="video-slide">
+            <video playsinline preload="metadata">
+                <source src="/assets/videos/2025/suraradasamanpelahara__2025-09-04T004921.000Z.mp4" type="video/mp4">
+            </video>
+            <div class="video-caption">Thilina Kaluthotage Invitation</div>
+        </div>
+
+        <div class="video-slide">
+            <video playsinline preload="metadata">
+                <source src="/assets/videos/2025/suraradasamanpelahara__2025-09-01T163755.000Z.mp4" type="video/mp4">
+            </video>
+            <div class="video-caption">Rasika Hapuaarachchi Invitation</div>
+        </div>
+
+        <div class="video-slide">
+            <video playsinline preload="metadata">
+                <source src="/assets/videos/2025/suraradasamanpelahara__2025-09-03T024817.000Z.mp4" type="video/mp4">
+            </video>
+            <div class="video-caption">Sasindu Pramudhita Invitation</div>
+        </div>
+
+        <div class="video-slide">
+            <video playsinline preload="metadata">
+                <source src="/assets/videos/2025/suraradasamanpelahara__2025-09-04T025941.000Z.mp4" type="video/mp4">
+            </video>
+            <div class="video-caption">Day 2 Afternoon Walkthrough</div>
+        </div>
+
+        <div class="video-slide">
+            <video playsinline preload="metadata">
+                <source src="/assets/videos/2025/suraradasamanpelahara__2025-09-06T081103.000Z.mp4" type="video/mp4">
+            </video>
+            <div class="video-caption">Day 2 Night Walkthrough</div>
+        </div>
+
+        <div class="video-slide">
+            <video playsinline preload="metadata">
+                <source src="/assets/videos/2025/suraradasamanpelahara__2025-09-04T120900.000Z.mp4" type="video/mp4">
+            </video>
+            <div class="video-caption">Grand Finale & Award Ceremony Moments</div>
+        </div>
+
+        <button class="slider-arrow prev-arrow" id="slider-prev-btn">&#10094;</button>
+        <button class="slider-arrow next-arrow" id="slider-next-btn">&#10095;</button>
+    </div>
+
+    <div class="video-empty-placeholder d-none" id="video-empty-view">
+        <div class="placeholder-content">
+            <span class="placeholder-icon">🎬</span>
+            <h4>2026 Gallery Coming Soon</h4>
+            <p>Video highlights and event captures for the 2026 competitive season will load once evaluations wrap up.</p>
+        </div>
+    </div>
+
+
+
+</div>
 
 
 
