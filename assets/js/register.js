@@ -313,3 +313,21 @@ ScrollReveal().reveal(
     origin:'bottom',
     interval:200
 });
+
+// ==========================================================================
+// SCROLL LOCK ON LIFECYCLE LOAD
+// ==========================================================================
+// Lock scrolling immediately when the page starts initializing
+document.documentElement.style.overflow = "hidden";
+document.body.style.overflow = "hidden";
+
+window.addEventListener("load", () => {
+    setTimeout(() => {
+        const loader = document.getElementById("loader");
+        if (loader) loader.style.display = "none";
+        
+        // Restore scrolling once the page is fully ready and loader is hidden
+        document.documentElement.style.overflow = "auto";
+        document.body.style.overflow = "auto";
+    }, 1200);
+});
