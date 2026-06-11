@@ -278,15 +278,49 @@ window.addEventListener("load", () => {
     }, 1200);
 });
 
-// Force an unlock fallback after 4 seconds no matter what
-setTimeout(() => {
+// ==========================================================================
+// 4. GLOBAL LIFECYCLE APP EVENTS (Loader & ScrollReveal Hooks)
+// ==========================================================================
+// Force hide scrollbars immediately when script initializes
+document.documentElement.classList.add('lock-scrolling');
+document.body.classList.add('lock-scrolling');
+document.documentElement.style.overflow = "hidden";
+document.body.style.overflow = "hidden";
+
+// SAFARI SAFETY VALVE: Force page open after 3.5 seconds max if window.load hangs
+const forceUnlockTimeout = setTimeout(() => {
+    cleanUpAndDestroyLoader("Safety Timeout Triggered");
+}, 3500);
+
+function cleanUpAndDestroyLoader(reason) {
+    console.log("Loader Dismissed via:", reason);
+    
     const loader = document.getElementById("loader");
-    if (loader && loader.style.display !== "none") {
+    if (loader) {
         loader.style.display = "none";
-        document.documentElement.classList.remove('lock-scrolling');
-        document.body.classList.remove('lock-scrolling');
-        // Restore standard fallback properties just in case
-        document.documentElement.style.overflow = "auto";
-        document.body.style.overflow = "auto";
     }
-}, 4000);
+    
+    // Completely strip away all strict scrolling locks cleanly
+    document.documentElement.classList.remove('lock-scrolling');
+    document.body.classList.remove('lock-scrolling');
+    document.documentElement.style.overflow = "auto";
+    document.body.style.overflow = "auto";
+}
+
+window.addEventListener("load", () => {
+    // Clear the backup timer since the website loaded naturally
+    clearTimeout(forceUnlockTimeout);
+    
+    setTimeout(() => {
+        cleanUpAndDestroyLoader("Standard Window Load Event");
+    }, 1200);
+});
+
+if (typeof ScrollReveal !== 'undefined') {
+    ScrollReveal().reveal('.section-title, .about-section, .gallery-section, .schools-bar', {
+        distance: '60px',
+        duration: 1200,
+        origin: 'bottom',
+        interval: 200
+    });
+}
