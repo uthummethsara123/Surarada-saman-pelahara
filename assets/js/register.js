@@ -331,3 +331,16 @@ window.addEventListener("load", () => {
         document.body.style.overflow = "auto";
     }, 1200);
 });
+
+// Force an unlock fallback after 4 seconds no matter what
+setTimeout(() => {
+    const loader = document.getElementById("loader");
+    if (loader && loader.style.display !== "none") {
+        loader.style.display = "none";
+        document.documentElement.classList.remove('lock-scrolling');
+        document.body.classList.remove('lock-scrolling');
+        // Restore standard fallback properties just in case
+        document.documentElement.style.overflow = "auto";
+        document.body.style.overflow = "auto";
+    }
+}, 4000);
