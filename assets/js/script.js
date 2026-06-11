@@ -35,7 +35,7 @@ if (modal) {
 }
 
 // ==========================================================================
-// 2. YEAR SWITCHING MANAGEMENT LAYER (Cross-Synchronized Selectors)
+// 2. YEAR SWITCHING MANAGEMENT LAYER (Fully Restructured for Global Sync)
 // ==========================================================================
 const allYearButtons = document.querySelectorAll('[data-year-select]');
 const wrapper2025 = document.getElementById('wrapper-year-2025');
@@ -49,43 +49,10 @@ const judgesPanel2026 = document.getElementById('judges-panel-2026');
 allYearButtons.forEach(btn => {
     btn.addEventListener('click', function(e) {
         e.preventDefault();
-
         const targetYear = this.dataset.yearSelect;
-
-        // FORCE SYNCHRONIZATION: Instantly update ALL year buttons across both sections
-        allYearButtons.forEach(yBtn => {
-            if (yBtn.dataset.yearSelect === targetYear) {
-                yBtn.classList.add('active');
-            } else {
-                yBtn.classList.remove('active');
-            }
-        });
-
-        if (targetYear === '2025') {
-            if (wrapper2025) wrapper2025.classList.remove('d-none');
-            if (wrapper2026) wrapper2026.classList.add('d-none');
-            
-            if (subCompTier) subCompTier.classList.add('d-none');
-            if (storytellingTab) storytellingTab.classList.add('d-none');
-
-            if (storytellingTab && storytellingTab.classList.contains('active')) {
-                const colourTabBtn = document.querySelector('[data-category="colour"]');
-                if (colourTabBtn) colourTabBtn.click();
-            }
-
-            if (judgesPanel2025) judgesPanel2025.classList.remove('d-none');
-            if (judgesPanel2026) judgesPanel2026.classList.add('d-none');
-        } 
-        else if (targetYear === '2026') {
-            if (wrapper2025) wrapper2025.classList.add('d-none');
-            if (wrapper2026) wrapper2026.classList.remove('d-none');
-
-            if (subCompTier) subCompTier.classList.remove('d-none');
-            if (storytellingTab) storytellingTab.classList.remove('d-none');
-
-            if (judgesPanel2025) judgesPanel2025.classList.add('d-none');
-            if (judgesPanel2026) judgesPanel2026.classList.remove('d-none');
-        }
+        
+        // Hand execution over to our centralized global syncing matrix
+        syncGlobalYearFilter(targetYear);
     });
 });
 
@@ -110,7 +77,6 @@ categoryButtons.forEach(button => {
         const currentActiveYear = document.querySelector('[data-year-select].active').dataset.yearSelect;
 
         if (currentActiveYear === '2025') {
-            // Standard execution track for pristine 2025 compatibility 
             if (category === 'colour') {
                 colourGallery.classList.add('active-gallery');
                 monoGallery.classList.remove('active-gallery');
@@ -120,7 +86,6 @@ categoryButtons.forEach(button => {
             }
         } 
         else if (currentActiveYear === '2026') {
-            // Execution flow mapping for 2026 categories
             [colourGallery2026, monoGallery2026, storyGallery2026].forEach(g => {
                 if(g) g.classList.remove('active-gallery');
             });
@@ -136,15 +101,11 @@ categoryButtons.forEach(button => {
     });
 });
 
-// 2026 Inter-School / Inner-School Tab Modifier Track Engine
 const compTierButtons = document.querySelectorAll('[data-comp-tier]');
 compTierButtons.forEach(tBtn => {
     tBtn.addEventListener('click', () => {
         compTierButtons.forEach(b => b.classList.remove('active'));
         tBtn.classList.add('active');
-        
-        // This structural slot remains ready to filter 2026 images asynchronously 
-        // once those assets are declared in future deployment stages.
     });
 });
 
@@ -166,3 +127,247 @@ if (typeof ScrollReveal !== 'undefined') {
         interval: 200
     });
 }
+
+// ==========================================================================
+// 5. EVENT-DRIVEN VIDEO SLIDESHOW DESIGN (Play to Completion Engine)
+// ==========================================================================
+let currentVideoIndex = 0;
+let isSectionVisible = false;
+let isMutedGlobal = true; // CHANGED: Restored to true so sound stays off on load
+
+// Initializing user interaction flags
+let userHasInteracted = false;
+document.addEventListener('click', () => {
+    userHasInteracted = true;
+}, { once: true });
+
+const slideshowSection = document.getElementById('video-exhibition-section');
+const allVideos = document.querySelectorAll('.video-slide video');
+const audioToggleBtn = document.getElementById('video-audio-toggle');
+const prevBtn = document.getElementById('slider-prev-btn');
+const nextBtn = document.getElementById('slider-next-btn');
+
+allVideos.forEach((vid) => {
+    vid.muted = true;
+    
+    vid.addEventListener('ended', () => {
+        if (isSectionVisible) {
+            changeVideoSlide(1);
+        }
+    });
+});
+
+function changeVideoSlide(direction) {
+    const slides = document.querySelectorAll('.video-slide');
+    if (slides.length === 0) return;
+
+    const currentVideo = slides[currentVideoIndex].querySelector('video');
+    if (currentVideo) {
+        currentVideo.pause();
+        currentVideo.currentTime = 0;
+    }
+
+    slides[currentVideoIndex].classList.remove('active-slide');
+
+    currentVideoIndex += direction;
+    if (currentVideoIndex >= slides.length) {
+        currentVideoIndex = 0;
+    } else if (currentVideoIndex < 0) {
+        currentVideoIndex = slides.length - 1;
+    }
+
+    const nextSlide = slides[currentVideoIndex];
+    nextSlide.classList.add('active-slide');
+
+    const nextVideo = nextSlide.querySelector('video');
+    if (nextVideo) {
+        // Keep initial mute engine parameters strictly verified
+        nextVideo.muted = isMutedGlobal;
+        if (isSectionVisible) {
+            nextVideo.play().catch(err => console.log("Playback state sync:", err));
+        }
+    }
+}
+
+if (audioToggleBtn) {
+    audioToggleBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        isMutedGlobal = !isMutedGlobal;
+
+        allVideos.forEach(vid => {
+            vid.muted = isMutedGlobal;
+        });
+
+        if (isMutedGlobal) {
+            this.innerHTML = '<span class="audio-icon">🔊</span> Unmute';
+        } else {
+            this.innerHTML = '<span class="audio-icon">🔇</span> Mute';
+            
+            const activeSlide = document.querySelectorAll('.video-slide')[currentVideoIndex];
+            const activeVideo = activeSlide ? activeSlide.querySelector('video') : null;
+            if (activeVideo && isSectionVisible) {
+                activeVideo.play().catch(() => {});
+            }
+        }
+    });
+}
+
+if (prevBtn) prevBtn.addEventListener('click', () => changeVideoSlide(-1));
+if (nextBtn) nextBtn.addEventListener('click', () => changeVideoSlide(1));
+
+// ==========================================================================
+// UPDATED SCROLL ENGINE (With Year-Check Validation Guard)
+// ==========================================================================
+if (slideshowSection && 'IntersectionObserver' in window) {
+    const observerOptions = {
+        root: null,
+        threshold: 0.3
+    };
+
+    const videoObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const activeSlide = document.querySelectorAll('.video-slide')[currentVideoIndex];
+            const activeVideo = activeSlide ? activeSlide.querySelector('video') : null;
+
+            const activeYearBtn = document.querySelector('[data-video-year].active') || document.querySelector('[data-year-select].active');
+            const currentYearState = activeYearBtn ? (activeYearBtn.getAttribute('data-video-year') || activeYearBtn.getAttribute('data-year-select')) : '2025';
+
+            if (entry.isIntersecting) {
+                isSectionVisible = true;
+                
+                if (currentYearState === "2026") {
+                    if (activeVideo) {
+                        activeVideo.pause();
+                    }
+                    return; 
+                }
+
+                if (activeVideo) {
+                    activeVideo.muted = isMutedGlobal;
+                    activeVideo.play().catch(err => {
+                        console.log("Autoplay context managed:", err);
+                        activeVideo.muted = true;
+                        activeVideo.play().catch(() => {});
+                    });
+                }
+            } else {
+                isSectionVisible = false;
+                if (activeVideo) {
+                    activeVideo.pause();
+                }
+            }
+        });
+    }, observerOptions);
+
+    videoObserver.observe(slideshowSection);
+}
+
+// ==========================================================================
+// 6. GLOBAL CENTRALIZED CROSS-SECTION SYNC ENGINE (With Auto-Play Resume)
+// ==========================================================================
+function syncGlobalYearFilter(targetYear) {
+    console.log("Global Filter Synced. Current Target:", targetYear);
+
+    // 1. Sync Video Highlight Elements UI
+    document.querySelectorAll('[data-video-year]').forEach(btn => {
+        if (btn.getAttribute('data-video-year') === targetYear) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // 2. Sync Gallery Layout Buttons UI
+    document.querySelectorAll('[data-year-select]').forEach(btn => {
+        if (btn.getAttribute('data-year-select') === targetYear) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // 3. Sync Judge Panel Selection Components UI 
+    document.querySelectorAll('[data-judge-year]').forEach(btn => {
+        if (btn.getAttribute('data-judge-year') === targetYear) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // 4. Process Gallery Visibility Wrapper Assignments
+    if (targetYear === '2025') {
+        if (wrapper2025) wrapper2025.classList.remove('d-none');
+        if (wrapper2026) wrapper2026.classList.add('d-none');
+        
+        if (subCompTier) subCompTier.classList.add('d-none');
+        if (storytellingTab) storytellingTab.classList.add('d-none');
+
+        if (storytellingTab && storytellingTab.classList.contains('active')) {
+            const colourTabBtn = document.querySelector('[data-category="colour"]');
+            if (colourTabBtn) colourTabBtn.click();
+        }
+
+        if (judgesPanel2025) judgesPanel2025.classList.remove('d-none');
+        if (judgesPanel2026) judgesPanel2026.classList.add('d-none');
+    } 
+    else if (targetYear === '2026') {
+        if (wrapper2025) wrapper2025.classList.add('d-none');
+        if (wrapper2026) wrapper2026.classList.remove('d-none');
+
+        if (subCompTier) subCompTier.classList.remove('d-none');
+        if (storytellingTab) storytellingTab.classList.remove('d-none');
+
+        if (judgesPanel2025) judgesPanel2025.classList.add('d-none');
+        if (judgesPanel2026) judgesPanel2026.classList.remove('d-none');
+    }
+
+    // 5. Process Dynamic Video Playback Visibility States
+    const mainSliderWrapper = document.getElementById('main-video-slider-wrapper');
+    const emptyStateView = document.getElementById('video-empty-view');
+    const allSlides = document.querySelectorAll('.video-slide');
+    const activeSlideVideo = allSlides[currentVideoIndex]?.querySelector('video');
+
+    if (targetYear === "2026") {
+        allVideos.forEach(vid => {
+            vid.pause();
+            vid.currentTime = 0;
+            vid.muted = true;
+        });
+        
+        allSlides.forEach(slide => {
+            slide.classList.remove('active-slide');
+        });
+        
+        if (mainSliderWrapper) mainSliderWrapper.style.display = 'none';
+        if (emptyStateView) emptyStateView.classList.remove('d-none');
+    } else {
+        if (emptyStateView) emptyStateView.classList.add('d-none');
+        if (mainSliderWrapper) mainSliderWrapper.style.display = 'block';
+        
+        allSlides.forEach(slide => slide.classList.remove('active-slide'));
+        if (allSlides[currentVideoIndex]) {
+            allSlides[currentVideoIndex].classList.add('active-slide');
+        }
+        
+        if (activeSlideVideo && slideshowSection) {
+            const rect = slideshowSection.getBoundingClientRect();
+            const isInView = (rect.top < window.innerHeight && rect.bottom >= 0);
+            
+            if (isInView) {
+                isSectionVisible = true;
+                // Keep audio status synced with global parameter setting tracking indexes
+                activeSlideVideo.muted = isMutedGlobal;
+                activeSlideVideo.play().catch(err => console.log("State switch play resume managed:", err));
+            }
+        }
+    }
+}
+
+// Attach Event Listeners to Video Section Row Buttons directly
+document.querySelectorAll('[data-video-year]').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const selectedYear = this.getAttribute('data-video-year');
+        syncGlobalYearFilter(selectedYear);
+    });
+});
