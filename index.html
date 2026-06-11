@@ -200,7 +200,17 @@
         </div>
 
         <div class="year-selector">
-            <button class="year-btn active">2025</button>
+    <button class="year-btn active" data-year-select="2025">2025</button>
+    <button class="year-btn" data-year-select="2026">2026</button>
+</div>
+
+        <div class="competition-selector d-none text-center mb-4" id="sub-competition-tier" style="display: flex; justify-content: center; gap: 12px;">
+            <button class="category-btn active" data-comp-tier="inter" style="box-shadow: 0 3px 10px rgba(0,0,0,.05); font-size: 0.95rem; padding: 8px 20px;">
+                Inter-School Competition
+            </button>
+            <button class="category-btn" data-comp-tier="inner" style="box-shadow: 0 3px 10px rgba(0,0,0,.05); font-size: 0.95rem; padding: 8px 20px;">
+                Inner-School Competition
+            </button>
         </div>
     </div>
 
@@ -211,128 +221,84 @@
         <button class="category-btn" data-category="mono">
             Monochrome Category
         </button>
+        <button class="category-btn d-none" data-category="storytelling" id="storytelling-tab-btn">
+            Storytelling Category
+        </button>
     </div>
 
     <div class="gallery-wrapper">
 
-        <div class="gallery-content active-gallery" id="colour-gallery">
+        <div id="wrapper-year-2025" class="year-content-group">
             
-            <div class="podium-gallery d-flex flex-column flex-lg-row align-items-center align-items-lg-end justify-content-center">
-
-                <div class="winner-card first order-1 order-lg-2">
-                    <img src="/assets/img/2025/c 1.jpg"
-                         data-title="1st Place"
-                         data-photographer="G Dulshan Kokila"
-                         data-school="Sivali Central College"
-                         data-year="2025"
-                         alt="">
-                    <div class="winner-label">1st Place</div>
+            <div class="gallery-content active-gallery" id="colour-gallery">
+                <div class="podium-gallery d-flex flex-column flex-lg-row align-items-center align-items-lg-end justify-content-center">
+                    <div class="winner-card first order-1 order-lg-2">
+                        <img src="/assets/img/2025/c 1.jpg" data-title="1st Place" data-photographer="G Dulshan Kokila" data-school="Sivali Central College" data-year="2025" alt="">
+                        <div class="winner-label">1st Place</div>
+                    </div>
+                    <div class="winner-card second order-2 order-lg-1">
+                        <img src="/assets/img/2025/c 2.jpg" data-title="2nd Place" data-photographer="K.A.I.S Hamdhaan" data-school="Karunaratne Buddhist College" data-year="2025" alt="">
+                        <div class="winner-label">2nd Place</div>
+                    </div>
+                    <div class="winner-card third order-3 order-lg-3">
+                        <img src="/assets/img/2025/c 3.jpg" data-title="3rd Place" data-photographer="Methul Premadasa" data-school="Royal College" data-year="2025" alt="">
+                        <div class="winner-label">3rd Place</div>
+                    </div>
                 </div>
 
-                <div class="winner-card second order-2 order-lg-1">
-                    <img src="/assets/img/2025/c 2.jpg"
-                         data-title="2nd Place"
-                         data-photographer="K.A.I.S Hamdhaan"
-                         data-school="Karunaratne Buddhist College"
-                         data-year="2025"
-                         alt="">
-                    <div class="winner-label">2nd Place</div>
+                <h3 class="merit-title">Merit Awards</h3>
+                <div class="merit-grid">
+                    <div class="photo-card"><img src="/assets/img/2025/c merit.jpg" data-title="Merit Award" data-photographer="M.K Binanga Menul" data-school="Ananda Maithreya Central College" data-year="2025" alt=""></div>
+                    <div class="photo-card"><img src="/assets/img/2025/c merit (2).jpg" data-title="Merit Award" data-photographer="R.M Semika Kaweeshwara" data-school="Eheliyagoda Central College" data-year="2025" alt=""></div>
+                    <div class="photo-card"><img src="/assets/img/2025/c merit (3).jpg" data-title="Merit Award" data-photographer="L.G.M Basilu Liyanage" data-school="Sri Chandananda Buddhist College" data-year="2025" alt=""></div>
+                    <div class="photo-card"><img src="/assets/img/2025/c merit (4).jpg" data-title="Merit Award" data-photographer="Ranidu Vajiranath" data-school="Karunaratne Buddhist College" data-year="2025" alt=""></div>
+                    <div class="photo-card"><img src="/assets/img/2025/c merit (5).jpg" data-title="Merit Award" data-photographer="Methul Premadasa" data-school="Royal College" data-year="2025" alt=""></div>
                 </div>
-
-                <div class="winner-card third order-3 order-lg-3">
-                    <img src="/assets/img/2025/c 3.jpg"
-                         data-title="3rd Place"
-                         data-photographer="Methul Premadasa"
-                         data-school="Royal College"
-                         data-year="2025"
-                         alt="">
-                    <div class="winner-label">3rd Place</div>
-                </div>
-
             </div>
 
-            <h3 class="merit-title">Merit Awards</h3>
+            <div class="gallery-content" id="mono-gallery">
+                <div class="podium-gallery d-flex flex-column flex-lg-row align-items-center align-items-lg-end justify-content-center">
+                    <div class="winner-card first order-1 order-lg-2">
+                        <img src="/assets/img/2025/m 1.jpg" data-title="1st Place" data-photographer="L.G.M Basilu Liyanage" data-school="Sri Chandananda Buddhist College" data-year="2025" alt="">
+                        <div class="winner-label">1st Place</div>
+                    </div>
+                    <div class="winner-card second order-2 order-lg-1">
+                        <img src="/assets/img/2025/m 2.jpg" data-title="2nd Place" data-photographer="D.M Vinuja Methsara Dissanayaka" data-school="Gankanda Central College" data-year="2025" alt="">
+                        <div class="winner-label">2nd Place</div>
+                    </div>
+                    <div class="winner-card third order-3 order-lg-3">
+                        <img src="/assets/img/2025/m 3.jpg" data-title="3rd Place" data-photographer="D.M Vinuja Methsara Dissanayaka" data-school="Gankanda Central College" data-year="2025" alt="">
+                        <div class="winner-label">3rd Place</div>
+                    </div>
+                </div>
 
-            <div class="merit-grid">
-                <div class="photo-card">
-                    <img src="/assets/img/2025/c merit.jpg" data-title="Merit Award" data-photographer="M.K Binanga Menul" data-school="Ananda Maithreya Central College" data-year="2025" alt="">
-                </div>
-                <div class="photo-card">
-                    <img src="/assets/img/2025/c merit (2).jpg" data-title="Merit Award" data-photographer="R.M Semika Kaweeshwara" data-school="Eheliyagoda Central College" data-year="2025" alt="">
-                </div>
-                <div class="photo-card">
-                    <img src="/assets/img/2025/c merit (3).jpg" data-title="Merit Award" data-photographer="L.G.M Basilu Liyanage" data-school="Sri Chandananda Buddhist College" data-year="2025" alt="">
-                </div>
-                <div class="photo-card">
-                    <img src="/assets/img/2025/c merit (4).jpg" data-title="Merit Award" data-photographer="Ranidu Vajiranath" data-school="Karunaratne Buddhist College" data-year="2025" alt="">
-                </div>
-                <div class="photo-card">
-                    <img src="/assets/img/2025/c merit (5).jpg" data-title="Merit Award" data-photographer="Methul Premadasa" data-school="Royal College" data-year="2025" alt="">
+                <h3 class="merit-title">Merit Awards</h3>
+                <div class="merit-grid">
+                    <div class="photo-card"><img src="/assets/img/2025/m merit.jpg" data-title="Merit Award" data-photographer="K.A.I.S Hamdhaan" data-school="Karunaratne Buddhist College" data-year="2025" alt=""></div>
+                    <div class="photo-card"><img src="/assets/img/2025/m merit (2).jpg" data-title="Merit Award" data-photographer="U.M Jayaweera" data-school="Sivali Central College" data-year="2025" alt=""></div>
+                    <div class="photo-card"><img src="/assets/img/2025/m merit (3).jpg" data-title="Merit Award" data-photographer="K.M Gayanath Madusankha" data-school="St. Aloysius College" data-year="2025" alt=""></div>
+                    <div class="photo-card"><img src="/assets/img/2025/m merit (4).jpg" data-title="Merit Award" data-photographer="Tharul D. Mannapperuma" data-school="Nalanda College" data-year="2025" alt=""></div>
+                    <div class="photo-card"><img src="/assets/img/2025/m merit (5).jpg" data-title="Merit Award" data-photographer="W.R Induweera Dineth Kumara" data-school="Eheliyagoda Central College" data-year="2025" alt=""></div>
                 </div>
             </div>
 
         </div>
 
-        <div class="gallery-content" id="mono-gallery">
-            
-            <div class="podium-gallery d-flex flex-column flex-lg-row align-items-center align-items-lg-end justify-content-center">
-
-                <div class="winner-card first order-1 order-lg-2">
-                    <img src="/assets/img/2025/m 1.jpg"
-                         data-title="1st Place"
-                         data-photographer="L.G.M Basilu Liyanage"
-                         data-school="Sri Chandananda Buddhist College"
-                         data-year="2025"
-                         alt="">
-                    <div class="winner-label">1st Place</div>
-                </div>
-
-                <div class="winner-card second order-2 order-lg-1">
-                    <img src="/assets/img/2025/m 2.jpg"
-                         data-title="2nd Place"
-                         data-photographer="D.M Vinuja Methsara Dissanayaka"
-                         data-school="Gankanda Central College"
-                         data-year="2025"
-                         alt="">
-                    <div class="winner-label">2nd Place</div>
-                </div>
-
-                <div class="winner-card third order-3 order-lg-3">
-                    <img src="/assets/img/2025/m 3.jpg"
-                         data-title="3rd Place"
-                         data-photographer="D.M Vinuja Methsara Dissanayaka"
-                         data-school="Gankanda Central College"
-                         data-year="2025"
-                         alt="">
-                    <div class="winner-label">3rd Place</div>
-                </div>
-
+        <div id="wrapper-year-2026" class="year-content-group d-none">
+            <div class="gallery-content active-gallery" id="colour-gallery-2026">
+                <div class="text-center py-5 text-muted"><p>Not ready.</p></div>
             </div>
-
-            <h3 class="merit-title">Merit Awards</h3>
-
-            <div class="merit-grid">
-                <div class="photo-card">
-                    <img src="/assets/img/2025/m merit.jpg" data-title="Merit Award" data-photographer="K.A.I.S Hamdhaan" data-school="Karunaratne Buddhist College" data-year="2025" alt="">
-                </div>
-                <div class="photo-card">
-                    <img src="/assets/img/2025/m merit (2).jpg" data-title="Merit Award" data-photographer="U.M Jayaweera" data-school="Sivali Central College" data-year="2025" alt="">
-                </div>
-                <div class="photo-card">
-                    <img src="/assets/img/2025/m merit (3).jpg" data-title="Merit Award" data-photographer="K.M Gayanath Madusankha" data-school="St. Aloysius College" data-year="2025" alt="">
-                </div>
-                <div class="photo-card">
-                    <img src="/assets/img/2025/m merit (4).jpg" data-title="Merit Award" data-photographer="Tharul D. Mannapperuma" data-school="Nalanda College" data-year="2025" alt="">
-                </div>
-                <div class="photo-card">
-                    <img src="/assets/img/2025/m merit (5).jpg" data-title="Merit Award" data-photographer="W.R Induweera Dineth Kumara" data-school="Eheliyagoda Central College" data-year="2025" alt="">
-                </div>
+            <div class="gallery-content" id="mono-gallery-2026">
+                <div class="text-center py-5 text-muted"><p>Not ready.</p></div>
             </div>
-
+            <div class="gallery-content" id="storytelling-gallery-2026">
+                <div class="text-center py-5 text-muted"><p>Not ready.</p></div>
+            </div>
         </div>
 
     </div>
 </section>
+
 
 
 <!-- Full screen modal -->
@@ -372,59 +338,112 @@
 </div>
 
 
-<section id="judges" class="judges-section">
+<section id="judges-master-section" class="judges-section" style="padding-bottom: 100px;">
     <div class="container">
         
-        <div class="section-title text-center">
-            <h2>2025 Judge Panel</h2>
-            <p>Guided by industry-leading professionals to ensure the highest standards of evaluation.</p>
+        <div class="year-selector mb-5">
+            <button class="year-btn active" data-year-select="2025">2025</button>
+            <button class="year-btn" data-year-select="2026">2026</button>
         </div>
 
-        <div class="row justify-content-center g-4">
+        <div id="judges-panel-2025" class="judges-year-wrapper">
+            <div class="section-heading text-center">
+                <h2 style="color: #ffffff;">2025 Judge Panel</h2>
+                <p style="color: #fef08a;">Guided by industry-leading professionals to ensure the highest standards of evaluation.</p>
+            </div>
 
-            <div class="col-lg-4 col-md-6">
-                <div class="judge-card">
-                    <div class="judge-image-wrapper">
-                        <img src="/assets/img/thilina sir.jpg" alt="Mr. Thilina Kaluthotage" class="judge-img">
+            <div class="row justify-content-center g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="judge-card">
+                        <div class="judge-image-wrapper">
+                            <img src="/assets/img/thilina sir.jpg" alt="Mr. Thilina Kaluthotage" class="judge-img">
+                        </div>
+                        <div class="judge-info">
+                            <h3>Mr. Thilina Kaluthotage</h3>
+                            <p class="judge-designation">Photography Journalist</p>
+                            <span class="badge bg-secondary">Panelist</span>
+                        </div>
                     </div>
-                    <div class="judge-info">
-                        <h3>Mr. Thilina Kaluthotage</h3>
-                        <p class="judge-designation">Photography Journalist</p>
-                        <span class="badge bg-secondary">Panelist</span>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="judge-card">
+                        <div class="judge-image-wrapper">
+                            <img src="/assets/img/rasika sir.jpg" alt="Mr. Rasika Hapuaarachchi" class="judge-img">
+                        </div>
+                        <div class="judge-info">
+                            <h3>Mr. Rasika Hapuaarachchi</h3>
+                            <p class="judge-designation">Professional Photographer & Visual Artist</p>
+                            <span class="badge bg-warning text-dark">Chief Judge</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="judge-card">
+                        <div class="judge-image-wrapper">
+                            <img src="/assets/img/sasindu sir.jpg" alt="Mr. Sasindu Pramudhita" class="judge-img">
+                        </div>
+                        <div class="judge-info">
+                            <h3>Mr. Sasindu Pramudhita</h3>
+                            <p class="judge-designation">Commercial & Cultural Photographer</p>
+                            <span class="badge bg-secondary">Panelist</span>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="col-lg-4 col-md-6">
-                <div class="judge-card">
-                    <div class="judge-image-wrapper">
-                        <img src="/assets/img/rasika sir.jpg" alt="Mr. Rasika Hapuaarachchi" class="judge-img">
-                    </div>
-                    <div class="judge-info">
-                        <h3>Mr. Rasika Hapuaarachchi</h3>
-                        <p class="judge-designation">Professional Photographer & Visual Artist</p>
-                        <span class="badge bg-warning text-dark">Chief Judge</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-4 col-md-6">
-                <div class="judge-card">
-                    <div class="judge-image-wrapper">
-                        <img src="/assets/img/sasindu sir.jpg" alt="Mr. Sasindu Pramudhita" class="judge-img">
-                    </div>
-                    <div class="judge-info">
-                        <h3>Mr. Sasindu Pramudhita</h3>
-                        <p class="judge-designation">Commercial & Cultural Photographer</p>
-                        <span class="badge bg-secondary">Panelist</span>
-                    </div>
-                </div>
-            </div>
-
         </div>
+
+        <div id="judges-panel-2026" class="judges-year-wrapper d-none">
+            <div class="section-heading text-center">
+                <h2 style="color: #ffffff;">2026 Judge Panel</h2>
+                <p style="color: #fef08a;">Guided by industry-leading professionals to ensure the highest standards of evaluation.</p>
+            </div>
+
+            <div class="row justify-content-center g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="judge-card">
+                        <div class="judge-image-wrapper">
+                            <img src="/assets/img/anonymous.jpg" alt="Anonymous Judge" class="judge-img" style="background: #e2e8f0; padding: 20px;">
+                        </div>
+                        <div class="judge-info">
+                            <h3>Anonymous Panelist</h3>
+                            <p class="judge-designation">Photography Journalist</p>
+                            <span class="badge bg-secondary">Panelist</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="judge-card">
+                        <div class="judge-image-wrapper">
+                            <img src="/assets/img/anonymous.jpg" alt="Anonymous Judge" class="judge-img" style="background: #e2e8f0; padding: 20px;">
+                        </div>
+                        <div class="judge-info">
+                            <h3>Anonymous Chief Judge</h3>
+                            <p class="judge-designation">Professional Photographer & Visual Artist</p>
+                            <span class="badge bg-warning text-dark">Chief Judge</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="judge-card">
+                        <div class="judge-image-wrapper">
+                            <img src="/assets/img/anonymous.jpg" alt="Anonymous Judge" class="judge-img" style="background: #e2e8f0; padding: 20px;">
+                        </div>
+                        <div class="judge-info">
+                            <h3>Anonymous Panelist</h3>
+                            <p class="judge-designation">Commercial & Cultural Photographer</p>
+                            <span class="badge bg-secondary">Panelist</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </section>
-
 
 
 <!-- Contact -->
