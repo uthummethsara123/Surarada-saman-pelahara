@@ -50,6 +50,11 @@
     }
 }
 
+.lock-scrolling {
+    overflow: hidden !important;
+    height: 100% !important;
+}
+
 
 /* ==========================================================================
    1. GLOBAL & BASICS
