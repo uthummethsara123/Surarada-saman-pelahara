@@ -112,10 +112,18 @@ compTierButtons.forEach(tBtn => {
 // ==========================================================================
 // 4. GLOBAL LIFECYCLE APP EVENTS (Loader & ScrollReveal Hooks)
 // ==========================================================================
+// FIXED: Strictly lock both html and body elements immediately
+document.documentElement.classList.add('lock-scrolling');
+document.body.classList.add('lock-scrolling');
+
 window.addEventListener("load", () => {
     setTimeout(() => {
         const loader = document.getElementById("loader");
         if(loader) loader.style.display = "none";
+        
+        // FIXED: Drop the strict lock layouts cleanly to let the page scroll
+        document.documentElement.classList.remove('lock-scrolling');
+        document.body.classList.remove('lock-scrolling');
     }, 1200);
 });
 
@@ -133,7 +141,7 @@ if (typeof ScrollReveal !== 'undefined') {
 // ==========================================================================
 let currentVideoIndex = 0;
 let isSectionVisible = false;
-let isMutedGlobal = true; // CHANGED: Restored to true so sound stays off on load
+let isMutedGlobal = true; 
 
 // Initializing user interaction flags
 let userHasInteracted = false;
@@ -181,7 +189,6 @@ function changeVideoSlide(direction) {
 
     const nextVideo = nextSlide.querySelector('video');
     if (nextVideo) {
-        // Keep initial mute engine parameters strictly verified
         nextVideo.muted = isMutedGlobal;
         if (isSectionVisible) {
             nextVideo.play().catch(err => console.log("Playback state sync:", err));
@@ -356,7 +363,6 @@ function syncGlobalYearFilter(targetYear) {
             
             if (isInView) {
                 isSectionVisible = true;
-                // Keep audio status synced with global parameter setting tracking indexes
                 activeSlideVideo.muted = isMutedGlobal;
                 activeSlideVideo.play().catch(err => console.log("State switch play resume managed:", err));
             }
