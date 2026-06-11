@@ -100,5 +100,24 @@ categoryButtons.forEach(button => {
 
 });
 
+window.addEventListener("load",()=>{
+
+setTimeout(()=>{
+
+document.getElementById("loader")
+.style.display="none";
+
+},1200);
+
+});
+
+ScrollReveal().reveal(
+'.section-title,.about-section,.gallery-section,.schools-bar',
+{
+    distance:'60px',
+    duration:1200,
+    origin:'bottom',
+    interval:200
+});
 
 
