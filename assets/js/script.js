@@ -112,18 +112,38 @@ compTierButtons.forEach(tBtn => {
 // ==========================================================================
 // 4. GLOBAL LIFECYCLE APP EVENTS (Loader & ScrollReveal Hooks)
 // ==========================================================================
-// FIXED: Strictly lock both html and body elements immediately
+// Force hide scrollbars immediately when script initializes
 document.documentElement.classList.add('lock-scrolling');
 document.body.classList.add('lock-scrolling');
+document.documentElement.style.overflow = "hidden";
+document.body.style.overflow = "hidden";
+
+// SAFARI SAFETY VALVE: Force page open after 3.5 seconds max if window.load hangs
+const forceUnlockTimeout = setTimeout(() => {
+    cleanUpAndDestroyLoader("Safety Timeout Triggered");
+}, 3500);
+
+function cleanUpAndDestroyLoader(reason) {
+    console.log("Loader Dismissed via:", reason);
+    
+    const loader = document.getElementById("loader");
+    if (loader) {
+        loader.style.display = "none";
+    }
+    
+    // Completely strip away all strict scrolling locks cleanly
+    document.documentElement.classList.remove('lock-scrolling');
+    document.body.classList.remove('lock-scrolling');
+    document.documentElement.style.overflow = "auto";
+    document.body.style.overflow = "auto";
+}
 
 window.addEventListener("load", () => {
+    // Clear the backup timer since the website loaded naturally
+    clearTimeout(forceUnlockTimeout);
+    
     setTimeout(() => {
-        const loader = document.getElementById("loader");
-        if(loader) loader.style.display = "none";
-        
-        // FIXED: Drop the strict lock layouts cleanly to let the page scroll
-        document.documentElement.classList.remove('lock-scrolling');
-        document.body.classList.remove('lock-scrolling');
+        cleanUpAndDestroyLoader("Standard Window Load Event");
     }, 1200);
 });
 
@@ -135,19 +155,6 @@ if (typeof ScrollReveal !== 'undefined') {
         interval: 200
     });
 }
-
-// Force an unlock fallback after 4 seconds no matter what
-setTimeout(() => {
-    const loader = document.getElementById("loader");
-    if (loader && loader.style.display !== "none") {
-        loader.style.display = "none";
-        document.documentElement.classList.remove('lock-scrolling');
-        document.body.classList.remove('lock-scrolling');
-        // Restore standard fallback properties just in case
-        document.documentElement.style.overflow = "auto";
-        document.body.style.overflow = "auto";
-    }
-}, 4000);
 
 // ==========================================================================
 // 5. EVENT-DRIVEN VIDEO SLIDESHOW DESIGN (Play to Completion Engine)
