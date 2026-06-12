@@ -564,91 +564,6 @@ html{
     }
 }
 
-/* ==========================================================================
-INFINITE MARQUEE RUNWAY CONTEXT (CURRENTLY ON HOLD FOR SPONSORSHIPS)
-==========================================================================
-
-.sponsor-marquee-wrapper {
-    width: 100%;
-    overflow: hidden;
-    background: #0f172a; 
-    border-top: 1px solid rgba(245, 158, 11, 0.15);
-    border-bottom: 1px solid rgba(245, 158, 11, 0.15);
-    padding: 22px 0;
-    display: flex;
-    position: relative;
-}
-
-.sponsor-marquee-wrapper::before,
-.sponsor-marquee-wrapper::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    width: 120px;
-    height: 100%;
-    z-index: 2;
-    pointer-events: none;
-}
-.sponsor-marquee-wrapper::before {
-    left: 0;
-    background: linear-gradient(to right, #0f172a 0%, transparent 100%);
-}
-.sponsor-marquee-wrapper::after {
-    right: 0;
-    background: linear-gradient(to left, #0f172a 0%, transparent 100%);
-}
-
-.marquee-track {
-    display: flex;
-    white-space: nowrap;
-    gap: 60px; 
-    animation: scrollSponsors 25s linear infinite;
-}
-
-.marquee-track span {
-    font-family: 'Poppins', sans-serif !important;
-    font-weight: 800;
-    font-size: 1.8rem;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    display: inline-block;
-}
-
-.marquee-track .stroke-text {
-    color: transparent;
-    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.25);
-    transition: -webkit-text-stroke 0.3s ease;
-}
-
-.marquee-track .solid-text {
-    color: #f59e0b;
-    text-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
-}
-
-.sponsor-marquee-wrapper:hover .stroke-text {
-    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.7);
-}
-
-@media (max-width: 768px) {
-    .marquee-track span {
-        font-size: 1.35rem;
-        letter-spacing: 2px;
-    }
-    .marquee-track {
-        gap: 40px;
-    }
-}
-
-@keyframes scrollSponsors {
-    0% {
-        transform: translateX(0);
-    }
-    100% {
-        transform: translateX(-50%);
-    }
-}
-*/
-
 
 /* ==========================================================================
    4. ABOUT & STATS GRID MODULES
@@ -709,7 +624,6 @@ INFINITE MARQUEE RUNWAY CONTEXT (CURRENTLY ON HOLD FOR SPONSORSHIPS)
 }
 
 
-
 /* ==========================================================================
    5. SCHOOL LOGOS MARQUEE
    ========================================================================== */
@@ -742,11 +656,6 @@ INFINITE MARQUEE RUNWAY CONTEXT (CURRENTLY ON HOLD FOR SPONSORSHIPS)
     height: 60px;
     width: auto;
     transition: all .3s ease;
-}
-
-.schools-logos #sbvlogo{
-    height: 100px;
-    width: 100px;
 }
 
 .schools-logos img:hover {
