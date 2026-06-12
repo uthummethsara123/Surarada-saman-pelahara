@@ -2,8 +2,6 @@
 // 2026 PARTICIPATION SYSTEM WITH AUTO-TIMER & GOOGLE DRIVE HOOK
 // ==========================================================================
 
-
-// 0 is januarty and vise versa
 const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycbxGNZPK9jYGNTyXYwDmONDu03wXPIg-LnWVIx2PA0n5XQDYWieJ01cVrVry5ML6VFLS/exec";
 const CLOSING_DEADLINE = new Date(2026, 6, 19, 24, 0, 0).getTime();
 
@@ -24,7 +22,7 @@ const countdownInterval = setInterval(function() {
     const days = Math.floor(distance / (1000 * 60 * 60 * 24));
     const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((distance % (1000 * 60)) / 1000); // <-- FIXED LINE
+    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
     // Grab the elements safely
     const daysEl = document.getElementById("days");
@@ -57,6 +55,8 @@ if(regForm) {
         
         const submitBtn = document.getElementById('submitBtn');
         const feedback = document.getElementById('formFeedback');
+        const addDelegateBtn = document.getElementById('add-delegate-btn');
+        const delegateContainer = document.getElementById('delegates-form-container');
         
         submitBtn.disabled = true;
         submitBtn.innerText = "Processing, please wait...";
@@ -78,24 +78,27 @@ if(regForm) {
             finalizedSchoolAddress = INNER_SCHOOL_ADDRESSES[finalizedSchoolName] || "";
         }
 
-        let foodPref = formData.get('dietaryPreference');
-        const customMixNotes = formData.get('mixedDietaryNotes');
-        if (foodPref === "Mixed" && customMixNotes) {
-            foodPref = `Mixed (${customMixNotes})`;
-        }
-
         // Loop over values and push clean mapping names safely
         for (const pair of formData.entries()) {
-            if (pair[0] === 'mixedDietaryNotes' || pair[0] === 'innerSchoolName') continue;
+            if (pair[0] === 'innerSchoolName') continue;
             
             if (pair[0] === 'schoolName') {
                 searchParams.append('schoolName', finalizedSchoolName || "");
             } else if (pair[0] === 'schoolAddress') {
                 searchParams.append('schoolAddress', finalizedSchoolAddress || "");
-            } else if (pair[0] === 'dietaryPreference') {
-                searchParams.append('dietaryPreference', foodPref);
             } else {
                 searchParams.append(pair[0], pair[1]);
+            }
+        }
+
+        // Explicitly fill empty delegate columns to maintain 3-column rows matching spreadsheet targets
+        for (let i = 2; i <= 3; i++) {
+            if (!formData.has(`delegate_name_${i}`)) {
+                searchParams.append(`delegate_name_${i}`, "");
+                searchParams.append(`delegate_dob_${i}`, "");
+                searchParams.append(`delegate_phone_${i}`, "");
+                searchParams.append(`delegate_cert_${i}`, "");
+                searchParams.append(`delegate_diet_${i}`, "");
             }
         }
 
@@ -116,11 +119,15 @@ if(regForm) {
             feedback.innerText = "Registration Successful! Verified details saved in Google Sheets.";
             regForm.reset();
             
-            // Explicitly force hide structures back to baseline defaults
-            if(document.getElementById("mixedDietaryWrapper")) {
-                document.getElementById("mixedDietaryWrapper").classList.add("d-none");
-                document.getElementById("mixedDietaryWrapper").style.setProperty('display', 'none', 'important');
+            // Clear extra dynamic cards out on reset success path loops
+            if (delegateContainer) {
+                const customBlocks = delegateContainer.querySelectorAll('.delegate-form-block:not(:first-child)');
+                customBlocks.forEach(b => b.remove());
             }
+            window.globalDelegateCount = 1;
+            if (addDelegateBtn) addDelegateBtn.style.display = 'inline-block';
+
+            // Explicitly force hide structures back to baseline defaults
             if(document.getElementById("innerSchoolWrapper")) {
                 document.getElementById("innerSchoolWrapper").classList.add("d-none");
                 document.getElementById("innerSchoolWrapper").style.setProperty('display', 'none', 'important');
@@ -165,26 +172,98 @@ document.addEventListener("DOMContentLoaded", () => {
     const presidentNameLabel = document.getElementById("presidentNameLabel");
     const presidentContactLabel = document.getElementById("presidentContactLabel");
 
-    const dietarySelect = document.getElementById("dietaryPreference");
-    const mixedDietaryWrapper = document.getElementById("mixedDietaryWrapper");
-    const mixedDietaryNotes = document.getElementById("mixedDietaryNotes");
+    // Initialize global dynamic counter context variable
+    window.globalDelegateCount = 1;
+    const maxDelegates = 3;
+    const addDelegateBtn = document.getElementById('add-delegate-btn');
+    const delegateContainer = document.getElementById('delegates-form-container');
 
-    if (dietarySelect && mixedDietaryWrapper && mixedDietaryNotes) {
-        mixedDietaryWrapper.classList.add("d-none");
-        mixedDietaryWrapper.style.setProperty('display', 'none', 'important');
-        mixedDietaryNotes.required = false;
+    // --- DYNAMIC DELEGATE CARD GENERATOR ---
+    if (addDelegateBtn && delegateContainer) {
+        addDelegateBtn.addEventListener('click', function(e) {
+            e.preventDefault();
 
-        dietarySelect.addEventListener("change", function() {
-            if (this.value === "Mixed") {
-                mixedDietaryWrapper.classList.remove("d-none");
-                mixedDietaryWrapper.style.setProperty('display', 'block', 'important');
-                mixedDietaryNotes.required = true;
-            } else {
-                mixedDietaryWrapper.classList.add("d-none");
-                mixedDietaryWrapper.style.setProperty('display', 'none', 'important');
-                mixedDietaryNotes.required = false;
-                mixedDietaryNotes.value = "";
+            if (window.globalDelegateCount >= maxDelegates) return;
+
+            window.globalDelegateCount++;
+
+            const delegateWrapper = document.createElement('div');
+            delegateWrapper.className = 'delegate-form-block mb-4 p-3 border border-secondary rounded glass-panel position-relative style-animation-reveal';
+            delegateWrapper.id = `delegate-block-${window.globalDelegateCount}`;
+            
+            delegateWrapper.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="text-white mb-0">Nominated Delegate #${window.globalDelegateCount}</h5>
+                    <button type="button" class="btn btn-danger btn-sm remove-delegate-btn" data-target-id="delegate-block-${window.globalDelegateCount}">
+                        <i class="fas fa-trash-alt"></i> Remove
+                    </button>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-warning-light">Full Name <span class="text-danger">*</span></label>
+                    <input type="text" name="delegate_name_${window.globalDelegateCount}" class="form-control glass-input" placeholder="Enter Full Name" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-warning-light">Date of Birth (YYYY.MM.DD) <span class="text-danger">*</span></label>
+                    <input type="text" name="delegate_dob_${window.globalDelegateCount}" class="form-control glass-input" placeholder="e.g. 2008.05.12" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-warning-light">Contact Number <span class="text-danger">*</span></label>
+                    <input type="tel" name="delegate_phone_${window.globalDelegateCount}" class="form-control glass-input" placeholder="Enter Contact Number" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-warning-light">Exact Name for Certificate <span class="text-danger">*</span></label>
+                    <input type="text" name="delegate_cert_${window.globalDelegateCount}" class="form-control glass-input" placeholder="Provide full initials + last name explicitly" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-warning-light">Delegation Dietary Option <span class="text-danger">*</span></label>
+                    <select name="delegate_diet_${window.globalDelegateCount}" class="form-select glass-input text-white" style="background-color: #1e293b;" required>
+                        <option value="" disabled selected hidden>Select Option</option>
+                        <option value="Vegetarian">Vegetarian</option>
+                        <option value="Non-Vegetarian">Non-Vegetarian</option>
+                    </select>
+                </div>
+            `;
+
+            delegateContainer.appendChild(delegateWrapper);
+
+            if (window.globalDelegateCount === maxDelegates) {
+                addDelegateBtn.style.display = 'none';
             }
+
+            // Bind cleanup configurations
+            delegateWrapper.querySelector('.remove-delegate-btn').addEventListener('click', function() {
+                const targetBlock = document.getElementById(this.getAttribute('data-target-id'));
+                if (targetBlock) {
+                    targetBlock.remove();
+                    window.globalDelegateCount--;
+                    if (window.globalDelegateCount < maxDelegates) {
+                        addDelegateBtn.style.display = 'inline-block';
+                    }
+                    renumberDelegates();
+                }
+            });
+        });
+    }
+
+    function renumberDelegates() {
+        const blocks = delegateContainer.querySelectorAll('.delegate-form-block:not(:first-child)');
+        window.globalDelegateCount = 1;
+        blocks.forEach((block) => {
+            window.globalDelegateCount++;
+            block.id = `delegate-block-${window.globalDelegateCount}`;
+            block.querySelector('h5').textContent = `Nominated Delegate #${window.globalDelegateCount}`;
+            block.querySelector('.remove-delegate-btn').setAttribute('data-target-id', `delegate-block-${window.globalDelegateCount}`);
+            
+            block.querySelector('input[name^="delegate_name_"]').name = `delegate_name_${window.globalDelegateCount}`;
+            block.querySelector('input[name^="delegate_dob_"]').name = `delegate_dob_${window.globalDelegateCount}`;
+            block.querySelector('input[name^="delegate_phone_"]').name = `delegate_phone_${window.globalDelegateCount}`;
+            block.querySelector('input[name^="delegate_cert_"]').name = `delegate_cert_${window.globalDelegateCount}`;
+            block.querySelector('select[name^="delegate_diet_"]').name = `delegate_diet_${window.globalDelegateCount}`;
         });
     }
 
@@ -294,54 +373,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-window.addEventListener("load",()=>{
-
-setTimeout(()=>{
-
-document.getElementById("loader")
-.style.display="none";
-
-},1200);
-
-});
-
-ScrollReveal().reveal(
-'.section-title,.about-section,.gallery-section,.schools-bar',
-{
-    distance:'60px',
-    duration:1200,
-    origin:'bottom',
-    interval:200
-});
-
 // ==========================================================================
-// SCROLL LOCK ON LIFECYCLE LOAD
+// 4. GLOBAL LIFECYCLE APP EVENTS (Loader & Scrollbars Lock Safes)
 // ==========================================================================
-// Lock scrolling immediately when the page starts initializing
-document.documentElement.style.overflow = "hidden";
-document.body.style.overflow = "hidden";
-
-window.addEventListener("load", () => {
-    setTimeout(() => {
-        const loader = document.getElementById("loader");
-        if (loader) loader.style.display = "none";
-        
-        // Restore scrolling once the page is fully ready and loader is hidden
-        document.documentElement.style.overflow = "auto";
-        document.body.style.overflow = "auto";
-    }, 1200);
-});
-
-// ==========================================================================
-// 4. GLOBAL LIFECYCLE APP EVENTS (Loader & ScrollReveal Hooks)
-// ==========================================================================
-// Force hide scrollbars immediately when script initializes
 document.documentElement.classList.add('lock-scrolling');
 document.body.classList.add('lock-scrolling');
 document.documentElement.style.overflow = "hidden";
 document.body.style.overflow = "hidden";
 
-// SAFARI SAFETY VALVE: Force page open after 3.5 seconds max if window.load hangs
 const forceUnlockTimeout = setTimeout(() => {
     cleanUpAndDestroyLoader("Safety Timeout Triggered");
 }, 3500);
@@ -354,7 +393,6 @@ function cleanUpAndDestroyLoader(reason) {
         loader.style.display = "none";
     }
     
-    // Completely strip away all strict scrolling locks cleanly
     document.documentElement.classList.remove('lock-scrolling');
     document.body.classList.remove('lock-scrolling');
     document.documentElement.style.overflow = "auto";
@@ -362,9 +400,7 @@ function cleanUpAndDestroyLoader(reason) {
 }
 
 window.addEventListener("load", () => {
-    // Clear the backup timer since the website loaded naturally
     clearTimeout(forceUnlockTimeout);
-    
     setTimeout(() => {
         cleanUpAndDestroyLoader("Standard Window Load Event");
     }, 1200);
