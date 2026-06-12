@@ -151,37 +151,49 @@
                     </div>
                 </div>
 
-                <h4 class="form-group-title text-warning mt-4 mb-3"><i class="fas fa-id-card me-2"></i>Nominated Delegates (1st, 2nd, 3rd)</h4>
-                <div class="mb-3">
-                    <label class="form-label">Full Names (In Order: 1st, 2nd, 3rd) <span class="text-danger">*</span></label>
-                    <textarea class="form-control glass-input" name="participantNames" rows="2" placeholder="1. Kasun Perera&#10;2. Amal Silva&#10;3. Nimali Fernando" required></textarea>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Dates of Birth (In Order: 1st, 2nd, 3rd) <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control glass-input" name="datesOfBirth" placeholder="e.g. 2008.05.12 / 2007.11.02 / 2009.01.20" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Contact Numbers (In Order: 1st, 2nd, 3rd) <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control glass-input" name="participantContacts" placeholder="e.g. 0771111111 / 0712222222 / 0753333333" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Exact Names for Certificates (In Order: 1st, 2nd, 3rd) <span class="text-danger">*</span></label>
-                    <textarea class="form-control glass-input" name="certificateNames" rows="2" placeholder="Provide full initials + last name explicitly" required></textarea>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="form-label fw-bold text-warning">Delegation Dietary Preference <span class="text-danger">*</span></label>
-                    <select class="form-select glass-input text-white" id="dietaryPreference" name="dietaryPreference" style="background-color: #1e293b;" required>
-                        <option value="" disabled selected hidden>Choose Preference Baseline</option>
-                        <option value="All-Veg">All Vegetarian (100% Veg)</option>
-                        <option value="All-NonVeg">All Non-Vegetarian (100% Non-Veg)</option>
-                        <option value="Mixed">Mixed Preference Delegation</option>
-                    </select>
+                <h4 class="form-group-title text-warning mt-4 mb-3">
+                    <i class="fas fa-id-card me-2"></i>Nominated Delegates
+                </h4>
+
+                <div id="delegates-form-container">
+                    <div class="delegate-form-block mb-4 p-3 border border-secondary rounded glass-panel">
+                        <h5 class="text-white mb-3">Nominated Delegate #1</h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-warning-light">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" name="delegate_name_1" class="form-control glass-input" placeholder="e.g. Kasun Perera" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-warning-light">Date of Birth (YYYY.MM.DD) <span class="text-danger">*</span></label>
+                            <input type="text" name="delegate_dob_1" class="form-control glass-input" placeholder="e.g. 2008.05.12" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-warning-light">Contact Number <span class="text-danger">*</span></label>
+                            <input type="tel" name="delegate_phone_1" class="form-control glass-input" placeholder="e.g. 0771111111" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-warning-light">Exact Name for Certificate <span class="text-danger">*</span></label>
+                            <input type="text" name="delegate_cert_1" class="form-control glass-input" placeholder="e.g. K.A. Kasun Perera" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-warning-light">Delegation Dietary Option <span class="text-danger">*</span></label>
+                            <select name="delegate_diet_1" class="form-select glass-input text-white" style="background-color: #1e293b;" required>
+                                <option value="" disabled selected hidden>Select Option</option>
+                                <option value="Vegetarian">Vegetarian</option>
+                                <option value="Non-Vegetarian">Non-Vegetarian</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
-                <div id="mixedDietaryWrapper" class="mb-4 d-none">
-                    <label class="form-label fw-bold text-warning" id="mixedDietaryLabel">Dietary Distribution Specifications <span class="text-danger">*</span></label>
-                    <textarea class="form-control glass-input text-white" id="mixedDietaryNotes" name="mixedDietaryNotes" rows="3" placeholder="Example: 2 Veg / 1 Non-Veg. Please specify details cleanly..."></textarea>
+                <div class="mb-4 text-start">
+                    <button type="button" id="add-delegate-btn" class="btn btn-outline-warning btn-sm">
+                        <i class="fas fa-plus me-1"></i> Add Another Delegate
+                    </button>
                 </div>
 
                 <button type="submit" class="btn btn-light submit-btn w-100 mt-3" id="submitBtn">
@@ -202,6 +214,9 @@
 
     </div>
 </section>
+
+</div>
+</main>
 
 </div>
 </main>
