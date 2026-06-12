@@ -50,6 +50,7 @@
     }
 }
 
+
 .lock-scrolling {
     overflow: hidden !important;
     height: 100% !important;
@@ -233,6 +234,28 @@ html{
     transform: translateY(0);
 }
 
+.nav-cta-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-cta-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.4) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: skewX(-25deg);
+    animation: buttonShine 2s infinite ease-in-out;
+}
+
 /* ==========================================================================
    3. HERO SECTION (UPGRADED THEME CONFIGURATION)
    ========================================================================== */
@@ -348,6 +371,33 @@ html{
     box-shadow: 0 12px 30px rgba(245, 158, 11, 0.45) !important;
 }
 
+.hero-cta-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-cta-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.4) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: skewX(-25deg);
+    animation: buttonShine 2s infinite ease-in-out;
+}
+
+@keyframes buttonShine {
+    0% { left: -150%; }
+    20%, 100% { left: 150%; } /* Moves completely across, then waits */
+}
+
 .hero-cta-btn:active {
     transform: translateY(0) scale(1);
 }
@@ -391,6 +441,214 @@ html{
         padding: 0 15px;
     }
 }
+
+/* Base desktop setup: Keep mobile helper element hidden */
+.mobile-glow-effector {
+    display: none;
+}
+
+/* Consolidated Mobile Overrides Matrix */
+@media (max-width: 768px) {
+    /* 1. Targets your hero wrapper elements */
+    .hero, #home {
+        position: relative !important;
+        height: 100vh !important;
+        min-height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        overflow: hidden !important;
+    }
+
+    /* 2. FORCES THE HERO::AFTER TO RE-INITIALIZE AND ANIMATE ON MOBILE */
+    .hero::after, #home::after {
+        content: '' !important;
+        display: block !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        width: 320px !important;
+        height: 320px !important;
+        background: rgba(245, 158, 11, 0.22) !important;
+        border-radius: 70% !important;
+        filter: blur(45px) !important;
+        z-index: 1 !important;
+        
+        /* Forces browser layout engine to fetch the custom mobile motion timeline */
+        animation-name: floatGlowMobile !important;
+        animation-duration: 4s !important;
+        animation-timing-function: ease-in-out !important;
+        animation-iteration-count: infinite !important;
+    }
+
+    /* Shut off alternate helper elements to prevent interference */
+    .mobile-glow-effector,
+    .hero-bg-animation, 
+    .background-animation-container, 
+    .hero canvas, 
+    #home canvas,
+    #particles-js,
+    .vanta-canvas {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+
+    /* 3. Keep content blocks readable above the moving aura */
+    .hero-content, .hero .container {
+        position: relative !important;
+        z-index: 5 !important;
+    }
+}
+
+/* Single mobile-calibrated keyframe path calculating off center axis */
+@keyframes floatGlowMobile {
+    0%, 100% {
+        transform: translate(-50%, -50%) translate(-35px, -20px);
+    }
+    50% {
+        transform: translate(-50%, -50%) translate(35px, 20px);
+    }
+}
+
+.golden-embers {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.golden-embers span {
+    position: absolute;
+    display: block;
+    width: 4px;
+    height: 4px;
+    background: #f59e0b;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #fbbf24;
+    bottom: -10px;
+    animation: floatUp 6s infinite linear;
+    opacity: 0;
+}
+
+/* Distribute particles across the screen with different timings */
+.golden-embers span:nth-child(1) { left: 15%; animation-delay: 0s; animation-duration: 7s; }
+.golden-embers span:nth-child(2) { left: 35%; animation-delay: 1.5s; animation-duration: 5s; width: 6px; height: 6px; }
+.golden-embers span:nth-child(3) { left: 55%; animation-delay: 3s; animation-duration: 8s; }
+.golden-embers span:nth-child(4) { left: 70%; animation-delay: 4.5s; animation-duration: 6s; }
+.golden-embers span:nth-child(5) { left: 85%; animation-delay: 2s; animation-duration: 9s; width: 3px; height: 3px; }
+/* New additions to scale density smoothly */
+.golden-embers span:nth-child(6) { left: 25%; animation-delay: 5s; animation-duration: 6.5s; width: 5px; height: 5px; }
+.golden-embers span:nth-child(7) { left: 45%; animation-delay: 0.8s; animation-duration: 8.5s; }
+.golden-embers span:nth-child(8) { left: 95%; animation-delay: 3.5s; animation-duration: 5.5s; width: 3px; height: 3px; }
+
+@keyframes floatUp {
+    0% {
+        transform: translateY(0) translateX(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.6;
+    }
+    90% {
+        opacity: 0.6;
+    }
+    100% {
+        transform: translateY(-105vh) translateX(50px);
+        opacity: 0;
+    }
+}
+
+/* ==========================================================================
+INFINITE MARQUEE RUNWAY CONTEXT (CURRENTLY ON HOLD FOR SPONSORSHIPS)
+==========================================================================
+
+.sponsor-marquee-wrapper {
+    width: 100%;
+    overflow: hidden;
+    background: #0f172a; 
+    border-top: 1px solid rgba(245, 158, 11, 0.15);
+    border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+    padding: 22px 0;
+    display: flex;
+    position: relative;
+}
+
+.sponsor-marquee-wrapper::before,
+.sponsor-marquee-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 120px;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+}
+.sponsor-marquee-wrapper::before {
+    left: 0;
+    background: linear-gradient(to right, #0f172a 0%, transparent 100%);
+}
+.sponsor-marquee-wrapper::after {
+    right: 0;
+    background: linear-gradient(to left, #0f172a 0%, transparent 100%);
+}
+
+.marquee-track {
+    display: flex;
+    white-space: nowrap;
+    gap: 60px; 
+    animation: scrollSponsors 25s linear infinite;
+}
+
+.marquee-track span {
+    font-family: 'Poppins', sans-serif !important;
+    font-weight: 800;
+    font-size: 1.8rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.marquee-track .stroke-text {
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.25);
+    transition: -webkit-text-stroke 0.3s ease;
+}
+
+.marquee-track .solid-text {
+    color: #f59e0b;
+    text-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+.sponsor-marquee-wrapper:hover .stroke-text {
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 768px) {
+    .marquee-track span {
+        font-size: 1.35rem;
+        letter-spacing: 2px;
+    }
+    .marquee-track {
+        gap: 40px;
+    }
+}
+
+@keyframes scrollSponsors {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+*/
+
 
 /* ==========================================================================
    4. ABOUT & STATS GRID MODULES
@@ -449,6 +707,8 @@ html{
     font-weight:800;
     margin-bottom:5px;
 }
+
+
 
 /* ==========================================================================
    5. SCHOOL LOGOS MARQUEE
