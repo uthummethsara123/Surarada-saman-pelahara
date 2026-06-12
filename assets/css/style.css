@@ -268,9 +268,9 @@ html{
     width:600px;
     height:600px;
     background:rgba(245,158,11,.15);
-    border-radius:50%;
-    filter:blur(120px);
-    animation:floatGlow 8s ease-in-out infinite;
+    border-radius:70%;
+    filter:blur(70px);
+    animation:floatGlow 4s ease-in-out infinite;
 }
 
 @keyframes floatGlow{
