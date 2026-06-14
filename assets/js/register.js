@@ -2,6 +2,7 @@
 // 2026 PARTICIPATION SYSTEM WITH AUTO-TIMER & GOOGLE DRIVE HOOK
 // ==========================================================================
 
+// 0=january
 const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycbxGNZPK9jYGNTyXYwDmONDu03wXPIg-LnWVIx2PA0n5XQDYWieJ01cVrVry5ML6VFLS/exec";
 const CLOSING_DEADLINE = new Date(2026, 6, 19, 24, 0, 0).getTime();
 
@@ -57,6 +58,7 @@ if(regForm) {
         const feedback = document.getElementById('formFeedback');
         const addDelegateBtn = document.getElementById('add-delegate-btn');
         const delegateContainer = document.getElementById('delegates-form-container');
+        const submittedStateDashboard = document.getElementById("submittedStateDashboard");
         
         submitBtn.disabled = true;
         submitBtn.innerText = "Processing, please wait...";
@@ -71,6 +73,10 @@ if(regForm) {
         let finalizedSchoolName = formData.get('schoolName');
         let finalizedSchoolAddress = formData.get('schoolAddress');
         const scopeChoice = formData.get('schoolScope');
+        const userEmailValue = formData.get('email');
+
+        // Append initial action type parameter for spreadsheet handling context
+        searchParams.append('action', 'submit');
 
         // IF INNER-SCHOOL: Overwrite name and fetch corresponding hardcoded address mapping
         if (scopeChoice === "Inner-School") {
@@ -116,7 +122,13 @@ if(regForm) {
         })
         .then(() => {
             feedback.className = "text-center mt-3 text-success fw-bold";
-            feedback.innerText = "Registration Successful! Verified details saved in Google Sheets.";
+            feedback.innerText = "Registration Successful! Verified details are saved.";
+            
+            // Persist the specific user submission token email to tracking memory
+            if (userEmailValue) {
+                localStorage.setItem("registeredUserEmail", userEmailValue);
+            }
+
             regForm.reset();
             
             // Clear extra dynamic cards out on reset success path loops
@@ -138,7 +150,13 @@ if(regForm) {
             }
 
             submitBtn.disabled = false;
-            submitBtn.innerText = "Submit Another Entry";
+            submitBtn.innerText = "Submit Delegation Entry";
+
+            // Swap interface to hidden dashboard window layout layer
+            if (submittedStateDashboard) {
+                regForm.classList.add("d-none");
+                submittedStateDashboard.classList.remove("d-none");
+            }
         })
         .catch(error => {
             console.error('Submission Error:', error);
@@ -177,6 +195,84 @@ document.addEventListener("DOMContentLoaded", () => {
     const maxDelegates = 3;
     const addDelegateBtn = document.getElementById('add-delegate-btn');
     const delegateContainer = document.getElementById('delegates-form-container');
+
+    // ==========================================================================
+    // LIFECYCLE PERSISTENCE ENGINE FOR REDIRECTS AND REFUNDS
+    // ==========================================================================
+    const submittedStateDashboard = document.getElementById("submittedStateDashboard");
+    const triggerDeleteBtn = document.getElementById("triggerDeleteBtn");
+    const confirmDataDeletionBtn = document.getElementById("confirmDataDeletionBtn");
+    const feedbackField = document.getElementById('formFeedback');
+
+    // Instantiate safety validation for Bootstrap modal element
+    let bsDeleteModal = null;
+    const deleteModalEl = document.getElementById("deleteConfirmModal");
+    if (deleteModalEl && typeof bootstrap !== 'undefined') {
+        bsDeleteModal = new bootstrap.Modal(deleteModalEl);
+    }
+
+    // Check if the current user has already submitted a form profile matching their active environment
+    const storedEmailSession = localStorage.getItem("registeredUserEmail");
+    if (storedEmailSession && regForm && submittedStateDashboard) {
+        regForm.classList.add("d-none");
+        submittedStateDashboard.classList.remove("d-none");
+    }
+
+    // Modal display lifecycle call hook
+    if (triggerDeleteBtn && bsDeleteModal) {
+        triggerDeleteBtn.addEventListener("click", () => {
+            bsDeleteModal.show();
+        });
+    }
+
+    // Confirm entry erasure command interaction execution routing
+    if (confirmDataDeletionBtn) {
+        confirmDataDeletionBtn.addEventListener("click", () => {
+            const targetedEmailKey = localStorage.getItem("registeredUserEmail");
+
+            if (!targetedEmailKey) {
+                alert("No structural context session key found.");
+                return;
+            }
+
+            confirmDataDeletionBtn.disabled = true;
+            confirmDataDeletionBtn.innerText = "Deleting row records...";
+
+            // Send command action signal payload straight over to the sheet script deployment
+            const deleteParams = new URLSearchParams();
+            deleteParams.append("action", "delete");
+            deleteParams.append("email", targetedEmailKey);
+
+            fetch(`${GOOGLE_APP_URL}?${deleteParams.toString()}`, {
+                method: 'POST',
+                mode: 'no-cors'
+            })
+            .then(() => {
+                // Wipe structural storage configuration caches clean
+                localStorage.removeItem("registeredUserEmail");
+                
+                if (regForm) regForm.reset();
+                if (feedbackField) {
+                    feedbackField.classList.add("d-none");
+                    feedbackField.innerText = "";
+                }
+
+                // Hide interface modallers and flip visibilities cleanly back to standard layout
+                if (bsDeleteModal) bsDeleteModal.hide();
+                if (submittedStateDashboard) submittedStateDashboard.classList.add("d-none");
+                if (regForm) regForm.classList.remove("d-none");
+
+                confirmDataDeletionBtn.disabled = false;
+                confirmDataDeletionBtn.innerText = "Yes, Delete Entry";
+            })
+            .catch(err => {
+                console.error("Deletion communication error pipeline:", err);
+                alert("Database dropping execution failure encountered.");
+                confirmDataDeletionBtn.disabled = false;
+                confirmDataDeletionBtn.innerText = "Yes, Delete Entry";
+            });
+        });
+    }
 
     // --- DYNAMIC DELEGATE CARD GENERATOR ---
     if (addDelegateBtn && delegateContainer) {
