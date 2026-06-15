@@ -10,7 +10,7 @@ const CLOSING_DEADLINE = new Date(2026, 6, 19, 24, 0, 0).getTime();
 const INNER_SCHOOL_ADDRESSES = {
     "Sivali Central College": "Hidellana, Rathnapura",
     "Gankanda Central College": "School lane, Pelmadulla",
-    "St. Aloysius College": "Cathedral road, Rathnapura",
+    // "St. Aloysius College": "Cathedral road, Rathnapura",
     "Prince College": "Hidellana, Rathnapura",
     "Sumana Balika Vidyalaya": "Pothgul vihara mawatha, Rathnapura"
 };
