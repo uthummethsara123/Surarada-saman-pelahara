@@ -152,7 +152,7 @@ const payload = {
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Upload & Submit Portfolio";
                 feedback.className = "text-center mt-3 text-danger fw-bold";
-                feedback.innerText = "Network transmission failed. Please try again.";
+                feedback.innerText = "Upload failed. Please check your connection.";
             }
         });
     }
@@ -170,7 +170,7 @@ const payload = {
             if (!currentActiveKey) return;
 
             confirmDeletionBtn.disabled = true;
-            confirmDeletionBtn.innerText = "Clearing Submission...";
+            confirmDeletionBtn.innerText = "Deleting previous Submission...";
 
             const delPayload = {
                 action: "deleteUpload",
