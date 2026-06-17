@@ -213,7 +213,7 @@ const payload = {
 // ==========================================================
 // MARATHON TIMELINE ENGINE
 // ==========================================================
-const START_DATE = new Date("2026-07-26T24:49:00").getTime();
+const START_DATE = new Date("2026-07-26T24:00:00").getTime();
 const DEADLINE_DATE = new Date("2026-07-27T02:00:00").getTime();
 
 const runTimelineEngine = () => {
