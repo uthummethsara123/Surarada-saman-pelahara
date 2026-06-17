@@ -72,14 +72,16 @@
         <div class="form-wrapper" id="formContainer">
             <form id="regForm">
                 
-                <h4 class="form-group-title text-warning mb-3"><i class="fas fa-school me-2"></i>School Information</h4>
+                <h4 class="form-group-title text-warning mb-3"><i class="fas fa-envelope me-2"></i>Email address</h4>
                 <div class="mb-3">
-                    <label class="form-label">Email Address (Personal mail)</label>
+                    <label class="form-label text-white">Email Address (Personal mail) <span class="text-danger">*</span></label>
                     <input type="email" class="form-control glass-input" name="email" id="emailInput" placeholder="example@gmail.com" required>
                 </div>
-                
+
+
+                <h4 class="form-group-title text-warning mb-3"><i class="fas fa-school me-2"></i>School Information</h4>
                 <div class="mb-4">
-                    <label class="form-label fw-bold text-warning">Competition Scope <span class="text-danger">*</span></label>
+                    <label class="form-label text-white">Competition Scope <span class="text-danger">*</span></label>
                     <select class="form-select glass-input text-white" id="regCompetitionScope" name="schoolScope" style="background-color: #1e293b;" required>
                         <option value="" disabled selected hidden>Select Competition Type</option>
                         <option value="Inter-School">Inter-School (Open Schools Competition)</option>
@@ -89,7 +91,7 @@
                 </div>
 
                 <div id="innerSchoolWrapper" class="mb-4 d-none">
-                    <label class="form-label fw-bold text-warning" id="innerSchoolLabel">Select Internal School Name <span class="text-danger">*</span></label>
+                    <label class="form-label text-warning" id="innerSchoolLabel">Select Internal School Name <span class="text-danger">*</span></label>
                     <select class="form-select glass-input text-white" id="innerSchoolSelect" name="innerSchoolName" style="background-color: #1e293b;">
                         <option value="" disabled selected hidden>Choose School</option>
                         <option value="Sivali Central College">Sivali Central College</option>
@@ -102,12 +104,12 @@
 
                 <div id="standardSchoolDetailsWrapper">
                     <div class="mb-3">
-                        <label class="form-label fw-bold text-warning" id="schoolNameLabel">School Name</label>
+                        <label class="form-label text-white id="schoolNameLabel">School Name</label>
                         <input type="text" class="form-control glass-input" id="schoolNameInput" name="schoolName" placeholder="Enter school name">
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label fw-bold text-warning" id="schoolAddressLabel">School Address</label>
+                        <label class="form-label text-white" id="schoolAddressLabel">School Address</label>
                         <input type="text" class="form-control glass-input" id="schoolAddressInput" name="schoolAddress" placeholder="Enter school address">
                     </div>
                 </div>
@@ -234,8 +236,8 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-start">
-                <p>This action will permanently delete your active delegation entry from the master Excel records database.</p>
-                <p class="mb-0 text-white">You will be required to fill out all structural parameters and fields from scratch.</p>
+                <p>This action will permanently delete your active delegation entry from the records database.</p>
+                <p class="mb-0 text-white">You will be required to fill out all structural fields from scratch.</p>
             </div>
             <div class="modal-footer border-secondary">
                 <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">Cancel</button>
