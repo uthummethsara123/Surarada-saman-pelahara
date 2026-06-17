@@ -163,7 +163,7 @@ if(regForm) {
             submitBtn.disabled = false;
             submitBtn.innerText = "Submit Delegation Entry";
             feedback.className = "text-center mt-3 text-danger fw-bold";
-            feedback.innerText = "Submission failed. Verify Google Sheet deployment rules.";
+            feedback.innerText = "Submission failed. Verify your connection.";
         });
     });
 }
@@ -236,7 +236,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             confirmDataDeletionBtn.disabled = true;
-            confirmDataDeletionBtn.innerText = "Deleting row records...";
+            confirmDataDeletionBtn.innerText = "Deleting details...";
 
             // Send command action signal payload straight over to the sheet script deployment
             const deleteParams = new URLSearchParams();
@@ -287,43 +287,38 @@ document.addEventListener("DOMContentLoaded", () => {
             delegateWrapper.className = 'delegate-form-block mb-4 p-3 border border-secondary rounded glass-panel position-relative style-animation-reveal';
             delegateWrapper.id = `delegate-block-${window.globalDelegateCount}`;
             
-            delegateWrapper.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="text-white mb-0">Nominated Delegate #${window.globalDelegateCount}</h5>
-                    <button type="button" class="btn btn-danger btn-sm remove-delegate-btn" data-target-id="delegate-block-${window.globalDelegateCount}">
-                        <i class="fas fa-trash-alt"></i> Remove
-                    </button>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label text-warning-light">Full Name <span class="text-danger">*</span></label>
-                    <input type="text" name="delegate_name_${window.globalDelegateCount}" class="form-control glass-input" placeholder="Enter Full Name" required>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label text-warning-light">Date of Birth (YYYY.MM.DD) <span class="text-danger">*</span></label>
-                    <input type="text" name="delegate_dob_${window.globalDelegateCount}" class="form-control glass-input" placeholder="e.g. 2008.05.12" required>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label text-warning-light">Contact Number <span class="text-danger">*</span></label>
-                    <input type="tel" name="delegate_phone_${window.globalDelegateCount}" class="form-control glass-input" placeholder="Enter Contact Number" required>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label text-warning-light">Exact Name for Certificate <span class="text-danger">*</span></label>
-                    <input type="text" name="delegate_cert_${window.globalDelegateCount}" class="form-control glass-input" placeholder="Provide full initials + last name explicitly" required>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label text-warning-light">Delegation Dietary Option <span class="text-danger">*</span></label>
-                    <select name="delegate_diet_${window.globalDelegateCount}" class="form-select glass-input text-white" style="background-color: #1e293b;" required>
-                        <option value="" disabled selected hidden>Select Option</option>
-                        <option value="Vegetarian">Vegetarian</option>
-                        <option value="Non-Vegetarian">Non-Vegetarian</option>
-                    </select>
-                </div>
-            `;
+delegateWrapper.innerHTML = `
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="text-white mb-0">Nominated Delegate #${window.globalDelegateCount}</h5>
+        <button type="button" class="btn btn-danger btn-sm remove-delegate-btn" data-target-id="delegate-block-${window.globalDelegateCount}">
+            <i class="fas fa-trash-alt"></i> Remove
+        </button>
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label text-warning-light">Full Name <span class="text-danger">*</span></label>
+        <input type="text" name="delegate_name_${window.globalDelegateCount}" class="form-control glass-input" placeholder="Enter Full Name" required>
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label text-warning-light">Date of Birth (YYYY.MM.DD) <span class="text-danger">*</span></label>
+        <input type="text" name="delegate_dob_${window.globalDelegateCount}" class="form-control glass-input" placeholder="e.g. 2008.05.12" required>
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label text-warning-light">Contact Number <span class="text-danger">*</span></label>
+        <input type="tel" name="delegate_phone_${window.globalDelegateCount}" class="form-control glass-input" placeholder="Enter Contact Number" required>
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label text-warning-light">Delegation Dietary Option <span class="text-danger">*</span></label>
+        <select name="delegate_diet_${window.globalDelegateCount}" class="form-select glass-input text-white" style="background-color: #1e293b;" required>
+            <option value="" disabled selected hidden>Select Option</option>
+            <option value="Vegetarian">Vegetarian</option>
+            <option value="Non-Vegetarian">Non-Vegetarian</option>
+        </select>
+    </div>
+`;
 
             delegateContainer.appendChild(delegateWrapper);
 
@@ -346,22 +341,21 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function renumberDelegates() {
-        const blocks = delegateContainer.querySelectorAll('.delegate-form-block:not(:first-child)');
-        window.globalDelegateCount = 1;
-        blocks.forEach((block) => {
-            window.globalDelegateCount++;
-            block.id = `delegate-block-${window.globalDelegateCount}`;
-            block.querySelector('h5').textContent = `Nominated Delegate #${window.globalDelegateCount}`;
-            block.querySelector('.remove-delegate-btn').setAttribute('data-target-id', `delegate-block-${window.globalDelegateCount}`);
-            
-            block.querySelector('input[name^="delegate_name_"]').name = `delegate_name_${window.globalDelegateCount}`;
-            block.querySelector('input[name^="delegate_dob_"]').name = `delegate_dob_${window.globalDelegateCount}`;
-            block.querySelector('input[name^="delegate_phone_"]').name = `delegate_phone_${window.globalDelegateCount}`;
-            block.querySelector('input[name^="delegate_cert_"]').name = `delegate_cert_${window.globalDelegateCount}`;
-            block.querySelector('select[name^="delegate_diet_"]').name = `delegate_diet_${window.globalDelegateCount}`;
-        });
-    }
+function renumberDelegates() {
+    const blocks = delegateContainer.querySelectorAll('.delegate-form-block:not(:first-child)');
+    window.globalDelegateCount = 1;
+    blocks.forEach((block) => {
+        window.globalDelegateCount++;
+        block.id = `delegate-block-${window.globalDelegateCount}`;
+        block.querySelector('h5').textContent = `Nominated Delegate #${window.globalDelegateCount}`;
+        block.querySelector('.remove-delegate-btn').setAttribute('data-target-id', `delegate-block-${window.globalDelegateCount}`);
+        
+        block.querySelector('input[name^="delegate_name_"]').name = `delegate_name_${window.globalDelegateCount}`;
+        block.querySelector('input[name^="delegate_dob_"]').name = `delegate_dob_${window.globalDelegateCount}`;
+        block.querySelector('input[name^="delegate_phone_"]').name = `delegate_phone_${window.globalDelegateCount}`;
+        block.querySelector('select[name^="delegate_diet_"]').name = `delegate_diet_${window.globalDelegateCount}`;
+    });
+}
 
     if (!scopeSelect) return;
 
