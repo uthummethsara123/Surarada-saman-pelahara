@@ -397,3 +397,72 @@ document.querySelectorAll('[data-video-year]').forEach(btn => {
         syncGlobalYearFilter(selectedYear);
     });
 });
+
+/* ==========================================================================
+   SAMAN DEWALAYA GALLERY LOADER
+   ========================================================================== */
+
+
+document.addEventListener("DOMContentLoaded", function() {
+    const track1 = document.getElementById('albumGrid');
+    const track2 = document.getElementById('albumGrid2');
+    const modal = document.getElementById('photoModal');
+    const modalImg = document.getElementById('modalImage');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    
+    const totalImages = 67;
+
+    // Clean node element generator factory helper
+    function createImageNode(index) {
+        const gridItem = document.createElement('div');
+        gridItem.className = 'gallery-item';
+        
+        const imageEl = document.createElement('img');
+        imageEl.src = `assets/img/2025/Album/${index}.jpg`;
+        imageEl.alt = `Saman Dewalaya Perahera Snapshot ${index}`;
+        imageEl.loading = 'lazy';
+
+        gridItem.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (modal && modalImg) {
+                modalImg.src = imageEl.src;
+                modal.classList.add('active'); 
+                document.documentElement.classList.add('modal-open');
+                document.body.classList.add('modal-open');
+            }
+        });
+
+        gridItem.appendChild(imageEl);
+        return gridItem;
+    }
+
+    // Populate Track 1 (Left Direction Scroll)
+    if (track1) {
+        for (let i = 1; i <= totalImages; i++) track1.appendChild(createImageNode(i));
+        for (let i = 1; i <= totalImages; i++) track1.appendChild(createImageNode(i));
+    }
+
+    // Populate Track 2 (Right Direction Scroll)
+    if (track2) {
+        // Reverse loop order to make images display differently than Row 1
+        for (let i = totalImages; i >= 1; i--) track2.appendChild(createImageNode(i));
+        for (let i = totalImages; i >= 1; i--) track2.appendChild(createImageNode(i));
+    }
+
+    function closeModal() {
+        if (modal) {
+            modal.classList.remove('active');
+            document.documentElement.classList.remove('modal-open');
+            document.body.classList.remove('modal-open');
+        }
+    }
+
+    if (modal) {
+        if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal || e.target.classList.contains('modal-content-wrapper')) {
+                closeModal();
+            }
+        });
+    }
+});
