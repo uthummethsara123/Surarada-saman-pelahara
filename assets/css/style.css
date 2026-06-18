@@ -1870,3 +1870,322 @@ textarea.glass-input {
     .site-footer { display: block !important; position: relative !important; margin-top: 0 !important; border-top: 1px solid rgba(255, 255, 255, 0.05); background: #08101f !important; padding: 30px 15px; }
 }
 
+/* ==========================================================================
+   SAMAN DEWALAYA HISTORICAL ARCHIVE STYLES
+   ========================================================================== */
+.dewalaya-page {
+    background-color: #440613 !important;
+    color: #e2e8f0;
+}
+
+.text-gold {
+    color: #eab308 !important;
+}
+
+.hero-section {
+    background: #540818 ;
+    padding: 80px 0 50px 0;
+    border-bottom: 3px solid #eab308;
+    padding-top: 150px;
+}
+
+.nilame-img {
+    border: 4px solid #eab308;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s ease;
+    max-width: 240px;
+    height: auto;
+}
+
+.nilame-img:hover {
+    transform: scale(1.03);
+}
+
+.back-home-btn {
+    border-radius: 30px;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
+.back-home-btn:hover {
+    background-color: #eab308;
+    color: #0f172a !important;
+}
+
+/* Responsive Album Grid Config */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+}
+
+.gallery-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    aspect-ratio: 4/3;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: #1e293b;
+}
+
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+}
+
+.gallery-item:hover img {
+    transform: scale(1.08);
+}
+
+/* ==========================================================================
+   MOBILE & TABLET RESPONSIVE OPTIMIZATIONS
+   ========================================================================== */
+
+/* --- Tablet Devices (Screens under 992px) --- */
+@media (max-width: 991.98px) {
+    .hero-section {
+        padding-top: 130px; /* Slight lift to clear the fixed navbar */
+        padding-bottom: 40px;
+    }
+
+    .display-4 {
+        font-size: 2.2rem !important; /* Scale down main heading */
+    }
+
+    .glass-card {
+        padding: 20px !important; /* Tighter padding margins inside containers */
+    }
+}
+
+/* --- Mobile Phones (Screens under 576px) --- */
+@media (max-width: 575.98px) {
+    .hero-section {
+        padding-top: 110px; 
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    .display-4 {
+        font-size: 1.75rem !important; /* Make title readable on single mobile line rows */
+    }
+
+    .hero-section .lead {
+        font-size: 1rem !important; /* Scale down subtitle description elements */
+    }
+
+    .nilame-img {
+        max-width: 180px; /* Shrink profile photo size slightly to conserve vertical space */
+    }
+
+    /* Change grid boundaries so photos stack in clean 2-column blocks on small displays */
+    .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+        gap: 10px !important; /* Tighten negative spaces between thumbnails */
+    }
+    
+    .site-footer {
+        font-size: 0.85rem; /* Make long school roster footer text elegant on tiny viewports */
+        padding: 20px 10px;
+    }
+}
+
+
+/* --- INFINITE MARQUEE TICKER TRACK --- */
+
+
+.ticker-wrapper {
+    width: 100%;
+    overflow: hidden;
+    background: rgba(30, 41, 59, 0.4);
+    border-radius: 12px;
+    padding: 20px 0;
+    position: relative;
+}
+
+.ticker-track {
+    display: flex;
+    width: max-content;
+    gap: 15px;
+    will-change: transform;
+    /* Smoothly transitions the track state when pausing */
+    transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Default Laptop Layout: Row 1 moves left, Row 2 is completely hidden */
+.ticker-track.track-left {
+    animation: scrollLeft 240s linear infinite; /* Your perfect slow desktop speed */
+}
+
+#albumGrid2 {
+    display: none; /* Hidden on desktop screens */
+}
+
+/* Pause keyframe execution smoothly on hover state */
+.ticker-wrapper:hover .ticker-track {
+    animation-play-state: paused;
+}
+
+.ticker-track .gallery-item {
+    width: 280px;
+    height: 210px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid rgba(234, 179, 8, 0.2);
+    /* High-end cinematic curve for scaling and border coloration */
+    transition: border-color 0.5s cubic-bezier(0.16, 1, 0.3, 1), 
+                transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+}
+
+.ticker-track .gallery-item:hover {
+    border-color: #eab308;
+    transform: scale(1.04); /* Elegant, steady lift */
+}
+
+/* --- TIMING KEYFRAMES --- */
+@keyframes scrollLeft {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); } 
+}
+
+@keyframes scrollRight {
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(0); } 
+}
+
+
+
+/* --- MOBILE & TABLET OPTIMIZATIONS (ONLY UNDER 576px) --- */
+@media (max-width: 575.98px) {
+    /* Show the second track layout on mobile devices */
+    #albumGrid2 {
+        display: flex;
+    }
+
+    /* Shrink the grid wrappers for small screens */
+    .ticker-track .gallery-item {
+        width: 130px;
+        height: 95px;
+    }
+    
+    .ticker-track {
+        gap: 10px;
+    }
+
+    /* Snappy speed overrides for mobile views */
+    .ticker-track.track-left {
+        animation: scrollLeft 190s linear infinite;
+    }
+    
+    .ticker-track.track-right {
+        animation: scrollRight 190s linear infinite;
+    }
+}
+
+/* --- FULL SCREEN MODAL STYLING --- */
+
+/* Force block scrolling on the html and body level when modal is open */
+/* Simply hides the scrollbar without resetting positions */
+
+/* Locks scrolling completely on both mobile and desktop browsers */
+html.modal-open,
+body.modal-open {
+    overflow: hidden !important;
+    touch-action: none; /* Prevents swiping to scroll on mobile/tablets */
+}
+
+
+.photo-modal {
+    display: flex !important; /* Keep display flex to handle layout */
+    position: fixed;
+    z-index: 99999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,.85);
+    backdrop-filter: blur(8px);
+    
+    /* Initially hide the modal using opacity and pointer events */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: opacity;
+}
+
+/* Scale up the image container container layout together smoothly */
+.modal-content-wrapper {
+    max-width: 90%;
+    max-height: 85%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: scale(0.92);
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); /* Custom elastic bounce pop curve */
+    will-change: transform;
+}
+
+/* Active State Trigger Rule (When modal is popped) */
+.photo-modal.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.photo-modal.active .modal-content-wrapper {
+    transform: scale(1);
+}
+
+#modalImage {
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+    border-radius: 8px;
+    border: 3px solid #eab308;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.modal-info {
+    text-align: center;
+    margin-top: 15px;
+    color: #e2e8f0;
+}
+
+.modal-info h3 {
+    color: #eab308;
+    margin-bottom: 5px;
+}
+
+.close-modal {
+    position: absolute;
+    top: 25px;
+    right: 35px;
+    color: #f1f5f9;
+    font-size: 50px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease, transform 0.3s ease;
+    user-select: none;
+}
+
+.close-modal:hover {
+    color: #eab308;
+    transform: scale(1.1);
+}
+
+@media (max-width: 575.98px) {
+    .ticker-track .gallery-item {
+        width: 180px;
+        height: 135px;
+    }
+}
+
+.year-btn-dewalaya:disabled {
+    opacity: 0.6;
+    cursor: not-allowed; /* Gives you that circle with a line/dash icon */
+}
+
