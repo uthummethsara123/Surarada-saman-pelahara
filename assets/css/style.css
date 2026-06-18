@@ -2084,11 +2084,11 @@ textarea.glass-input {
     }
 
     .ticker-track.track-left {
-        animation: scrollLeft 45s linear infinite;
+        animation: scrollLeft 200s linear infinite;
     }
     
     .ticker-track.track-right {
-        animation: scrollRight 45s linear infinite;
+        animation: scrollRight 200s linear infinite;
     }
 }
 
