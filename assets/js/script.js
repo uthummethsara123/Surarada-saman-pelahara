@@ -1,5 +1,5 @@
 // ==========================================================================
-// 1. LIGHTBOX PREVIEW MODAL LOGIC ENGINE
+// 1. LIGHTBOX PREVIEW MODAL LOGIC ENGINE (Modal 1)
 // ==========================================================================
 const modal = document.getElementById('photoModal');
 const modalImg = document.getElementById('modalImage');
@@ -12,30 +12,43 @@ document.querySelectorAll('.photo-card img, .winner-card img').forEach(img => {
     img.addEventListener('click', () => {
         if (!modal) return;
         modal.classList.add('active');
+        
+        // Lock background scroll on activation
+        document.documentElement.classList.add('modal-open');
+        document.body.classList.add('modal-open');
+
         modalImg.src = img.src;
-        modalTitle.textContent = img.dataset.title || '';
-        modalPhotographer.textContent = img.dataset.photographer || '';
-        modalSchool.textContent = img.dataset.school || '';
-        modalYear.textContent = "Surarada Saman Pelahara " + (img.dataset.year || '');
+        if (modalTitle) modalTitle.textContent = img.dataset.title || '';
+        if (modalPhotographer) modalPhotographer.textContent = img.dataset.photographer || '';
+        if (modalSchool) modalSchool.textContent = img.dataset.school || '';
+        if (modalYear) modalYear.textContent = "Surarada Saman Pelahara " + (img.dataset.year || '');
     });
 });
 
-if (document.querySelector('.close-modal')) {
-    document.querySelector('.close-modal').addEventListener('click', () => {
+function closeModal1() {
+    if (modal) {
         modal.classList.remove('active');
-    });
+        document.documentElement.classList.remove('modal-open');
+        document.body.classList.remove('modal-open');
+    }
+}
+
+// Find the precise exit button tied inside Modal 1
+const closeBtn1 = modal ? modal.querySelector('.close-modal') : null;
+if (closeBtn1) {
+    closeBtn1.addEventListener('click', closeModal1);
 }
 
 if (modal) {
     modal.addEventListener('click', (e) => {
-        if(e.target === modal){
-            modal.classList.remove('active');
+        if (e.target === modal || e.target.classList.contains('modal-content-wrapper')) {
+            closeModal1();
         }
     });
 }
 
 // ==========================================================================
-// 2. YEAR SWITCHING MANAGEMENT LAYER (Fully Restructured for Global Sync)
+// 2. YEAR SWITCHING MANAGEMENT LAYER (Global Sync Matrix Layout)
 // ==========================================================================
 const allYearButtons = document.querySelectorAll('[data-year-select]');
 const wrapper2025 = document.getElementById('wrapper-year-2025');
@@ -50,8 +63,6 @@ allYearButtons.forEach(btn => {
     btn.addEventListener('click', function(e) {
         e.preventDefault();
         const targetYear = this.dataset.yearSelect;
-        
-        // Hand execution over to our centralized global syncing matrix
         syncGlobalYearFilter(targetYear);
     });
 });
@@ -63,7 +74,6 @@ const categoryButtons = document.querySelectorAll('.category-btn:not([data-comp-
 const colourGallery = document.getElementById('colour-gallery');
 const monoGallery = document.getElementById('mono-gallery');
 
-// 2026 Sub-elements references
 const colourGallery2026 = document.getElementById('colour-gallery-2026');
 const monoGallery2026 = document.getElementById('mono-gallery-2026');
 const storyGallery2026 = document.getElementById('storytelling-gallery-2026');
@@ -74,20 +84,21 @@ categoryButtons.forEach(button => {
         button.classList.add('active');
 
         const category = button.dataset.category;
-        const currentActiveYear = document.querySelector('[data-year-select].active').dataset.yearSelect;
+        const currentActiveYearBtn = document.querySelector('[data-year-select].active');
+        const currentActiveYear = currentActiveYearBtn ? currentActiveYearBtn.dataset.yearSelect : '2025';
 
         if (currentActiveYear === '2025') {
             if (category === 'colour') {
-                colourGallery.classList.add('active-gallery');
-                monoGallery.classList.remove('active-gallery');
+                if (colourGallery) colourGallery.classList.add('active-gallery');
+                if (monoGallery) monoGallery.classList.remove('active-gallery');
             } else {
-                monoGallery.classList.add('active-gallery');
-                colourGallery.classList.remove('active-gallery');
+                if (monoGallery) monoGallery.classList.add('active-gallery');
+                if (colourGallery) colourGallery.classList.remove('active-gallery');
             }
         } 
         else if (currentActiveYear === '2026') {
             [colourGallery2026, monoGallery2026, storyGallery2026].forEach(g => {
-                if(g) g.classList.remove('active-gallery');
+                if (g) g.classList.remove('active-gallery');
             });
 
             if (category === 'colour' && colourGallery2026) {
@@ -110,28 +121,23 @@ compTierButtons.forEach(tBtn => {
 });
 
 // ==========================================================================
-// 4. GLOBAL LIFECYCLE APP EVENTS (Loader & ScrollReveal Hooks)
+// 4. GLOBAL LIFECYCLE APP EVENTS (Loader Window Locks)
 // ==========================================================================
-// Force hide scrollbars immediately when script initializes
 document.documentElement.classList.add('lock-scrolling');
 document.body.classList.add('lock-scrolling');
 document.documentElement.style.overflow = "hidden";
 document.body.style.overflow = "hidden";
 
-// SAFARI SAFETY VALVE: Force page open after 3.5 seconds max if window.load hangs
 const forceUnlockTimeout = setTimeout(() => {
     cleanUpAndDestroyLoader("Safety Timeout Triggered");
 }, 3500);
 
 function cleanUpAndDestroyLoader(reason) {
     console.log("Loader Dismissed via:", reason);
-    
     const loader = document.getElementById("loader");
     if (loader) {
         loader.style.display = "none";
     }
-    
-    // Completely strip away all strict scrolling locks cleanly
     document.documentElement.classList.remove('lock-scrolling');
     document.body.classList.remove('lock-scrolling');
     document.documentElement.style.overflow = "auto";
@@ -139,9 +145,7 @@ function cleanUpAndDestroyLoader(reason) {
 }
 
 window.addEventListener("load", () => {
-    // Clear the backup timer since the website loaded naturally
     clearTimeout(forceUnlockTimeout);
-    
     setTimeout(() => {
         cleanUpAndDestroyLoader("Standard Window Load Event");
     }, 1200);
@@ -157,14 +161,13 @@ if (typeof ScrollReveal !== 'undefined') {
 }
 
 // ==========================================================================
-// 5. EVENT-DRIVEN VIDEO SLIDESHOW DESIGN (Play to Completion Engine)
+// 5. EVENT-DRIVEN VIDEO SLIDESHOW DESIGN (Play Hooks)
 // ==========================================================================
 let currentVideoIndex = 0;
 let isSectionVisible = false;
 let isMutedGlobal = true; 
-
-// Initializing user interaction flags
 let userHasInteracted = false;
+
 document.addEventListener('click', () => {
     userHasInteracted = true;
 }, { once: true });
@@ -177,7 +180,6 @@ const nextBtn = document.getElementById('slider-next-btn');
 
 allVideos.forEach((vid) => {
     vid.muted = true;
-    
     vid.addEventListener('ended', () => {
         if (isSectionVisible) {
             changeVideoSlide(1);
@@ -196,8 +198,8 @@ function changeVideoSlide(direction) {
     }
 
     slides[currentVideoIndex].classList.remove('active-slide');
-
     currentVideoIndex += direction;
+
     if (currentVideoIndex >= slides.length) {
         currentVideoIndex = 0;
     } else if (currentVideoIndex < 0) {
@@ -229,7 +231,6 @@ if (audioToggleBtn) {
             this.innerHTML = '<span class="audio-icon">🔊</span> Unmute';
         } else {
             this.innerHTML = '<span class="audio-icon">🔇</span> Mute';
-            
             const activeSlide = document.querySelectorAll('.video-slide')[currentVideoIndex];
             const activeVideo = activeSlide ? activeSlide.querySelector('video') : null;
             if (activeVideo && isSectionVisible) {
@@ -242,33 +243,21 @@ if (audioToggleBtn) {
 if (prevBtn) prevBtn.addEventListener('click', () => changeVideoSlide(-1));
 if (nextBtn) nextBtn.addEventListener('click', () => changeVideoSlide(1));
 
-// ==========================================================================
-// UPDATED SCROLL ENGINE (With Year-Check Validation Guard)
-// ==========================================================================
 if (slideshowSection && 'IntersectionObserver' in window) {
-    const observerOptions = {
-        root: null,
-        threshold: 0.3
-    };
-
+    const observerOptions = { root: null, threshold: 0.3 };
     const videoObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             const activeSlide = document.querySelectorAll('.video-slide')[currentVideoIndex];
             const activeVideo = activeSlide ? activeSlide.querySelector('video') : null;
-
             const activeYearBtn = document.querySelector('[data-video-year].active') || document.querySelector('[data-year-select].active');
             const currentYearState = activeYearBtn ? (activeYearBtn.getAttribute('data-video-year') || activeYearBtn.getAttribute('data-year-select')) : '2025';
 
             if (entry.isIntersecting) {
                 isSectionVisible = true;
-                
                 if (currentYearState === "2026") {
-                    if (activeVideo) {
-                        activeVideo.pause();
-                    }
+                    if (activeVideo) activeVideo.pause();
                     return; 
                 }
-
                 if (activeVideo) {
                     activeVideo.muted = isMutedGlobal;
                     activeVideo.play().catch(err => {
@@ -279,9 +268,7 @@ if (slideshowSection && 'IntersectionObserver' in window) {
                 }
             } else {
                 isSectionVisible = false;
-                if (activeVideo) {
-                    activeVideo.pause();
-                }
+                if (activeVideo) activeVideo.pause();
             }
         });
     }, observerOptions);
@@ -290,66 +277,52 @@ if (slideshowSection && 'IntersectionObserver' in window) {
 }
 
 // ==========================================================================
-// 6. GLOBAL CENTRALIZED CROSS-SECTION SYNC ENGINE (With Auto-Play Resume)
+// 6. GLOBAL CENTRALIZED CROSS-SECTION SYNC ENGINE 
 // ==========================================================================
 function syncGlobalYearFilter(targetYear) {
     console.log("Global Filter Synced. Current Target:", targetYear);
 
-    // 1. Sync Video Highlight Elements UI
     document.querySelectorAll('[data-video-year]').forEach(btn => {
-        if (btn.getAttribute('data-video-year') === targetYear) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
+        btn.classList.toggle('active', btn.getAttribute('data-video-year') === targetYear);
     });
-
-    // 2. Sync Gallery Layout Buttons UI
     document.querySelectorAll('[data-year-select]').forEach(btn => {
-        if (btn.getAttribute('data-year-select') === targetYear) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
+        btn.classList.toggle('active', btn.getAttribute('data-year-select') === targetYear);
     });
-
-    // 3. Sync Judge Panel Selection Components UI 
     document.querySelectorAll('[data-judge-year]').forEach(btn => {
-        if (btn.getAttribute('data-judge-year') === targetYear) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
+        btn.classList.toggle('active', btn.getAttribute('data-judge-year') === targetYear);
     });
 
-    // 4. Process Gallery Visibility Wrapper Assignments
+    const albumMainContent = document.getElementById('album-main-content');
+    const albumEmptyView = document.getElementById('album-empty-view');
+
     if (targetYear === '2025') {
         if (wrapper2025) wrapper2025.classList.remove('d-none');
         if (wrapper2026) wrapper2026.classList.add('d-none');
-        
         if (subCompTier) subCompTier.classList.add('d-none');
         if (storytellingTab) storytellingTab.classList.add('d-none');
+
+        if (albumMainContent) albumMainContent.classList.remove('d-none');
+        if (albumEmptyView) albumEmptyView.classList.add('d-none');
 
         if (storytellingTab && storytellingTab.classList.contains('active')) {
             const colourTabBtn = document.querySelector('[data-category="colour"]');
             if (colourTabBtn) colourTabBtn.click();
         }
-
         if (judgesPanel2025) judgesPanel2025.classList.remove('d-none');
         if (judgesPanel2026) judgesPanel2026.classList.add('d-none');
     } 
     else if (targetYear === '2026') {
         if (wrapper2025) wrapper2025.classList.add('d-none');
         if (wrapper2026) wrapper2026.classList.remove('d-none');
-
         if (subCompTier) subCompTier.classList.remove('d-none');
         if (storytellingTab) storytellingTab.classList.remove('d-none');
-
         if (judgesPanel2025) judgesPanel2025.classList.add('d-none');
         if (judgesPanel2026) judgesPanel2026.classList.remove('d-none');
+
+        if (albumMainContent) albumMainContent.classList.add('d-none');
+        if (albumEmptyView) albumEmptyView.classList.remove('d-none');
     }
 
-    // 5. Process Dynamic Video Playback Visibility States
     const mainSliderWrapper = document.getElementById('main-video-slider-wrapper');
     const emptyStateView = document.getElementById('video-empty-view');
     const allSlides = document.querySelectorAll('.video-slide');
@@ -361,11 +334,7 @@ function syncGlobalYearFilter(targetYear) {
             vid.currentTime = 0;
             vid.muted = true;
         });
-        
-        allSlides.forEach(slide => {
-            slide.classList.remove('active-slide');
-        });
-        
+        allSlides.forEach(slide => slide.classList.remove('active-slide'));
         if (mainSliderWrapper) mainSliderWrapper.style.display = 'none';
         if (emptyStateView) emptyStateView.classList.remove('d-none');
     } else {
@@ -380,7 +349,6 @@ function syncGlobalYearFilter(targetYear) {
         if (activeSlideVideo && slideshowSection) {
             const rect = slideshowSection.getBoundingClientRect();
             const isInView = (rect.top < window.innerHeight && rect.bottom >= 0);
-            
             if (isInView) {
                 isSectionVisible = true;
                 activeSlideVideo.muted = isMutedGlobal;
@@ -390,29 +358,24 @@ function syncGlobalYearFilter(targetYear) {
     }
 }
 
-// Attach Event Listeners to Video Section Row Buttons directly
 document.querySelectorAll('[data-video-year]').forEach(btn => {
     btn.addEventListener('click', function() {
-        const selectedYear = this.getAttribute('data-video-year');
-        syncGlobalYearFilter(selectedYear);
+        syncGlobalYearFilter(this.getAttribute('data-video-year'));
     });
 });
 
-/* ==========================================================================
-   SAMAN DEWALAYA GALLERY LOADER
-   ========================================================================== */
-
-
+// ==========================================================================
+// 7. SAMAN DEWALAYA MARQUEE ALBUM LOADER ENGINE (Modal 2)
+// ==========================================================================
 document.addEventListener("DOMContentLoaded", function() {
     const track1 = document.getElementById('albumGrid');
     const track2 = document.getElementById('albumGrid2');
-    const modal = document.getElementById('photoModal');
-    const modalImg = document.getElementById('modalImage');
-    const closeModalBtn = document.getElementById('closeModalBtn');
+    const modal2 = document.getElementById('photoModal2');
+    const modalImg2 = document.getElementById('modalImage2');
+    const closeModalBtn2 = document.getElementById('closeModalBtn2');
     
     const totalImages = 67;
 
-    // Clean node element generator factory helper
     function createImageNode(index) {
         const gridItem = document.createElement('div');
         gridItem.className = 'gallery-item';
@@ -424,11 +387,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
         gridItem.addEventListener('click', function(e) {
             e.preventDefault();
-            if (modal && modalImg) {
-                modalImg.src = imageEl.src;
-                modal.classList.add('active'); 
-                document.documentElement.classList.add('modal-open');
-                document.body.classList.add('modal-open');
+            if (modal2 && modalImg2) {
+                modalImg2.src = imageEl.src;
+                modal2.classList.add('active'); 
+                
+                document.documentElement.classList.add('modal-open2');
+                document.body.classList.add('modal-open2');
             }
         });
 
@@ -436,32 +400,30 @@ document.addEventListener("DOMContentLoaded", function() {
         return gridItem;
     }
 
-    // Populate Track 1 (Left Direction Scroll)
+    // Safely appends only if elements are found on the active page (index.html)
     if (track1) {
         for (let i = 1; i <= totalImages; i++) track1.appendChild(createImageNode(i));
         for (let i = 1; i <= totalImages; i++) track1.appendChild(createImageNode(i));
     }
 
-    // Populate Track 2 (Right Direction Scroll)
     if (track2) {
-        // Reverse loop order to make images display differently than Row 1
         for (let i = totalImages; i >= 1; i--) track2.appendChild(createImageNode(i));
         for (let i = totalImages; i >= 1; i--) track2.appendChild(createImageNode(i));
     }
 
-    function closeModal() {
-        if (modal) {
-            modal.classList.remove('active');
-            document.documentElement.classList.remove('modal-open');
-            document.body.classList.remove('modal-open');
+    function closeModal2() {
+        if (modal2) {
+            modal2.classList.remove('active');
+            document.documentElement.classList.remove('modal-open2');
+            document.body.classList.remove('modal-open2');
         }
     }
 
-    if (modal) {
-        if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal || e.target.classList.contains('modal-content-wrapper')) {
-                closeModal();
+    if (modal2) {
+        if (closeModalBtn2) closeModalBtn2.addEventListener('click', closeModal2);
+        modal2.addEventListener('click', function(e) {
+            if (e.target === modal2 || e.target.classList.contains('modal-content-wrapper')) {
+                closeModal2();
             }
         });
     }
