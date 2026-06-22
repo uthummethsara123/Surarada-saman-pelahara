@@ -98,7 +98,7 @@ if(regForm) {
         }
 
         // Explicitly fill empty delegate columns to maintain 3-column rows matching spreadsheet targets
-        for (let i = 2; i <= 3; i++) {
+        for (let i = 2; i <= 5; i++) {
             if (!formData.has(`delegate_name_${i}`)) {
                 searchParams.append(`delegate_name_${i}`, "");
                 searchParams.append(`delegate_dob_${i}`, "");
@@ -192,7 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Initialize global dynamic counter context variable
     window.globalDelegateCount = 1;
-    const maxDelegates = 3;
+    const maxDelegates = 5;
     const addDelegateBtn = document.getElementById('add-delegate-btn');
     const delegateContainer = document.getElementById('delegates-form-container');
 
