@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Virtual Exhibition</title>
+    <title>Virtual Exhibition - Live Stream</title>
     
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     
@@ -60,6 +60,9 @@
     </style>
 
     <script>
+      // Replace with your Google Web App script URL from Step 1
+      const LIVE_GET_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oGEeijewaNR0t8a5vARJkiuBWpOuMJVcowQdkDdaWGofaar8BRuG88VGGtQ/exec";
+
       window.galleryState = {
         isUserTouching: false,
         touchStartX: 0,
@@ -131,13 +134,17 @@
         window.galleryState.touchStartY = currentY;
       }
 
+      // Conveyor item script calculates loop wrap coordinates globally based on dynamic counts
       AFRAME.registerComponent('conveyor-item', {
-        init: function () {
-          this.minZ = -8.0;
-          this.maxZ = 8.0;
-          this.totalSpan = 16.0;
+        schema: {
+          totalCount: { type: 'number', default: 8 }
         },
-
+        init: function () {
+          let rowsCount = Math.ceil(this.data.totalCount / 2);
+          this.minZ = -(rowsCount * 2.0);
+          this.maxZ = (rowsCount * 2.0);
+          this.totalSpan = this.maxZ - this.minZ;
+        },
         tick: function () {
           let position = this.el.getAttribute('position');
           let currentZ = position.z;
@@ -154,11 +161,72 @@
             currentZ -= this.totalSpan;
           }
 
-          this.el.setAttribute('position', {
-            x: position.x,
-            y: position.y,
-            z: currentZ
-          });
+          this.el.setAttribute('position', { x: position.x, y: position.y, z: currentZ });
+        }
+      });
+
+      // DYNAMIC LOADER INTERACTION FOR GOOGLE SHEET EXTRACTION
+      AFRAME.registerComponent('gallery-loader', {
+        init: function () {
+          const sceneEl = this.el;
+          const assetsEl = document.querySelector('a-assets');
+          const startBtn = document.getElementById('startBtn');
+
+          startBtn.disabled = true;
+          startBtn.innerText = "Connecting Live Feed...";
+
+          fetch(LIVE_GET_API_URL)
+            .then(res => res.json())
+            .then(images => {
+              if(!images || images.length === 0) {
+                // Fallback text if sheet is empty at start line
+                document.getElementById('overlay-desc').innerText = "No submitted pictures found in database yet.";
+                startBtn.innerText = "Gallery Empty";
+                return;
+              }
+
+              images.forEach((imgData, index) => {
+                // 1. Inject assets dynamically
+                let imgAsset = document.createElement('img');
+                imgAsset.setAttribute('id', `live-img-${index}`);
+                imgAsset.setAttribute('src', imgData.src);
+                imgAsset.setAttribute('crossorigin', 'anonymous');
+                assetsEl.appendChild(imgAsset);
+
+                // 2. Build A-Frame visual projection entities
+                let aImg = document.createElement('a-image');
+                let isLeft = index % 2 === 0;
+                
+                let xPos = isLeft ? "-3" : "3";
+                let rotation = isLeft ? "0 90 0" : "0 -90 0";
+                
+                // Perfect staggered rows calculation down the conveyor line
+                let rowIndex = Math.floor(index / 2);
+                let zPos = 6.0 - (rowIndex * 4.0);
+
+                aImg.setAttribute('src', `#live-img-${index}`);
+                aImg.setAttribute('position', `${xPos} 0 ${zPos}`);
+                aImg.setAttribute('rotation', rotation);
+                aImg.setAttribute('width', '3.2');
+                aImg.setAttribute('height', '1.8');
+                aImg.setAttribute('conveyor-item', `totalCount: ${images.length}`);
+                
+                if (isLeft) {
+                  aImg.setAttribute('material', 'side: double');
+                }
+
+                sceneEl.appendChild(aImg);
+              });
+
+              // Re-enable interface after engine parses live feed
+              startBtn.disabled = false;
+              const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+              startBtn.innerText = isMobile ? "Enter Exhibition" : "Start Exhibition";
+            })
+            .catch(err => {
+              console.error("Live fetch failed:", err);
+              document.getElementById('overlay-desc').innerText = "Error syncing submissions with Google Sheet.";
+            });
         }
       });
     </script>
@@ -168,35 +236,16 @@
     <div id="overlay">
       <div id="overlay-content">
         <h2 id="overlay-title">Virtual Exhibition</h2>
-        <p id="overlay-desc">Loading instructions...</p>
+        <p id="overlay-desc">Synchronizing with live data panels...</p>
         <button id="startBtn">Enter Exhibition</button>
       </div>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>
 
-    <a-scene vr-mode-ui="enabled: false" embedded style="background: transparent;">
+    <a-scene vr-mode-ui="enabled: false" embedded style="background: transparent;" gallery-loader>
       <a-assets>
-        <img id="imgL1" src="/assets/img/2025/c 1.jpg" crossorigin="anonymous">
-        <img id="imgL2" src="/assets/img/2025/c 2.jpg" crossorigin="anonymous">
-        <img id="imgL3" src="/assets/img/2025/c 3.jpg" crossorigin="anonymous">
-        <img id="imgL4" src="/assets/img/2025/c merit (2).jpg" crossorigin="anonymous">
-        
-        <img id="imgR1" src="/assets/img/2025/m 1.jpg" crossorigin="anonymous">
-        <img id="imgR2" src="/assets/img/2025/m 2.jpg" crossorigin="anonymous">
-        <img id="imgR3" src="/assets/img/2025/m 3.jpg" crossorigin="anonymous">
-        <img id="imgR4" src="/assets/img/2025/m merit (2).jpg" crossorigin="anonymous">
-      </a-assets>
-
-      <a-image src="#imgL1" position="-3 0 6.0" rotation="0 90 0" width="3.2" height="1.8" material="side: double" conveyor-item></a-image>
-      <a-image src="#imgL2" position="-3 0 2.0" rotation="0 90 0" width="3.2" height="1.8" material="side: double" conveyor-item></a-image>
-      <a-image src="#imgL3" position="-3 0 -2.0" rotation="0 90 0" width="3.2" height="1.8" material="side: double" conveyor-item></a-image>
-      <a-image src="#imgL4" position="-3 0 -6.0" rotation="0 90 0" width="3.2" height="1.8" material="side: double" conveyor-item></a-image>
-
-      <a-image src="#imgR1" position="3 0 6.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
-      <a-image src="#imgR2" position="3 0 2.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
-      <a-image src="#imgR3" position="3 0 -2.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
-      <a-image src="#imgR4" position="3 0 -6.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
+        </a-assets>
 
       <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" position="0 0 0"></a-entity>
     </a-scene>
@@ -212,14 +261,12 @@
 
       const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
-      // Setup dynamic text instructions inside the modal based on screen hardware
       if (isMobile) {
         overlayTitle.innerText = "Mobile Exhibition Guide";
         overlayDesc.innerHTML = "• Move your phone to look around the space.<br>• Swipe your finger left/right to scroll the conveyor belt photos manually.<br><br>Camera and motion permissions are required to blend the art with your surroundings.";
       } else {
         overlayTitle.innerText = "Laptop Exhibition Guide";
         overlayDesc.innerHTML = "• <b>Look Around:</b> Click and drag with your <u>Left Mouse Button</u>.<br>• <b>Scroll Photos:</b> Click and hold your <u>Right Mouse Button</u> while dragging your trackpad/mouse left or right.";
-        startBtn.innerText = "Start Exhibition";
       }
 
       startBtn.addEventListener('click', () => {
