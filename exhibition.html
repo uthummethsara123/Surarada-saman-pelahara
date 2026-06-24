@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Virtual Exhibition - Live Stream</title>
+    <title>Virtual Exhibition</title>
     
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     
@@ -14,17 +14,10 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background-color: transparent !important;
-      }
-
-      /* Forces all layers to remain completely transparent */
-      a-scene, .a-canvas, .a-grabbing {
-        background-color: transparent !important;
-        background: transparent !important;
+        background-color: transparent;
       }
 
       #webcam {
-        display: none;
         position: absolute;
         top: 0;
         left: 0;
@@ -32,12 +25,6 @@
         height: 100vh;
         object-fit: cover;
         z-index: -2;
-      }
-
-      @media (max-width: 767px) {
-        #webcam {
-          display: block;
-        }
       }
 
       #overlay {
@@ -73,8 +60,6 @@
     </style>
 
     <script>
-      const LIVE_GET_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oGEeijewaNR0t8a5vARJkiuBWpOuMJVcowQdkDdaWGofaar8BRuG88VGGtQ/exec";
-
       window.galleryState = {
         isUserTouching: false,
         touchStartX: 0,
@@ -82,11 +67,11 @@
         deltaZ: 0,
         sensitivity: 0.02,
         autoScrollSpeed: 0.015,
-        leftTrackMaxSpan: 0,
-        rightTrackMaxSpan: 0
+        leftTrackSpan: 16.0,
+        rightTrackSpan: 16.0
       };
 
-      // --- TOUCH CONTROLS ---
+      // --- MOBILE TOUCH CONTROLS ---
       window.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) {
           window.galleryState.isUserTouching = true;
@@ -107,7 +92,7 @@
         window.galleryState.deltaZ = 0;
       });
 
-      // --- MOUSE CONTROLS ---
+      // --- LAPTOP RIGHT-CLICK CONTROLS ---
       window.addEventListener('mousedown', (e) => {
         if (e.button === 2) {
           window.galleryState.isUserTouching = true;
@@ -148,26 +133,21 @@
         window.galleryState.touchStartY = currentY;
       }
 
-      // SMART FLUID CONVEYOR COMPONENT
+      // CONVEYOR TRACK PACKING LOGIC ENGINE
       AFRAME.registerComponent('conveyor-item', {
         schema: {
           trackSide: { type: 'string', default: 'left' }
         },
         init: function () {
-          this.isInitialized = false;
-        },
-        setupBounds: function(totalSpan) {
-          this.minZ = -totalSpan / 2;
-          this.maxZ = totalSpan / 2;
-          this.totalSpan = totalSpan;
-          this.isInitialized = true;
+          this.minZ = -8.0;
+          this.maxZ = 8.0;
+          this.totalSpan = 16.0;
         },
         tick: function () {
-          if (!this.isInitialized) {
-            let globalSpan = (this.data.trackSide === 'left') ? window.galleryState.leftTrackMaxSpan : window.galleryState.rightTrackMaxSpan;
-            if (globalSpan > 0) this.setupBounds(globalSpan);
-            return;
-          }
+          // Dynamic bounds adjustment depending on track limits
+          this.totalSpan = (this.data.trackSide === 'left') ? window.galleryState.leftTrackSpan : window.galleryState.rightTrackSpan;
+          this.minZ = -this.totalSpan / 2;
+          this.maxZ = this.totalSpan / 2;
 
           let position = this.el.getAttribute('position');
           let currentZ = position.z;
@@ -188,131 +168,68 @@
         }
       });
 
-      // LIVE SHEET EXTRACTION & GAPLESS FLUID PACKER
-      AFRAME.registerComponent('gallery-loader', {
-        init: function () {
+      // SYSTEMATIC GAP ELIMINATOR COMPONENT
+      AFRAME.registerComponent('track-gap-packer', {
+        init: function() {
           const sceneEl = this.el;
-          const assetsEl = document.querySelector('a-assets');
-          const startBtn = document.getElementById('startBtn');
+          
+          // Wait for assets to finish initialization parameters cleanly
+          sceneEl.addEventListener('assets-loaded', () => {
+            this.packTrack('[conveyor-item="trackSide: left"]', 'left', -3);
+            this.packTrack('[conveyor-item="trackSide: right"]', 'right', 3);
+          });
+        },
+        packTrack: function(selector, side, xPosition) {
+          const frames = Array.from(document.querySelectorAll(selector));
+          if (frames.length === 0) return;
 
-          startBtn.disabled = true;
-          startBtn.innerText = "Connecting Live Feed...";
+          let accumulatorZ = 0;
+          let spacingMargin = 0.8; // Structured uniform padding gap metric
 
-          fetch(LIVE_GET_API_URL)
-            .then(res => res.json())
-            .then(images => {
-              if(!images || images.length === 0) {
-                document.getElementById('overlay-desc').innerText = "No submitted pictures found in database yet.";
-                startBtn.innerText = "Gallery Empty";
-                return;
+          // Phase 1: Dynamic calculation of dimensions based on image natural aspects
+          frames.forEach(frame => {
+            const imgAsset = document.querySelector(frame.getAttribute('src'));
+            if (imgAsset) {
+              let nativeW = imgAsset.naturalWidth || 16;
+              let nativeH = imgAsset.naturalHeight || 9;
+              let aspect = nativeW / nativeH;
+
+              let targetW = 3.2;
+              let targetH = 1.8;
+
+              if (aspect > (3.2 / 1.8)) {
+                targetH = 3.2 / aspect;
+              } else {
+                targetW = 1.8 * aspect;
               }
 
-              let leftTrackElements = [];
-              let rightTrackElements = [];
+              frame.setAttribute('width', targetW);
+              frame.setAttribute('height', targetH);
+              frame.computedWidth = targetW;
+            } else {
+              frame.computedWidth = 3.2; // Fallback metric
+            }
+          });
 
-              images.forEach((imgData, index) => {
-                let imgAsset = document.createElement('img');
-                imgAsset.setAttribute('id', `live-img-${index}`);
-                imgAsset.setAttribute('src', imgData.src);
-                imgAsset.setAttribute('crossorigin', 'anonymous');
-                assetsEl.appendChild(imgAsset);
+          // Phase 2: Structural chaining setup
+          frames.forEach(frame => {
+            accumulatorZ += (frame.computedWidth / 2);
+            frame.calculatedZ = accumulatorZ;
+            accumulatorZ += (frame.computedWidth / 2) + spacingMargin;
+          });
 
-                let aImg = document.createElement('a-image');
-                let isLeft = index % 2 === 0;
-                
-                aImg.setAttribute('src', `#live-img-${index}`);
-                aImg.setAttribute('conveyor-item', `trackSide: ${isLeft ? 'left' : 'right'}`);
-                
-                if (isLeft) {
-                  aImg.setAttribute('material', 'side: double');
-                  leftTrackElements.push({ item: aImg, asset: imgAsset });
-                } else {
-                  rightTrackElements.push({ item: aImg, asset: imgAsset });
-                }
+          // Phase 3: Alignment centering sequence
+          if (side === 'left') {
+            window.galleryState.leftTrackSpan = accumulatorZ;
+          } else {
+            window.galleryState.rightTrackSpan = accumulatorZ;
+          }
 
-                sceneEl.appendChild(aImg);
-              });
-
-              let processedCount = 0;
-              const totalToProcess = images.length;
-
-              function checkProcessingComplete() {
-                processedCount++;
-                if (processedCount === totalToProcess) {
-                  arrangeTrackFluidly(leftTrackElements, '-3', '0 90 0', 'left');
-                  arrangeTrackFluidly(rightTrackElements, '3', '0 -90 0', 'right');
-
-                  startBtn.disabled = false;
-                  const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-                  startBtn.innerText = isMobile ? "Enter Exhibition" : "Start Exhibition";
-                }
-              }
-
-              [...leftTrackElements, ...rightTrackElements].forEach(obj => {
-                if (obj.asset.complete) {
-                  calculateTargetDimensions(obj);
-                  checkProcessingComplete();
-                } else {
-                  obj.asset.addEventListener('load', function() {
-                    calculateTargetDimensions(obj);
-                    checkProcessingComplete();
-                  });
-                  obj.asset.addEventListener('error', function() {
-                    obj.calculatedWidth = 3.2;
-                    obj.calculatedHeight = 1.8;
-                    checkProcessingComplete();
-                  });
-                }
-              });
-
-              function calculateTargetDimensions(obj) {
-                let width = obj.asset.naturalWidth || 16;
-                let height = obj.asset.naturalHeight || 9;
-                let aspectRatio = width / height;
-
-                let maxBoundaryWidth = 3.2;
-                let maxBoundaryHeight = 1.8;
-
-                if (aspectRatio > (maxBoundaryWidth / maxBoundaryHeight)) {
-                  obj.calculatedWidth = maxBoundaryWidth;
-                  obj.calculatedHeight = maxBoundaryWidth / aspectRatio;
-                } else {
-                  obj.calculatedHeight = maxBoundaryHeight;
-                  obj.calculatedWidth = maxBoundaryHeight * aspectRatio;
-                }
-                
-                obj.item.setAttribute('width', obj.calculatedWidth);
-                obj.item.setAttribute('height', obj.calculatedHeight);
-              }
-
-              function arrangeTrackFluidly(elementsArray, xPos, rotation, sideName) {
-                let currentZAccumulator = 0;
-                let marginBetweenFrames = 0.8;
-
-                elementsArray.forEach(obj => {
-                  currentZAccumulator += (obj.calculatedWidth / 2);
-                  obj.initialZ = currentZAccumulator;
-                  currentZAccumulator += (obj.calculatedWidth / 2) + marginBetweenFrames;
-                });
-
-                let totalSpan = currentZAccumulator;
-                if (sideName === 'left') {
-                  window.galleryState.leftTrackMaxSpan = totalSpan;
-                } else {
-                  window.galleryState.rightTrackMaxSpan = totalSpan;
-                }
-
-                elementsArray.forEach(obj => {
-                  let centeredZ = obj.initialZ - (totalSpan / 2);
-                  obj.item.setAttribute('position', `${xPos} 0 ${centeredZ}`);
-                  obj.item.setAttribute('rotation', rotation);
-                });
-              }
-            })
-            .catch(err => {
-              console.error("Live fetch failed:", err);
-              document.getElementById('overlay-desc').innerText = "Error syncing submissions with Google Sheet.";
-            });
+          frames.forEach(frame => {
+            let finalizedZ = frame.calculatedZ - (accumulatorZ / 2);
+            let currentPos = frame.getAttribute('position');
+            frame.setAttribute('position', { x: xPosition, y: currentPos.y, z: finalizedZ });
+          });
         }
       });
     </script>
@@ -322,16 +239,35 @@
     <div id="overlay">
       <div id="overlay-content">
         <h2 id="overlay-title">Virtual Exhibition</h2>
-        <p id="overlay-desc">Synchronizing with live data panels...</p>
+        <p id="overlay-desc">Loading instructions...</p>
         <button id="startBtn">Enter Exhibition</button>
       </div>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>
 
-    <a-scene vr-mode-ui="enabled: false" embedded renderer="alpha: true;" gallery-loader>
+    <a-scene vr-mode-ui="enabled: false" embedded renderer="alpha: true;" track-gap-packer>
       <a-assets>
-        </a-assets>
+        <img id="imgL1" src="/assets/img/2025/c 1.jpg" crossorigin="anonymous">
+        <img id="imgL2" src="/assets/img/2025/c 2.jpg" crossorigin="anonymous">
+        <img id="imgL3" src="/assets/img/2025/c 3.jpg" crossorigin="anonymous">
+        <img id="imgL4" src="/assets/img/2025/c merit (2).jpg" crossorigin="anonymous">
+        
+        <img id="imgR1" src="/assets/img/2025/m 1.jpg" crossorigin="anonymous">
+        <img id="imgR2" src="/assets/img/2025/m 2.jpg" crossorigin="anonymous">
+        <img id="imgR3" src="/assets/img/2025/m 3.jpg" crossorigin="anonymous">
+        <img id="imgR4" src="/assets/img/2025/m merit (2).jpg" crossorigin="anonymous">
+      </a-assets>
+
+      <a-image src="#imgL1" position="-3 0 6.0" rotation="0 90 0" width="3.2" height="1.8" material="side: double" conveyor-item="trackSide: left"></a-image>
+      <a-image src="#imgL2" position="-3 0 2.0" rotation="0 90 0" width="3.2" height="1.8" material="side: double" conveyor-item="trackSide: left"></a-image>
+      <a-image src="#imgL3" position="-3 0 -2.0" rotation="0 90 0" width="3.2" height="1.8" material="side: double" conveyor-item="trackSide: left"></a-image>
+      <a-image src="#imgL4" position="-3 0 -6.0" rotation="0 90 0" width="3.2" height="1.8" material="side: double" conveyor-item="trackSide: left"></a-image>
+
+      <a-image src="#imgR1" position="3 0 6.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item="trackSide: right"></a-image>
+      <a-image src="#imgR2" position="3 0 2.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item="trackSide: right"></a-image>
+      <a-image src="#imgR3" position="3 0 -2.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item="trackSide: right"></a-image>
+      <a-image src="#imgR4" position="3 0 -6.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item="trackSide: right"></a-image>
 
       <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" position="0 0 0"></a-entity>
     </a-scene>
@@ -347,51 +283,31 @@
 
       const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
-      // DOM ANTI-WHITE BACKGROUND GUARD
-      // This forces transparency whenever A-Frame touches the layout
-      const forceTransparency = () => {
-        if (scene) scene.style.backgroundColor = "transparent";
-        const canvases = document.querySelectorAll('.a-canvas');
-        canvases.forEach(c => {
-          c.style.backgroundColor = "transparent";
-          c.style.background = "transparent";
-        });
-      };
-
-      // Watch for runtime styling changes and instantly correct them
-      const observer = new MutationObserver(forceTransparency);
-      observer.observe(document.body, { attributes: true, childList: true, subtree: true });
-      window.addEventListener('DOMContentLoaded', forceTransparency);
-      window.addEventListener('load', forceTransparency);
-
       if (isMobile) {
         overlayTitle.innerText = "Mobile Exhibition Guide";
-        overlayDesc.innerHTML = "• Move your phone to look around the space.<br>• Swipe your finger left/right to scroll the conveyor belt photos manually.<br><br>Camera and motion permissions are required to blend the art with your surroundings.";
+        overlayDesc.innerHTML = "• Move your phone to look around the space.<br>• Swipe your finger up/down or left/right to scroll the conveyor belt photos manually.<br><br>Camera and motion permissions are required to blend the art with your surroundings.";
       } else {
         overlayTitle.innerText = "Laptop Exhibition Guide";
         overlayDesc.innerHTML = "• <b>Look Around:</b> Click and drag with your <u>Left Mouse Button</u>.<br>• <b>Scroll Photos:</b> Click and hold your <u>Right Mouse Button</u> while dragging your trackpad/mouse left or right.";
+        startBtn.innerText = "Start Exhibition";
       }
 
       startBtn.addEventListener('click', () => {
         overlay.style.display = 'none';
 
         if (isMobile) {
-          forceTransparency();
           navigator.mediaDevices.getUserMedia({ 
             video: { facingMode: 'environment' } 
           })
           .then((stream) => {
             video.srcObject = stream;
             video.play();
-            setTimeout(forceTransparency, 100);
-            setTimeout(forceTransparency, 500);
           })
           .catch((err) => {
             console.error("Camera error:", err);
             alert("Could not access camera. Please check permissions or run via HTTPS.");
           });
         } else {
-          observer.disconnect(); // Turn off filter on desktops
           video.style.display = 'none';
           scene.style.backgroundColor = "#1a1a1a";
           
