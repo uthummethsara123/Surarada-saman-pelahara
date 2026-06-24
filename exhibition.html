@@ -14,7 +14,7 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background-color: transparent; /* Allows webcam background pass-through */
+        background-color: transparent;
       }
 
       #webcam {
@@ -24,7 +24,7 @@
         width: 100vw;
         height: 100vh;
         object-fit: cover;
-        z-index: -2; /* Sends camera view to the lowest visual layer */
+        z-index: -2;
       }
 
       #overlay {
@@ -133,35 +133,36 @@
         }
       });
 
-AFRAME.registerComponent('device-motion-walk', {
-  init: function () {
-    this.maxWalkLimit = 2.5; // Distance in meters you can physically walk forward or backward
-    this.currentX = 0;
-    this.currentZ = 0;
+      AFRAME.registerComponent('device-motion-walk', {
+        init: function () {
+          // Boundaries locked to the start/end corner thresholds of the walls (-6.0 to 6.0)
+          this.maxForwardLimit = 6.0; 
+          this.currentZ = 0;
 
-    if (window.DeviceMotionEvent) {
-      window.addEventListener('devicemotion', (event) => {
-        let acc = event.acceleration;
-        if (!acc || !acc.x || !acc.y) return;
+          if (window.DeviceMotionEvent) {
+            window.addEventListener('devicemotion', (event) => {
+              let acc = event.accelerationIncludingGravity || event.acceleration;
+              if (!acc || !acc.z) return;
 
-        // X tracks side shifting, Y tracks forward/back tracking pushes
-        this.currentX += acc.x * 0.005;
-        this.currentZ -= acc.y * 0.005; 
+              // Smooth out device spikes using step filtration
+              let motionStep = acc.z * 0.02;
+              if (Math.abs(motionStep) > 0.002) {
+                this.currentZ += motionStep;
+              }
+            });
+          }
+        },
+        tick: function () {
+          // Clamp walking movement strictly between the furthest edges of the exhibit walls
+          this.currentZ = Math.max(-this.maxForwardLimit, Math.min(this.maxForwardLimit, this.currentZ));
+
+          this.el.setAttribute('position', {
+            x: 0,
+            y: 0,
+            z: this.currentZ
+          });
+        }
       });
-    }
-  },
-  tick: function () {
-    // Keep side-to-side movement tight, but clamp forward/backward (Z-axis) to your specific limit
-    this.currentX = Math.max(-0.5, Math.min(0.5, this.currentX)); 
-    this.currentZ = Math.max(-this.maxWalkLimit, Math.min(this.maxWalkLimit, this.currentZ));
-
-    this.el.setAttribute('position', {
-      x: this.currentX,
-      y: 0,
-      z: this.currentZ
-    });
-  }
-});
     </script>
   </head>
   <body>
@@ -189,15 +190,15 @@ AFRAME.registerComponent('device-motion-walk', {
         <img id="imgR4" src="/assets/img/2025/m merit (2).jpg" crossorigin="anonymous">
       </a-assets>
 
-        <a-image src="#imgL1" position="-3.5 0 6.0" rotation="0 90 0" width="3.2" height="1.8" conveyor-item></a-image>
-        <a-image src="#imgL2" position="-3.5 0 2.0" rotation="0 90 0" width="3.2" height="1.8" conveyor-item></a-image>
-        <a-image src="#imgL3" position="-3.5 0 -2.0" rotation="0 90 0" width="3.2" height="1.8" conveyor-item></a-image>
-        <a-image src="#imgL4" position="-3.5 0 -6.0" rotation="0 90 0" width="3.2" height="1.8" conveyor-item></a-image>
-        
-        <a-image src="#imgR1" position="3 0 6.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
-        <a-image src="#imgR2" position="3 0 2.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
-        <a-image src="#imgR3" position="3 0 -2.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
-        <a-image src="#imgR4" position="3 0 -6.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
+      <a-image src="#imgL1" position="-3 0 6.0" rotation="0 90 0" width="3.2" height="1.8" scale="-1 1 1" conveyor-item></a-image>
+      <a-image src="#imgL2" position="-3 0 2.0" rotation="0 90 0" width="3.2" height="1.8" scale="-1 1 1" conveyor-item></a-image>
+      <a-image src="#imgL3" position="-3 0 -2.0" rotation="0 90 0" width="3.2" height="1.8" scale="-1 1 1" conveyor-item></a-image>
+      <a-image src="#imgL4" position="-3 0 -6.0" rotation="0 90 0" width="3.2" height="1.8" scale="-1 1 1" conveyor-item></a-image>
+
+      <a-image src="#imgR1" position="3 0 6.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
+      <a-image src="#imgR2" position="3 0 2.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
+      <a-image src="#imgR3" position="3 0 -2.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
+      <a-image src="#imgR4" position="3 0 -6.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
 
       <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" device-motion-walk></a-entity>
     </a-scene>
