@@ -60,34 +60,60 @@
     </style>
 
     <script>
-      AFRAME.registerComponent('bounded-touch-translate', {
+      AFRAME.registerComponent('infinite-touch-scroll', {
         init: function () {
           this.touchStartX = 0;
           this.currentZOffset = 0;
-          this.sensitivity = 0.02; // Adjusted translation speed for larger track
-          this.moveLimit = 8.0;    // Increased boundary limit to track the extra spacing
+          this.sensitivity = 0.02;
+          this.autoScrollSpeed = 0.005; // Base auto-scrolling speed
+          this.isUserTouching = false;
+          
+          // Loop threshold based on our 4-photo layout spacing
+          this.loopThreshold = 8.0; 
 
           window.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
+              this.isUserTouching = true;
               this.touchStartX = e.touches[0].clientX;
             }
           });
 
           window.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 1) {
+            if (e.touches.length === 1 && this.isUserTouching) {
               let deltaX = e.touches[0].clientX - this.touchStartX;
               this.touchStartX = e.touches[0].clientX;
 
               this.currentZOffset += deltaX * this.sensitivity;
-              this.currentZOffset = Math.max(-this.moveLimit, Math.min(this.moveLimit, this.currentZOffset));
-              
-              this.el.setAttribute('position', {
-                x: 0,
-                y: 0,
-                z: this.currentZOffset
-              });
+              this.handleLooping();
             }
           });
+
+          window.addEventListener('touchend', () => {
+            this.isUserTouching = false;
+          });
+        },
+
+        handleLooping: function () {
+          // Instantly loops the coordinate index once it crosses the threshold boundaries
+          if (this.currentZOffset > this.loopThreshold) {
+            this.currentZOffset = -this.loopThreshold;
+          } else if (this.currentZOffset < -this.loopThreshold) {
+            this.currentZOffset = this.loopThreshold;
+          }
+
+          this.el.setAttribute('position', {
+            x: 0,
+            y: 0,
+            z: this.currentZOffset
+          });
+        },
+
+        tick: function () {
+          // If the user isn't interacting, scroll automatically
+          if (!this.isUserTouching) {
+            this.currentZOffset -= this.autoScrollSpeed;
+            this.handleLooping();
+          }
         }
       });
     </script>
@@ -127,7 +153,7 @@
       <a-image src="#imgR3" position="3 0 -2.0" rotation="0 -90 0" width="3.2" height="1.8"></a-image>
       <a-image src="#imgR4" position="3 0 -6.0" rotation="0 -90 0" width="3.2" height="1.8"></a-image>
 
-      <a-entity id="camera-slider-rig" bounded-touch-translate>
+      <a-entity id="camera-slider-rig" infinite-touch-scroll>
         <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;"></a-entity>
       </a-entity>
     </a-scene>
