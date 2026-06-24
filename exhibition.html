@@ -74,7 +74,7 @@
       }
     </style>
 
-    <script>
+<script>
       const LIVE_GET_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oGEeijewaNR0t8a5vARJkiuBWpOuMJVcowQdkDdaWGofaar8BRuG88VGGtQ/exec";
 
       window.galleryState = {
@@ -83,7 +83,10 @@
         touchStartY: 0,
         deltaZ: 0,
         sensitivity: 0.02,
-        autoScrollSpeed: 0.015 
+        autoScrollSpeed: 0.015,
+        // Track the running layout depth spans for loop calculations
+        leftTrackMaxSpan: 0,
+        rightTrackMaxSpan: 0
       };
 
       // --- MOBILE TOUCH CONTROLS ---
@@ -148,17 +151,29 @@
         window.galleryState.touchStartY = currentY;
       }
 
+      // SMART FLUID CONVEYOR COMPONENT
       AFRAME.registerComponent('conveyor-item', {
         schema: {
-          totalCount: { type: 'number', default: 8 }
+          trackSide: { type: 'string', default: 'left' }
         },
         init: function () {
-          let rowsCount = Math.ceil(this.data.totalCount / 2);
-          this.minZ = -(rowsCount * 2.0);
-          this.maxZ = (rowsCount * 2.0);
-          this.totalSpan = this.maxZ - this.minZ;
+          // Dynamic parameters get established on layout calculation phase
+          this.isInitialized = false;
+        },
+        setupBounds: function(totalSpan) {
+          this.minZ = -totalSpan / 2;
+          this.maxZ = totalSpan / 2;
+          this.totalSpan = totalSpan;
+          this.isInitialized = true;
         },
         tick: function () {
+          if (!this.isInitialized) {
+            // Wait until layout calculations map out the track boundaries completely
+            let globalSpan = (this.data.trackSide === 'left') ? window.galleryState.leftTrackMaxSpan : window.galleryState.rightTrackMaxSpan;
+            if (globalSpan > 0) this.setupBounds(globalSpan);
+            return;
+          }
+
           let position = this.el.getAttribute('position');
           let currentZ = position.z;
 
@@ -168,6 +183,7 @@
             currentZ -= window.galleryState.autoScrollSpeed;
           }
 
+          // Loop wrapping logic adjusted perfectly to the track depth
           if (currentZ < this.minZ) {
             currentZ += this.totalSpan;
           } else if (currentZ > this.maxZ) {
@@ -178,6 +194,7 @@
         }
       });
 
+      // LIVE SHEET EXTRACTION & GAPLESS FLUID PACKER
       AFRAME.registerComponent('gallery-loader', {
         init: function () {
           const sceneEl = this.el;
@@ -196,59 +213,117 @@
                 return;
               }
 
+              let leftTrackElements = [];
+              let rightTrackElements = [];
+
               images.forEach((imgData, index) => {
                 let imgAsset = document.createElement('img');
                 imgAsset.setAttribute('id', `live-img-${index}`);
                 imgAsset.setAttribute('src', imgData.src);
-                // Critical step: Anonymous cross-origin policies prevent the browser from blocking background rendering
                 imgAsset.setAttribute('crossorigin', 'anonymous');
                 assetsEl.appendChild(imgAsset);
 
                 let aImg = document.createElement('a-image');
                 let isLeft = index % 2 === 0;
                 
-                let xPos = isLeft ? "-3" : "3";
-                let rotation = isLeft ? "0 90 0" : "0 -90 0";
-                
-                let rowIndex = Math.floor(index / 2);
-                let zPos = 6.0 - (rowIndex * 4.0);
-
                 aImg.setAttribute('src', `#live-img-${index}`);
-                aImg.setAttribute('position', `${xPos} 0 ${zPos}`);
-                aImg.setAttribute('rotation', rotation);
-                
-                aImg.setAttribute('width', '3.2');
-                aImg.setAttribute('height', '1.8');
-                aImg.setAttribute('conveyor-item', `totalCount: ${images.length}`);
+                aImg.setAttribute('conveyor-item', `trackSide: ${isLeft ? 'left' : 'right'}`);
                 
                 if (isLeft) {
                   aImg.setAttribute('material', 'side: double');
+                  leftTrackElements.push({ item: aImg, asset: imgAsset });
+                } else {
+                  rightTrackElements.push({ item: aImg, asset: imgAsset });
                 }
-
-                // Adaptive Ratio Sizer handles Portrait/Squares/Landscape seamlessly
-                imgAsset.addEventListener('load', function() {
-                  let width = imgAsset.naturalWidth;
-                  let height = imgAsset.naturalHeight;
-                  let aspectRatio = width / height;
-
-                  let maxBoundaryWidth = 3.2;
-                  let maxBoundaryHeight = 1.8;
-
-                  if (aspectRatio > (maxBoundaryWidth / maxBoundaryHeight)) {
-                    aImg.setAttribute('width', maxBoundaryWidth);
-                    aImg.setAttribute('height', maxBoundaryWidth / aspectRatio);
-                  } else {
-                    aImg.setAttribute('height', maxBoundaryHeight);
-                    aImg.setAttribute('width', maxBoundaryHeight * aspectRatio);
-                  }
-                });
 
                 sceneEl.appendChild(aImg);
               });
 
-              startBtn.disabled = false;
-              const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-              startBtn.innerText = isMobile ? "Enter Exhibition" : "Start Exhibition";
+              // Track layout processing counters
+              let processedCount = 0;
+              const totalToProcess = images.length;
+
+              function checkProcessingComplete() {
+                processedCount++;
+                if (processedCount === totalToProcess) {
+                  // Both tracks mapped out perfectly! Build calculations and initialize entry sequence
+                  arrangeTrackFluidly(leftTrackElements, '-3', '0 90 0', 'left');
+                  arrangeTrackFluidly(rightTrackElements, '3', '0 -90 0', 'right');
+
+                  startBtn.disabled = false;
+                  const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+                  startBtn.innerText = isMobile ? "Enter Exhibition" : "Start Exhibition";
+                }
+              }
+
+              // Listen for image loads to gather original parameters cleanly before layout placement
+              [...leftTrackElements, ...rightTrackElements].forEach(obj => {
+                if (obj.asset.complete) {
+                  calculateTargetDimensions(obj);
+                  checkProcessingComplete();
+                } else {
+                  obj.asset.addEventListener('load', function() {
+                    calculateTargetDimensions(obj);
+                    checkProcessingComplete();
+                  });
+                  obj.asset.addEventListener('error', function() {
+                    // Fallback to standard proportions if image loads break
+                    obj.calculatedWidth = 3.2;
+                    obj.calculatedHeight = 1.8;
+                    checkProcessingComplete();
+                  });
+                }
+              });
+
+              function calculateTargetDimensions(obj) {
+                let width = obj.asset.naturalWidth || 16;
+                let height = obj.asset.naturalHeight || 9;
+                let aspectRatio = width / height;
+
+                let maxBoundaryWidth = 3.2;
+                let maxBoundaryHeight = 1.8;
+
+                if (aspectRatio > (maxBoundaryWidth / maxBoundaryHeight)) {
+                  obj.calculatedWidth = maxBoundaryWidth;
+                  obj.calculatedHeight = maxBoundaryWidth / aspectRatio;
+                } else {
+                  obj.calculatedHeight = maxBoundaryHeight;
+                  obj.calculatedWidth = maxBoundaryHeight * aspectRatio;
+                }
+                
+                obj.item.setAttribute('width', obj.calculatedWidth);
+                obj.item.setAttribute('height', obj.calculatedHeight);
+              }
+
+              function arrangeTrackFluidly(elementsArray, xPos, rotation, sideName) {
+                let currentZAccumulator = 0;
+                let marginBetweenFrames = 0.8; // Uniform structural gap spacing (80cm)
+
+                // Step 1: Align frames seamlessly next to one another based on true physical widths
+                elementsArray.forEach(obj => {
+                  // Shift spacing forward by half width of the target frame
+                  currentZAccumulator += (obj.calculatedWidth / 2);
+                  
+                  obj.initialZ = currentZAccumulator;
+                  
+                  // Move pointer forward for next asset position
+                  currentZAccumulator += (obj.calculatedWidth / 2) + marginBetweenFrames;
+                });
+
+                // Step 2: Recenter positions around world origin to make background loop wraps perfect
+                let totalSpan = currentZAccumulator;
+                if (sideName === 'left') {
+                  window.galleryState.leftTrackMaxSpan = totalSpan;
+                } else {
+                  window.galleryState.rightTrackMaxSpan = totalSpan;
+                }
+
+                elementsArray.forEach(obj => {
+                  let centeredZ = obj.initialZ - (totalSpan / 2);
+                  obj.item.setAttribute('position', `${xPos} 0 ${centeredZ}`);
+                  obj.item.setAttribute('rotation', rotation);
+                });
+              }
             })
             .catch(err => {
               console.error("Live fetch failed:", err);
