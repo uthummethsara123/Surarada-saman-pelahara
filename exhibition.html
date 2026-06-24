@@ -59,6 +59,53 @@
         margin-top: 20px;
       }
     </style>
+
+    <script>
+      // Custom component to handle high-sensitivity touch panning with hard stops
+      AFRAME.registerComponent('bounded-touch-controls', {
+        init: function () {
+          this.touchStartX = 0;
+          this.touchOffsetYaw = 0; // Tracks manual touch panning
+          this.sensitivity = 0.25; // High responsiveness factor
+          
+          // Limit how far they can swipe left or right in degrees (e.g., 45 degrees either way)
+          this.yawLimit = 45; 
+
+          window.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+              this.touchStartX = e.touches[0].clientX;
+            }
+          });
+
+          window.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1) {
+              let deltaX = e.touches[0].clientX - this.touchStartX;
+              this.touchStartX = e.touches[0].clientX;
+
+              // Update the manual swipe offset
+              this.touchOffsetYaw += deltaX * this.sensitivity;
+              
+              // Prevent 360 rotation: Hard clamp the touch offset so it doesn't spin past limits
+              this.touchOffsetYaw = Math.max(-this.yawLimit, Math.min(this.yawLimit, this.touchOffsetYaw));
+            }
+          });
+        },
+        
+        tick: function () {
+          // Combine the A-Frame look-controls tracking with our restricted touch offset
+          let lookControls = this.el.components['look-controls'];
+          if (lookControls && lookControls.rotation) {
+            // Apply the manual restricted touch offset on top of gyro rotation
+            let currentRotation = this.el.getAttribute('rotation');
+            this.el.setAttribute('rotation', {
+              x: currentRotation.x,
+              y: lookControls.rotation.y + this.touchOffsetYaw,
+              z: currentRotation.z
+            });
+          }
+        }
+      });
+    </script>
   </head>
   <body>
 
@@ -81,7 +128,7 @@
       <a-image src="#img1" position="-3 0 0" rotation="0 90 0" width="3.5" height="2"></a-image>
       <a-image src="#img2" position="3 0 0" rotation="0 -90 0" width="3.5" height="2"></a-image>
 
-      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: true; touchUserScale: 2;"></a-entity>
+      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" bounded-touch-controls></a-entity>
     </a-scene>
 
     <script>
@@ -95,7 +142,6 @@
 
       const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
-      // Change messaging instantly if the user is on a laptop/desktop
       if (!isMobile) {
         overlayTitle.innerText = "Mobile Phone Recommended";
         overlayDesc.innerHTML = "For the best experience, please open this link on your mobile phone to look around using your device camera.<br><br>You can still enter on desktop by dragging your mouse to look around.";
@@ -103,11 +149,9 @@
       }
 
       startBtn.addEventListener('click', () => {
-        // Hide overlay screen
         overlay.style.display = 'none';
 
         if (isMobile) {
-          // Request device camera
           navigator.mediaDevices.getUserMedia({ 
             video: { facingMode: 'environment' } 
           })
@@ -120,7 +164,6 @@
             alert("Could not access camera. Please check permissions or run via HTTPS.");
           });
         } else {
-          // Desktop view fallback: hide camera element and apply dark background
           video.style.display = 'none';
           scene.style.backgroundColor = "#1a1a1a";
         }
