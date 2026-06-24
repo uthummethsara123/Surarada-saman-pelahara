@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Virtual Exhibition</title>
+    
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #121212;
+      }
+
+      #webcam {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+        z-index: -1;
+      }
+
+      /* Splash screen to trigger browser permissions */
+      #overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 999;
+        color: white;
+        font-family: sans-serif;
+        text-align: center;
+      }
+
+      #startBtn {
+        padding: 15px 30px;
+        font-size: 18px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="overlay">
+      <div>
+        <h2>Virtual Exhibition</h2>
+        <p>This experience requires camera access to overlay the artworks.</p>
+        <button id="startBtn">Enter Exhibition</button>
+      </div>
+    </div>
+
+    <video id="webcam" autoplay playsinline muted></video>
+
+    <a-scene vr-mode-ui="enabled: false" embedded style="background: transparent;">
+      <a-assets>
+        <img id="img1" src="/assets/img/2025/c 1.jpg" crossorigin="anonymous">
+        <img id="img2" src="/assets/img/2025/c 2.jpg" crossorigin="anonymous">
+      </a-assets>
+
+      <a-image src="#img1" position="-3 0 0" rotation="0 90 0" width="3.5" height="2"></a-image>
+      <a-image src="#img2" position="3 0 0" rotation="0 -90 0" width="3.5" height="2"></a-image>
+
+      <a-entity camera look-controls="magicWindowTrackingEnabled: true"></a-entity>
+    </a-scene>
+
+    <script>
+      const video = document.getElementById('webcam');
+      const overlay = document.getElementById('overlay');
+      const startBtn = document.getElementById('startBtn');
+      const scene = document.querySelector('a-scene');
+
+      const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+
+      startBtn.addEventListener('click', () => {
+        // Hide overlay screen
+        overlay.style.display = 'none';
+
+        if (isMobile) {
+          // Request device camera
+          navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'environment' } 
+          })
+          .then((stream) => {
+            video.srcObject = stream;
+            video.play();
+          })
+          .catch((err) => {
+            console.error("Camera error:", err);
+            alert("Could not access camera. Please check permissions or run via HTTPS.");
+          });
+        } else {
+          // Desktop view fallback
+          video.style.display = 'none';
+          scene.style.backgroundColor = "#1a1a1a";
+        }
+      });
+    </script>
+  </body>
+</html>
