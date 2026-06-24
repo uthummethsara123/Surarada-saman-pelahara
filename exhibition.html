@@ -61,15 +61,13 @@
     </style>
 
     <script>
-      // Custom component to handle high-sensitivity touch panning with hard stops
-      AFRAME.registerComponent('bounded-touch-controls', {
+      // Custom component attached to the RIG to handle bounded finger swipe panning
+      AFRAME.registerComponent('bounded-rig-touch', {
         init: function () {
           this.touchStartX = 0;
-          this.touchOffsetYaw = 0; // Tracks manual touch panning
-          this.sensitivity = 0.25; // High responsiveness factor
-          
-          // Limit how far they can swipe left or right in degrees (e.g., 45 degrees either way)
-          this.yawLimit = 45; 
+          this.currentYaw = 0;
+          this.sensitivity = 0.3; // Responsive touch speed
+          this.yawLimit = 45;     // Limits swiping to 45 degrees left or right
 
           window.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
@@ -82,27 +80,20 @@
               let deltaX = e.touches[0].clientX - this.touchStartX;
               this.touchStartX = e.touches[0].clientX;
 
-              // Update the manual swipe offset
-              this.touchOffsetYaw += deltaX * this.sensitivity;
+              // Calculate new swipe angle
+              this.currentYaw += deltaX * this.sensitivity;
               
-              // Prevent 360 rotation: Hard clamp the touch offset so it doesn't spin past limits
-              this.touchOffsetYaw = Math.max(-this.yawLimit, Math.min(this.yawLimit, this.touchOffsetYaw));
+              // Hard clamp the touch dragging so it cannot rotate 360 degrees
+              this.currentYaw = Math.max(-this.yawLimit, Math.min(this.yawLimit, this.currentYaw));
+              
+              // Apply the restricted rotation directly to the camera rig parent
+              this.el.setAttribute('rotation', {
+                x: 0,
+                y: this.currentYaw,
+                z: 0
+              });
             }
           });
-        },
-        
-        tick: function () {
-          // Combine the A-Frame look-controls tracking with our restricted touch offset
-          let lookControls = this.el.components['look-controls'];
-          if (lookControls && lookControls.rotation) {
-            // Apply the manual restricted touch offset on top of gyro rotation
-            let currentRotation = this.el.getAttribute('rotation');
-            this.el.setAttribute('rotation', {
-              x: currentRotation.x,
-              y: lookControls.rotation.y + this.touchOffsetYaw,
-              z: currentRotation.z
-            });
-          }
         }
       });
     </script>
@@ -128,7 +119,9 @@
       <a-image src="#img1" position="-3 0 0" rotation="0 90 0" width="3.5" height="2"></a-image>
       <a-image src="#img2" position="3 0 0" rotation="0 -90 0" width="3.5" height="2"></a-image>
 
-      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" bounded-touch-controls></a-entity>
+      <a-entity id="camera-rig" bounded-rig-touch>
+        <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;"></a-entity>
+      </a-entity>
     </a-scene>
 
     <script>
@@ -166,6 +159,10 @@
         } else {
           video.style.display = 'none';
           scene.style.backgroundColor = "#1a1a1a";
+          
+          // Fallback: If desktop, re-enable standard touch/mouse dragging for testing
+          const cam = document.querySelector('[camera]');
+          if (cam) cam.setAttribute('look-controls', 'touchEnabled: true');
         }
       });
     </script>
