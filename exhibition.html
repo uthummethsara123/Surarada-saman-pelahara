@@ -341,9 +341,9 @@
         <img id="logo-img" src="/assets/img/logo.png" crossorigin="anonymous">
       </a-assets>
 
-      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" position="0 0 0">
-        <a-image src="#logo-img" position="0 0 -2" width="1.5" height="1.5" material="side: double; transparent: true;"></a-image>
-      </a-entity>
+      <a-image src="#logo-img" position="0 0 -2" width="1.5" height="1.5" material="side: double; transparent: true;"></a-image>
+
+      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" position="0 0 0"></a-entity>
     </a-scene>
 
     <script>
@@ -357,6 +357,7 @@
 
       const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
+      // DOM Transparency Enforcement Routine
       const forceSceneClearTransparency = () => {
         if (scene) {
           scene.style.backgroundColor = "transparent";
