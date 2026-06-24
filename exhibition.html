@@ -14,10 +14,9 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background-color: #000000;
+        background-color: #1a1a1a;
       }
 
-      /* Kept in DOM structure but off-screen so Safari updates frames */
       #webcam-texture {
         position: absolute;
         top: 0;
@@ -325,17 +324,24 @@
     <a-scene vr-mode-ui="enabled: false" embedded renderer="colorManagement: true;" gallery-loader>
       <a-assets></a-assets>
 
-      <a-sky id="ar-bg" color="#1a1a1a" rotation="0 90 0"></a-sky>
+      <a-sky color="#1a1a1a"></a-sky>
 
-      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" position="0 0 0"></a-entity>
+      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" position="0 0 0">
+        <a-plane id="ar-bg-plane" 
+                 position="0 0 -20" 
+                 width="45" 
+                 height="25" 
+                 material="shader: flat; color: #1a1a1a; side: double;"
+                 visible="false">
+        </a-plane>
+      </a-entity>
     </a-scene>
 
     <script>
       const textureVideo = document.getElementById('webcam-texture');
       const overlay = document.getElementById('overlay');
       const startBtn = document.getElementById('startBtn');
-      const scene = document.querySelector('a-scene');
-      const arBg = document.getElementById('ar-bg');
+      const arBgPlane = document.getElementById('ar-bg-plane');
       
       const overlayTitle = document.getElementById('overlay-title');
       const overlayDesc = document.getElementById('overlay-desc');
@@ -351,12 +357,10 @@
       }
 
       function activateMobilePermissions() {
-        // 1. Device Orientation Access Request
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
           DeviceOrientationEvent.requestPermission().catch(console.error);
         }
 
-        // 2. Access Camera Hardware Loop
         navigator.mediaDevices.getUserMedia({ 
           video: { 
             facingMode: 'environment',
@@ -367,18 +371,17 @@
         .then((stream) => {
           textureVideo.srcObject = stream;
 
-          // Crucial for iOS: Wait until data has actually loaded down the pipeline before binding texture maps
           textureVideo.addEventListener('playing', () => {
-            // Force texture initialization inside the operational space
-            arBg.removeAttribute('color');
-            arBg.setAttribute('src', '#webcam-texture');
+            // Unhide the camera background plane and map the live hardware stream to it smoothly
+            arBgPlane.setAttribute('visible', 'true');
+            arBgPlane.setAttribute('src', '#webcam-texture');
           }, { once: true });
 
-          textureVideo.play().catch(e => console.log("Stream execution failed:", e));
+          textureVideo.play().catch(e => console.log(e));
         })
         .catch((err) => {
           console.error("Camera access denied:", err);
-          alert("Camera initialization failed. Make sure permissions are enabled and you are connected via HTTPS.");
+          alert("Camera initialization failed. Make sure your browser settings allow camera permission.");
         });
       }
 
@@ -388,7 +391,6 @@
         if (isMobile) {
           activateMobilePermissions();
         } else {
-          arBg.setAttribute('color', '#1a1a1a');
           const cam = document.querySelector('[camera]');
           if (cam) cam.setAttribute('look-controls', 'touchEnabled: true');
         }
