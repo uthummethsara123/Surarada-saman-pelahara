@@ -63,48 +63,46 @@
       // Global state to sync touch interaction across all tracking entities
       window.galleryState = {
         isUserTouching: false,
-        touchStartPos: 0,
-        deltaX: 0,
+        touchStartX: 0,
+        touchStartY: 0,
+        deltaZ: 0,
         sensitivity: 0.02,
         autoScrollSpeed: 0.015 
       };
 
-      // Helper function to check if the screen layout is horizontal (landscape)
-      function isLandscape() {
-        if (screen.orientation && screen.orientation.type) {
-          return screen.orientation.type.includes('landscape');
-        }
-        return window.innerHeight < window.innerWidth;
-      }
-
-      // Adaptive touch listeners tracking orientation modes
+      // Combined touch detection logic: measures swipe paths over both axes to support landscape
       window.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) {
           window.galleryState.isUserTouching = true;
-          // In landscape mode, track Y axis swipes. In portrait, track X axis swipes.
-          window.galleryState.touchStartPos = isLandscape() ? e.touches[0].clientY : e.touches[0].clientX;
-          window.galleryState.deltaX = 0;
+          window.galleryState.touchStartX = e.touches[0].clientX;
+          window.galleryState.touchStartY = e.touches[0].clientY;
+          window.galleryState.deltaZ = 0;
         }
       });
 
       window.addEventListener('touchmove', (e) => {
         if (e.touches.length === 1 && window.galleryState.isUserTouching) {
-          let currentPos = isLandscape() ? e.touches[0].clientY : e.touches[0].clientX;
+          let currentX = e.touches[0].clientX;
+          let currentY = e.touches[0].clientY;
           
-          // Reverse direction calculation in landscape to maintain natural pulling feel
-          if (isLandscape()) {
-            window.galleryState.deltaX = currentPos - window.galleryState.touchStartPos;
+          let diffX = currentX - window.galleryState.touchStartX;
+          let diffY = currentY - window.galleryState.touchStartY;
+
+          // Determine dominant motion swipe path axis (supports seamless screen rotation)
+          if (Math.abs(diffX) > Math.abs(diffY)) {
+            window.galleryState.deltaZ = diffX;
           } else {
-            window.galleryState.deltaX = currentPos - window.galleryState.touchStartPos;
+            window.galleryState.deltaZ = -diffY; 
           }
-          
-          window.galleryState.touchStartPos = currentPos;
+
+          window.galleryState.touchStartX = currentX;
+          window.galleryState.touchStartY = currentY;
         }
       });
 
       window.addEventListener('touchend', () => {
         window.galleryState.isUserTouching = false;
-        window.galleryState.deltaX = 0;
+        window.galleryState.deltaZ = 0;
       });
 
       // Component attached to every photo to turn it into an independent looping conveyor belt node
@@ -120,7 +118,7 @@
           let currentZ = position.z;
 
           if (window.galleryState.isUserTouching) {
-            currentZ += window.galleryState.deltaX * window.galleryState.sensitivity;
+            currentZ += window.galleryState.deltaZ * window.galleryState.sensitivity;
           } else {
             currentZ -= window.galleryState.autoScrollSpeed;
           }
@@ -136,6 +134,26 @@
             y: position.y,
             z: currentZ
           });
+        }
+      });
+
+      // Component that monitors the physical walking tracking space and restricts it to safe limits
+      AFRAME.registerComponent('bounded-walk', {
+        init: function () {
+          this.maxWalkLimit = 1.8; // Max meters user can step closer to left/right walls
+        },
+        tick: function () {
+          let pos = this.el.getAttribute('position');
+          let clampedX = Math.max(-this.maxWalkLimit, Math.min(this.maxWalkLimit, pos.x));
+          let clampedZ = Math.max(-this.maxWalkLimit, Math.min(this.maxWalkLimit, pos.z));
+
+          if (pos.x !== clampedX || pos.z !== clampedZ) {
+            this.el.setAttribute('position', {
+              x: clampedX,
+              y: pos.y,
+              z: clampedZ
+            });
+          }
         }
       });
     </script>
@@ -175,7 +193,7 @@
       <a-image src="#imgR3" position="3 0 -2.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
       <a-image src="#imgR4" position="3 0 -6.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
 
-      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;"></a-entity>
+      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" bounded-walk></a-entity>
     </a-scene>
 
     <script>
