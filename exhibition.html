@@ -378,39 +378,52 @@
         overlayDesc.innerHTML = "• <b>Look Around:</b> Click and drag with your <u>Left Mouse Button</u>.<br>• <b>Scroll Photos:</b> Click and hold your <u>Right Mouse Button</u> while dragging your trackpad/mouse left or right.";
       }
 
+      // FUNCTION TO BOOTSTRAP IOS PERMISSIONS
+      function activatePermissions() {
+        // Request Device Motion for iPhone Gyroscope lookup
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+          DeviceOrientationEvent.requestPermission()
+            .then(response => {
+              if (response === 'granted') {
+                console.log("iOS Device Orientation Activated");
+              }
+            })
+            .catch(console.error);
+        }
+
+        // Request Camera
+        navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          } 
+        })
+        .then((stream) => {
+          video.srcObject = stream;
+          let playPromise = video.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(error => console.error("Video stalled:", error));
+          }
+          setTimeout(forceTransparency, 100);
+          setTimeout(forceTransparency, 500);
+        })
+        .catch((err) => {
+          console.error("Camera error:", err);
+          alert("Could not access camera. Make sure your browser settings allow camera permissions for this domain over HTTPS.");
+        });
+      }
+
       startBtn.addEventListener('click', () => {
         overlay.style.display = 'none';
 
         if (isMobile) {
           forceTransparency();
-          
-          // Make camera container visible cleanly on mobile before loading stream so iOS allows execution
           video.style.opacity = "1";
           video.style.visibility = "visible";
-
-          navigator.mediaDevices.getUserMedia({ 
-            video: { 
-              facingMode: 'environment',
-              width: { ideal: 1280 },
-              height: { ideal: 720 }
-            } 
-          })
-          .then((stream) => {
-            video.srcObject = stream;
-            // Explicitly handling play callback to verify iOS initialization complete
-            let playPromise = video.play();
-            if (playPromise !== undefined) {
-              playPromise.catch(error => {
-                console.error("iOS Video playback integration stalled:", error);
-              });
-            }
-            setTimeout(forceTransparency, 100);
-            setTimeout(forceTransparency, 500);
-          })
-          .catch((err) => {
-            console.error("Camera error:", err);
-            alert("Could not access camera. Please check your system settings or run over HTTPS.");
-          });
+          
+          // Fire mobile sensor pipeline safely inside click handler
+          activatePermissions();
         } else {
           observer.disconnect(); 
           video.style.opacity = "0";
