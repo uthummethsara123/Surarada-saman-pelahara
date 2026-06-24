@@ -60,14 +60,13 @@
     </style>
 
     <script>
-      // This component handles left/right finger swipes by sliding the camera position slightly.
-      // This keeps your 360 gyro rotation perfectly intact without breaking.
-      AFRAME.registerComponent('bounded-touch-translate', {
+      // Custom component that safely handles finger swipe offsets on the outer rig
+      AFRAME.registerComponent('bounded-touch-pan', {
         init: function () {
           this.touchStartX = 0;
-          this.currentZOffset = 0;
-          this.sensitivity = 0.01; // Adjust touch sliding speed
-          this.moveLimit = 3.5;    // Limits how far down the wall you can pan
+          this.touchYawOffset = 0;
+          this.sensitivity = 0.4; // Responsive pan speed
+          this.yawLimit = 45;      // Restricts local swipe panning limits 
 
           window.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
@@ -80,14 +79,16 @@
               let deltaX = e.touches[0].clientX - this.touchStartX;
               this.touchStartX = e.touches[0].clientX;
 
-              // Slide forward/backward along the gallery space line
-              this.currentZOffset += deltaX * this.sensitivity;
-              this.currentZOffset = Math.max(-this.moveLimit, Math.min(this.moveLimit, this.currentZOffset));
+              this.touchYawOffset += deltaX * this.sensitivity;
               
-              this.el.setAttribute('position', {
+              // Hard limit local touch dragging so it doesn't spin freely
+              this.touchYawOffset = Math.max(-this.yawLimit, Math.min(this.yawLimit, this.touchYawOffset));
+              
+              // Update the Rig's rotation, leaving the internal camera free to track 360
+              this.el.setAttribute('rotation', {
                 x: 0,
-                y: 0,
-                z: this.currentZOffset
+                y: this.touchYawOffset,
+                z: 0
               });
             }
           });
@@ -120,17 +121,17 @@
         <img id="imgR4" src="/assets/img/2025/m merit (2).jpg" crossorigin="anonymous">
       </a-assets>
 
-      <a-image src="#imgL1" position="-3 0 4.5" rotation="0 90 0" width="2" height="1.5"></a-image>
-      <a-image src="#imgL2" position="-3 0 1.5" rotation="0 90 0" width="2" height="1.5"></a-image>
-      <a-image src="#imgL3" position="-3 0 -1.5" rotation="0 90 0" width="2" height="1.5"></a-image>
-      <a-image src="#imgL4" position="-3 0 -4.5" rotation="0 90 0" width="2" height="1.5"></a-image>
+      <a-image src="#imgL1" position="-3 0  3" rotation="0 90 0" width="3.5" height="2"></a-image>
+      <a-image src="#imgL2" position="-3 0  1" rotation="0 90 0" width="3.5" height="2"></a-image>
+      <a-image src="#imgL3" position="-3 0 -1" rotation="0 90 0" width="3.5" height="2"></a-image>
+      <a-image src="#imgL4" position="-3 0 -3" rotation="0 90 0" width="3.5" height="2"></a-image>
 
-      <a-image src="#imgR1" position="3 0 4.5" rotation="0 -90 0" width="2" height="1.5"></a-image>
-      <a-image src="#imgR2" position="3 0 1.5" rotation="0 -90 0" width="2" height="1.5"></a-image>
-      <a-image src="#imgR3" position="3 0 -1.5" rotation="0 -90 0" width="2" height="1.5"></a-image>
-      <a-image src="#imgR4" position="3 0 -4.5" rotation="0 -90 0" width="2" height="1.5"></a-image>
+      <a-image src="#imgR1" position="3 0  3" rotation="0 -90 0" width="3.5" height="2"></a-image>
+      <a-image src="#imgR2" position="3 0  1" rotation="0 -90 0" width="3.5" height="2"></a-image>
+      <a-image src="#imgR3" position="3 0 -1" rotation="0 -90 0" width="3.5" height="2"></a-image>
+      <a-image src="#imgR4" position="3 0 -3" rotation="0 -90 0" width="3.5" height="2"></a-image>
 
-      <a-entity id="camera-slider-rig" bounded-touch-translate>
+      <a-entity id="camera-rig" bounded-touch-pan>
         <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;"></a-entity>
       </a-entity>
     </a-scene>
@@ -171,6 +172,7 @@
           video.style.display = 'none';
           scene.style.backgroundColor = "#1a1a1a";
           
+          // Fallback touch controls for desktop mouse testing
           const cam = document.querySelector('[camera]');
           if (cam) cam.setAttribute('look-controls', 'touchEnabled: true');
         }
