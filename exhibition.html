@@ -133,33 +133,35 @@
         }
       });
 
-      AFRAME.registerComponent('device-motion-walk', {
-        init: function () {
-          this.maxWalkLimit = 1.8; 
-          this.currentX = 0;
-          this.currentZ = 0;
+AFRAME.registerComponent('device-motion-walk', {
+  init: function () {
+    this.maxWalkLimit = 2.5; // Distance in meters you can physically walk forward or backward
+    this.currentX = 0;
+    this.currentZ = 0;
 
-          if (window.DeviceMotionEvent) {
-            window.addEventListener('devicemotion', (event) => {
-              let acc = event.acceleration;
-              if (!acc || !acc.x || !acc.y) return;
+    if (window.DeviceMotionEvent) {
+      window.addEventListener('devicemotion', (event) => {
+        let acc = event.acceleration;
+        if (!acc || !acc.x || !acc.y) return;
 
-              this.currentX += acc.x * 0.005;
-              this.currentZ -= acc.y * 0.005; 
-            });
-          }
-        },
-        tick: function () {
-          this.currentX = Math.max(-this.maxWalkLimit, Math.min(this.maxWalkLimit, this.currentX));
-          this.currentZ = Math.max(-this.maxWalkLimit, Math.min(this.maxWalkLimit, this.currentZ));
-
-          this.el.setAttribute('position', {
-            x: this.currentX,
-            y: 0,
-            z: this.currentZ
-          });
-        }
+        // X tracks side shifting, Y tracks forward/back tracking pushes
+        this.currentX += acc.x * 0.005;
+        this.currentZ -= acc.y * 0.005; 
       });
+    }
+  },
+  tick: function () {
+    // Keep side-to-side movement tight, but clamp forward/backward (Z-axis) to your specific limit
+    this.currentX = Math.max(-0.5, Math.min(0.5, this.currentX)); 
+    this.currentZ = Math.max(-this.maxWalkLimit, Math.min(this.maxWalkLimit, this.currentZ));
+
+    this.el.setAttribute('position', {
+      x: this.currentX,
+      y: 0,
+      z: this.currentZ
+    });
+  }
+});
     </script>
   </head>
   <body>
