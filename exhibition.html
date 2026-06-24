@@ -17,13 +17,16 @@
         background-color: #000000;
       }
 
-      /* Native video stream collector hidden safely away from rendering tree */
-      #webcam {
+      /* Kept in DOM structure but off-screen so Safari updates frames */
+      #webcam-texture {
         position: absolute;
-        width: 1px;
-        height: 1px;
+        top: 0;
+        left: 0;
+        width: 16px;
+        height: 16px;
         opacity: 0.01;
         pointer-events: none;
+        z-index: -10;
       }
 
       #overlay {
@@ -317,12 +320,10 @@
       </div>
     </div>
 
-    <video id="webcam" autoplay playsinline muted loop></video>
+    <video id="webcam-texture" autoplay playsinline muted loop></video>
 
     <a-scene vr-mode-ui="enabled: false" embedded renderer="colorManagement: true;" gallery-loader>
-      <a-assets>
-        <video id="webcam-texture" autoplay playsinline muted loop></video>
-      </a-assets>
+      <a-assets></a-assets>
 
       <a-sky id="ar-bg" color="#1a1a1a" rotation="0 90 0"></a-sky>
 
@@ -330,7 +331,6 @@
     </a-scene>
 
     <script>
-      const video = document.getElementById('webcam');
       const textureVideo = document.getElementById('webcam-texture');
       const overlay = document.getElementById('overlay');
       const startBtn = document.getElementById('startBtn');
@@ -351,18 +351,12 @@
       }
 
       function activateMobilePermissions() {
-        // 1. Device Orientation Activation
+        // 1. Device Orientation Access Request
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-          DeviceOrientationEvent.requestPermission()
-            .then(response => {
-              if (response !== 'granted') {
-                console.warn("Motion detection permissions denied.");
-              }
-            })
-            .catch(console.error);
+          DeviceOrientationEvent.requestPermission().catch(console.error);
         }
 
-        // 2. Dual Camera Mapping Pipeline
+        // 2. Access Camera Hardware Loop
         navigator.mediaDevices.getUserMedia({ 
           video: { 
             facingMode: 'environment',
@@ -371,22 +365,20 @@
           } 
         })
         .then((stream) => {
-          // Bind the hardware stream to both components safely
-          video.srcObject = stream;
           textureVideo.srcObject = stream;
-          
-          video.play().catch(e => console.log(e));
-          textureVideo.play().then(() => {
-            // Apply the active webcam canvas directly to the background shell
+
+          // Crucial for iOS: Wait until data has actually loaded down the pipeline before binding texture maps
+          textureVideo.addEventListener('playing', () => {
+            // Force texture initialization inside the operational space
             arBg.removeAttribute('color');
             arBg.setAttribute('src', '#webcam-texture');
-          }).catch(error => {
-            console.error("Texture stream execution stalled:", error);
-          });
+          }, { once: true });
+
+          textureVideo.play().catch(e => console.log("Stream execution failed:", e));
         })
         .catch((err) => {
-          console.error("Camera access failed:", err);
-          alert("Could not pull camera stream. Please check browser settings or verify HTTPS connectivity.");
+          console.error("Camera access denied:", err);
+          alert("Camera initialization failed. Make sure permissions are enabled and you are connected via HTTPS.");
         });
       }
 
