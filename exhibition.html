@@ -74,7 +74,7 @@
       }
     </style>
 
-<script>
+    <script>
       const LIVE_GET_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oGEeijewaNR0t8a5vARJkiuBWpOuMJVcowQdkDdaWGofaar8BRuG88VGGtQ/exec";
 
       window.galleryState = {
@@ -84,7 +84,6 @@
         deltaZ: 0,
         sensitivity: 0.02,
         autoScrollSpeed: 0.015,
-        // Track the running layout depth spans for loop calculations
         leftTrackMaxSpan: 0,
         rightTrackMaxSpan: 0
       };
@@ -157,7 +156,6 @@
           trackSide: { type: 'string', default: 'left' }
         },
         init: function () {
-          // Dynamic parameters get established on layout calculation phase
           this.isInitialized = false;
         },
         setupBounds: function(totalSpan) {
@@ -168,7 +166,6 @@
         },
         tick: function () {
           if (!this.isInitialized) {
-            // Wait until layout calculations map out the track boundaries completely
             let globalSpan = (this.data.trackSide === 'left') ? window.galleryState.leftTrackMaxSpan : window.galleryState.rightTrackMaxSpan;
             if (globalSpan > 0) this.setupBounds(globalSpan);
             return;
@@ -183,7 +180,6 @@
             currentZ -= window.galleryState.autoScrollSpeed;
           }
 
-          // Loop wrapping logic adjusted perfectly to the track depth
           if (currentZ < this.minZ) {
             currentZ += this.totalSpan;
           } else if (currentZ > this.maxZ) {
@@ -239,14 +235,12 @@
                 sceneEl.appendChild(aImg);
               });
 
-              // Track layout processing counters
               let processedCount = 0;
               const totalToProcess = images.length;
 
               function checkProcessingComplete() {
                 processedCount++;
                 if (processedCount === totalToProcess) {
-                  // Both tracks mapped out perfectly! Build calculations and initialize entry sequence
                   arrangeTrackFluidly(leftTrackElements, '-3', '0 90 0', 'left');
                   arrangeTrackFluidly(rightTrackElements, '3', '0 -90 0', 'right');
 
@@ -256,7 +250,6 @@
                 }
               }
 
-              // Listen for image loads to gather original parameters cleanly before layout placement
               [...leftTrackElements, ...rightTrackElements].forEach(obj => {
                 if (obj.asset.complete) {
                   calculateTargetDimensions(obj);
@@ -267,7 +260,6 @@
                     checkProcessingComplete();
                   });
                   obj.asset.addEventListener('error', function() {
-                    // Fallback to standard proportions if image loads break
                     obj.calculatedWidth = 3.2;
                     obj.calculatedHeight = 1.8;
                     checkProcessingComplete();
@@ -297,20 +289,14 @@
 
               function arrangeTrackFluidly(elementsArray, xPos, rotation, sideName) {
                 let currentZAccumulator = 0;
-                let marginBetweenFrames = 0.8; // Uniform structural gap spacing (80cm)
+                let marginBetweenFrames = 0.8;
 
-                // Step 1: Align frames seamlessly next to one another based on true physical widths
                 elementsArray.forEach(obj => {
-                  // Shift spacing forward by half width of the target frame
                   currentZAccumulator += (obj.calculatedWidth / 2);
-                  
                   obj.initialZ = currentZAccumulator;
-                  
-                  // Move pointer forward for next asset position
                   currentZAccumulator += (obj.calculatedWidth / 2) + marginBetweenFrames;
                 });
 
-                // Step 2: Recenter positions around world origin to make background loop wraps perfect
                 let totalSpan = currentZAccumulator;
                 if (sideName === 'left') {
                   window.galleryState.leftTrackMaxSpan = totalSpan;
@@ -345,7 +331,7 @@
 
     <video id="webcam" autoplay playsinline muted></video>
 
-    <a-scene vr-mode-ui="enabled: false" embedded renderer="alpha: true;" gallery-loader>
+    <a-scene vr-mode-ui="enabled: false" embedded renderer="alpha: true; colorManagement: true;" gallery-loader>
       <a-assets>
         </a-assets>
 
@@ -384,10 +370,9 @@
           })
           .catch((err) => {
             console.error("Camera connection dropped:", err);
-            alert("Could not access the camera background stream. Make sure your local setup is deployment-tested using secure HTTPS protocols.");
+            alert("Could not access the camera background stream. Make sure your setup runs over an HTTPS protocol connection.");
           });
         } else {
-          // Laptop configurations skip hardware permissions entirely and serve fallback layout blocks
           video.style.display = 'none';
           scene.style.backgroundColor = "#1a1a1a";
           
