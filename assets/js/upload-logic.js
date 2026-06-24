@@ -1,62 +1,5 @@
 const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oGEeijewaNR0t8a5vARJkiuBWpOuMJVcowQdkDdaWGofaar8BRuG88VGGtQ/exec";
 
-/**
- * HIGH-PERFORMANCE CHUNKED STREAM TRANSMITTER
- * Splits a completely untouched file into smaller sequential byte segments 
- * to speed up transmission times to Google Apps Script.
- */
-async function uploadFileInChunks(file, metadata, feedbackElement) {
-    const CHUNK_SIZE = 250 * 1024; // 250KB chunks for optimal Google Apps Script ingestion
-    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-    
-    // Generate a unique transmission ID for this specific file session
-    const fileToken = "FILE_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
-
-    for (let currentChunk = 0; currentChunk < totalChunks; currentChunk++) {
-        const startIdx = currentChunk * CHUNK_SIZE;
-        const endIdx = Math.min(file.size, startIdx + CHUNK_SIZE);
-        const fileSlice = file.slice(startIdx, endIdx);
-
-        // Convert only the slice chunk to Base64
-        const chunkBase64 = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result.split(',')[1]);
-            reader.onerror = (err) => reject(err);
-            reader.readAsDataURL(fileSlice);
-        });
-
-        if (feedbackElement) {
-            feedbackElement.innerText = `Streaming "${metadata.rawTitle}" (${Math.round((currentChunk / totalChunks) * 100)}% complete)...`;
-        }
-
-        // Build the piece payload package
-        const chunkPayload = {
-            action: "submitUploadChunk",
-            fileToken: fileToken,
-            chunkIndex: currentChunk,
-            totalChunks: totalChunks,
-            filename: metadata.filename,
-            mimeType: file.type,
-            category: metadata.category,
-            rawTitle: metadata.rawTitle,
-            participantEmail: metadata.participantEmail,
-            participantName: metadata.participantName,
-            certificateName: metadata.certificateName,
-            schoolName: metadata.schoolName,
-            competitionScope: metadata.competitionScope,
-            bytes: chunkBase64
-        };
-
-        // Dispatch chunk block immediately 
-        await fetch(SUBMISSION_API_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(chunkPayload)
-        });
-    }
-}
-
 document.addEventListener("DOMContentLoaded", () => {
     const uploadForm = document.getElementById('uploadForm');
     const uploadDashboard = document.getElementById('uploadSubmittedDashboard');
@@ -127,13 +70,29 @@ document.addEventListener("DOMContentLoaded", () => {
             const participantName = document.getElementById('participantName').value.trim();
             const schoolName = document.getElementById('schoolName').value.trim(); 
             const competitionScope = document.getElementById('competitionScope').value;
-            const certificateName = document.getElementById('certificateName').value.trim();
 
             submitBtn.disabled = true;
-            submitBtn.innerText = "Initiating Stream Transmission...";
-            feedback.className = "text-center mt-3 text-warning fw-bold";
-            feedback.innerText = "Preparing untouched source files...";
+            submitBtn.innerText = "Uploading images... Please wait...";
+            feedback.className = "text-center mt-3 text-warning";
+            feedback.innerText = "Processing submission...";
             feedback.classList.remove('d-none');
+
+const payload = {
+    action: "submitUpload",
+    participantEmail: participantEmail,
+    participantName: participantName,
+    certificateName: document.getElementById('certificateName').value.trim(), // ADD THIS LINE
+    schoolName: schoolName,
+    competitionScope: competitionScope,
+    files: []
+};
+
+            const toBase64 = file => new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
 
             const fileInputs = document.querySelectorAll('.preview-trigger');
             
@@ -142,34 +101,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 for (let input of fileInputs) {
                     if (input.files.length > 0) {
-                        const file = input.files[0]; // The untouched original file object
+                        const file = input.files[0];
+                        const base64Str = await toBase64(file);
                         
                         const customTitleInput = document.getElementById("title_" + input.name);
                         let finalizedTitle = customTitleInput && customTitleInput.value.trim() ? customTitleInput.value.trim() : "untitled";
                         
                         finalizedTitle = finalizedTitle.replace(/[^a-zA-Z0-9_\-\s]/g, "");
                         const cleanRawTitleForSheet = finalizedTitle;
-                        const originalExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-                        finalizedTitle += originalExtension;
+                        const extension = file.name.substring(file.name.lastIndexOf('.')) || ".jpg";
+                        finalizedTitle += extension;
 
-                        const fileMetadata = {
+                        payload.files.push({
                             category: input.name.split('_')[0],
                             rawTitle: cleanRawTitleForSheet.replace(/\s+/g, "_"), 
                             filename: `${safeName}_${input.name}_${finalizedTitle.replace(/\s+/g, "_")}`,
-                            participantEmail: participantEmail,
-                            participantName: participantName,
-                            certificateName: certificateName,
-                            schoolName: schoolName,
-                            competitionScope: competitionScope
-                        };
-
-                        // Stream the original file chunk by chunk without any edits
-                        await uploadFileInChunks(file, fileMetadata, feedback);
+                            mimeType: file.type,
+                            bytes: base64Str
+                        });
                     }
                 }
 
-                feedback.innerText = "Finalizing secure portfolio assembly...";
+                feedback.innerText = "submitting portfolio to Google Drive storage...";
 
+                // Restored to working 'no-cors' setup
+                await fetch(SUBMISSION_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                
+                // Cache info locally safely
                 localStorage.setItem("submittedUploadEmail", participantEmail);
                 localStorage.setItem("submittedUploadName", participantName);
                 
