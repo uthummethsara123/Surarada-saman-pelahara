@@ -60,13 +60,13 @@
     </style>
 
     <script>
-      // Custom component that safely handles finger swipe offsets on the outer rig
+      // Custom component that handles fixed horizontal swipe offsets on the rig object
       AFRAME.registerComponent('bounded-touch-pan', {
         init: function () {
           this.touchStartX = 0;
           this.touchYawOffset = 0;
-          this.sensitivity = 0.4; // Responsive pan speed
-          this.yawLimit = 45;      // Restricts local swipe panning limits 
+          this.sensitivity = 0.5; // High responsiveness for panning
+          this.yawLimit = 45;      // Restricts finger swipe to 45 degrees left or right
 
           window.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
@@ -81,10 +81,10 @@
 
               this.touchYawOffset += deltaX * this.sensitivity;
               
-              // Hard limit local touch dragging so it doesn't spin freely
+              // Hard limit local touch dragging so it stays fixed to left/right scanning
               this.touchYawOffset = Math.max(-this.yawLimit, Math.min(this.yawLimit, this.touchYawOffset));
               
-              // Update the Rig's rotation, leaving the internal camera free to track 360
+              // Updates only the horizontal tracking (Y-axis), leaving the internal gyro display active
               this.el.setAttribute('rotation', {
                 x: 0,
                 y: this.touchYawOffset,
@@ -172,7 +172,6 @@
           video.style.display = 'none';
           scene.style.backgroundColor = "#1a1a1a";
           
-          // Fallback touch controls for desktop mouse testing
           const cam = document.querySelector('[camera]');
           if (cam) cam.setAttribute('look-controls', 'touchEnabled: true');
         }
