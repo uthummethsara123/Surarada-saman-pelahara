@@ -210,11 +210,14 @@ const payload = {
     }
 });
 
-// ==========================================================
-// MARATHON TIMELINE ENGINE
-// ==========================================================
+// ==========================================================================
+// MARATHON TIMELINE ENGINE (WITH DELAYED LOCKOUT FOR ACTIVE SUBMISSIONS)
+// ==========================================================================
 const START_DATE = new Date("2026-06-24T18:00:00").getTime();
 const DEADLINE_DATE = new Date("2026-06-24T24:00:00").getTime();
+
+// Keep a timestamp flag for when a late submission finishes successfully
+let submissionFinishedTime = null;
 
 const runTimelineEngine = () => {
     const now = new Date().getTime();
@@ -229,11 +232,14 @@ const runTimelineEngine = () => {
     const timerTitle = document.querySelector(".timer-title");
     const submitBtn = document.getElementById('uploadSubmitBtn');
 
-    // Check if an upload operation is actively running right now
+    // 1. Check if the participant is currently in the middle of uploading files
     const isCurrentlyUploading = submitBtn && submitBtn.disabled === true;
 
+    // 2. Check if an active form upload recently finished right at/after the deadline
+    const isWithinFiveSecondGrace = submissionFinishedTime !== null && (now - submissionFinishedTime < 5000);
+
     if (now >= DEADLINE_DATE) {
-        // If they are mid-upload, bypass rendering the closed block layout until the request completes
+        // Condition A: If they are actively streaming/uploading, do not cut them off!
         if (isCurrentlyUploading) {
             if (hoursEl) hoursEl.innerText = "00";
             if (minutesEl) minutesEl.innerText = "00";
@@ -242,9 +248,22 @@ const runTimelineEngine = () => {
                 timerTitle.innerText = "Finishing Upload...";
                 timerTitle.style.color = "#ef4444";
             }
-            return; // Exit early to let the ongoing upload stream finish cleanly
+            return; // Stay out of the closed display view to let the process complete
         }
 
+        // Condition B: If they just finished successfully, let the Dashboard stay up for exactly 5 seconds
+        if (isWithinFiveSecondGrace) {
+            if (hoursEl) hoursEl.innerText = "00";
+            if (minutesEl) minutesEl.innerText = "00";
+            if (secondsEl) secondsEl.innerText = "00";
+            if (timerTitle) {
+                timerTitle.innerText = "Closing Portal...";
+                timerTitle.style.color = "#ef4444";
+            }
+            return; // Wait out the remaining duration of the 5-second grace window
+        }
+
+        // Condition C: Otherwise, completely close out and secure the page layout
         clearInterval(window.timelineInterval);
         
         if (hoursEl) hoursEl.innerText = "00";
