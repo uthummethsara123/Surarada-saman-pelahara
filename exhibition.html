@@ -70,7 +70,7 @@
         autoScrollSpeed: 0.015 
       };
 
-      // Tracks gestures dynamically on both axes to perfectly support landscape rotation
+      // Combined touch detection logic: measures swipe paths over both axes to support landscape
       window.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) {
           window.galleryState.isUserTouching = true;
@@ -88,6 +88,7 @@
           let diffX = currentX - window.galleryState.touchStartX;
           let diffY = currentY - window.galleryState.touchStartY;
 
+          // Determine dominant motion swipe path axis (supports seamless screen rotation)
           if (Math.abs(diffX) > Math.abs(diffY)) {
             window.galleryState.deltaZ = diffX;
           } else {
@@ -104,7 +105,7 @@
         window.galleryState.deltaZ = 0;
       });
 
-      // Individual looping conveyor belt node script for images
+      // Component attached to every photo to turn it into an independent looping conveyor belt node
       AFRAME.registerComponent('conveyor-item', {
         init: function () {
           this.minZ = -8.0;
@@ -136,35 +137,23 @@
         }
       });
 
-      // Custom motion tracking component that captures device acceleration
-      AFRAME.registerComponent('device-motion-walk', {
+      // Component that monitors the physical walking tracking space and restricts it to safe limits
+      AFRAME.registerComponent('bounded-walk', {
         init: function () {
-          this.maxWalkLimit = 1.8; 
-          this.currentX = 0;
-          this.currentZ = 0;
-
-          // Listen directly to the phone's physical hardware acceleration
-          if (window.DeviceMotionEvent) {
-            window.addEventListener('devicemotion', (event) => {
-              let acc = event.acceleration;
-              if (!acc || !acc.x || !acc.y) return;
-
-              // Extract directional movement speed vectors
-              this.currentX += acc.x * 0.005;
-              this.currentZ -= acc.y * 0.005; 
-            });
-          }
+          this.maxWalkLimit = 1.8; // Max meters user can step closer to left/right walls
         },
         tick: function () {
-          // Keep physical movement steps bounded safely within a set threshold
-          this.currentX = Math.max(-this.maxWalkLimit, Math.min(this.maxWalkLimit, this.currentX));
-          this.currentZ = Math.max(-this.maxWalkLimit, Math.min(this.maxWalkLimit, this.currentZ));
+          let pos = this.el.getAttribute('position');
+          let clampedX = Math.max(-this.maxWalkLimit, Math.min(this.maxWalkLimit, pos.x));
+          let clampedZ = Math.max(-this.maxWalkLimit, Math.min(this.maxWalkLimit, pos.z));
 
-          this.el.setAttribute('position', {
-            x: this.currentX,
-            y: 0,
-            z: this.currentZ
-          });
+          if (pos.x !== clampedX || pos.z !== clampedZ) {
+            this.el.setAttribute('position', {
+              x: clampedX,
+              y: pos.y,
+              z: clampedZ
+            });
+          }
         }
       });
     </script>
@@ -174,7 +163,7 @@
     <div id="overlay">
       <div id="overlay-content">
         <h2 id="overlay-title">Virtual Exhibition</h2>
-        <p id="overlay-desc">This experience requires camera and motion access to position the artworks.</p>
+        <p id="overlay-desc">This experience requires camera access to overlay the artworks.</p>
         <button id="startBtn">Enter Exhibition</button>
       </div>
     </div>
@@ -196,7 +185,7 @@
 
       <a-image src="#imgL1" position="-3 0 6.0" rotation="0 90 0" width="3.2" height="1.8" conveyor-item></a-image>
       <a-image src="#imgL2" position="-3 0 2.0" rotation="0 90 0" width="3.2" height="1.8" conveyor-item></a-image>
-      <a-image src="#imgL3" position="-3 0 -2.0" rotation="0 90 0" width="3.2" height="1.8" conveyor-item></a-item>
+      <a-image src="#imgL3" position="-3 0 -2.0" rotation="0 90 0" width="3.2" height="1.8" conveyor-item></a-image>
       <a-image src="#imgL4" position="-3 0 -6.0" rotation="0 90 0" width="3.2" height="1.8" conveyor-item></a-image>
 
       <a-image src="#imgR1" position="3 0 6.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
@@ -204,7 +193,7 @@
       <a-image src="#imgR3" position="3 0 -2.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
       <a-image src="#imgR4" position="3 0 -6.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
 
-      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" device-motion-walk></a-entity>
+      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" bounded-walk></a-entity>
     </a-scene>
 
     <script>
@@ -225,15 +214,6 @@
       }
 
       startBtn.addEventListener('click', () => {
-        // Request official iOS/Android motion permissions if required by security settings
-        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-          DeviceMotionEvent.requestPermission()
-            .then(response => {
-              if (response !== 'granted') console.warn('Motion permission denied');
-            })
-            .catch(console.error);
-        }
-
         overlay.style.display = 'none';
 
         if (isMobile) {
