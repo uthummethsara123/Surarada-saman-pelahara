@@ -14,7 +14,7 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background-color: #121212;
+        background-color: transparent; /* Allows webcam background pass-through */
       }
 
       #webcam {
@@ -24,7 +24,7 @@
         width: 100vw;
         height: 100vh;
         object-fit: cover;
-        z-index: -1;
+        z-index: -2; /* Sends camera view to the lowest visual layer */
       }
 
       #overlay {
@@ -60,7 +60,6 @@
     </style>
 
     <script>
-      // Global state to sync touch interaction across all tracking entities
       window.galleryState = {
         isUserTouching: false,
         touchStartX: 0,
@@ -70,7 +69,6 @@
         autoScrollSpeed: 0.015 
       };
 
-      // Combined touch detection logic: measures swipe paths over both axes to support landscape
       window.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) {
           window.galleryState.isUserTouching = true;
@@ -88,7 +86,6 @@
           let diffX = currentX - window.galleryState.touchStartX;
           let diffY = currentY - window.galleryState.touchStartY;
 
-          // Determine dominant motion swipe path axis (supports seamless screen rotation)
           if (Math.abs(diffX) > Math.abs(diffY)) {
             window.galleryState.deltaZ = diffX;
           } else {
@@ -105,7 +102,6 @@
         window.galleryState.deltaZ = 0;
       });
 
-      // Component attached to every photo to turn it into an independent looping conveyor belt node
       AFRAME.registerComponent('conveyor-item', {
         init: function () {
           this.minZ = -8.0;
@@ -137,23 +133,31 @@
         }
       });
 
-      // Component that monitors the physical walking tracking space and restricts it to safe limits
-      AFRAME.registerComponent('bounded-walk', {
+      AFRAME.registerComponent('device-motion-walk', {
         init: function () {
-          this.maxWalkLimit = 1.8; // Max meters user can step closer to left/right walls
-        },
-        tick: function () {
-          let pos = this.el.getAttribute('position');
-          let clampedX = Math.max(-this.maxWalkLimit, Math.min(this.maxWalkLimit, pos.x));
-          let clampedZ = Math.max(-this.maxWalkLimit, Math.min(this.maxWalkLimit, pos.z));
+          this.maxWalkLimit = 1.8; 
+          this.currentX = 0;
+          this.currentZ = 0;
 
-          if (pos.x !== clampedX || pos.z !== clampedZ) {
-            this.el.setAttribute('position', {
-              x: clampedX,
-              y: pos.y,
-              z: clampedZ
+          if (window.DeviceMotionEvent) {
+            window.addEventListener('devicemotion', (event) => {
+              let acc = event.acceleration;
+              if (!acc || !acc.x || !acc.y) return;
+
+              this.currentX += acc.x * 0.005;
+              this.currentZ -= acc.y * 0.005; 
             });
           }
+        },
+        tick: function () {
+          this.currentX = Math.max(-this.maxWalkLimit, Math.min(this.maxWalkLimit, this.currentX));
+          this.currentZ = Math.max(-this.maxWalkLimit, Math.min(this.maxWalkLimit, this.currentZ));
+
+          this.el.setAttribute('position', {
+            x: this.currentX,
+            y: 0,
+            z: this.currentZ
+          });
         }
       });
     </script>
@@ -163,7 +167,7 @@
     <div id="overlay">
       <div id="overlay-content">
         <h2 id="overlay-title">Virtual Exhibition</h2>
-        <p id="overlay-desc">This experience requires camera access to overlay the artworks.</p>
+        <p id="overlay-desc">This experience requires camera and motion access to position the artworks.</p>
         <button id="startBtn">Enter Exhibition</button>
       </div>
     </div>
@@ -193,7 +197,7 @@
       <a-image src="#imgR3" position="3 0 -2.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
       <a-image src="#imgR4" position="3 0 -6.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
 
-      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" bounded-walk></a-entity>
+      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" device-motion-walk></a-entity>
     </a-scene>
 
     <script>
@@ -214,6 +218,14 @@
       }
 
       startBtn.addEventListener('click', () => {
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+          DeviceMotionEvent.requestPermission()
+            .then(response => {
+              if (response !== 'granted') console.warn('Motion permission denied');
+            })
+            .catch(console.error);
+        }
+
         overlay.style.display = 'none';
 
         if (isMobile) {
