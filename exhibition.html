@@ -14,18 +14,25 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background-color: #1a1a1a;
+        background-color: transparent !important;
       }
 
-      #webcam-texture {
-        position: absolute;
+      /* Native hardware camera stream positioned perfectly flat in the background */
+      #webcam-video {
+        position: fixed;
         top: 0;
         left: 0;
-        width: 16px;
-        height: 16px;
-        opacity: 0.01;
-        pointer-events: none;
-        z-index: -10;
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+        z-index: -1;
+        display: none; /* Controlled by JS once stream activates */
+      }
+
+      /* Forces WebGL canvases to remain transparent */
+      a-scene, .a-canvas {
+        background-color: transparent !important;
+        background: transparent !important;
       }
 
       #overlay {
@@ -187,6 +194,14 @@
           const assetsEl = document.querySelector('a-assets');
           const startBtn = document.getElementById('startBtn');
 
+          // Explicitly command the internal WebGL instance to accept alpha transparent pipelines
+          sceneEl.addEventListener('render-target-loaded', () => {
+            if (sceneEl.renderer) {
+              sceneEl.renderer.setClearColor(0x000000, 0);
+              sceneEl.renderer.alpha = true;
+            }
+          });
+
           startBtn.disabled = true;
           startBtn.innerText = "Connecting Live Feed...";
 
@@ -319,34 +334,39 @@
       </div>
     </div>
 
-    <video id="webcam-texture" autoplay playsinline muted loop></video>
+    <video id="webcam-video" autoplay playsinline muted loop></video>
 
-    <a-scene vr-mode-ui="enabled: false" embedded renderer="colorManagement: true;" gallery-loader>
+    <a-scene vr-mode-ui="enabled: false" embedded renderer="alpha: true; colorManagement: true;" gallery-loader>
       <a-assets></a-assets>
 
-      <a-sky color="#1a1a1a"></a-sky>
-
-      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" position="0 0 0">
-        <a-plane id="ar-bg-plane" 
-                 position="0 0 -20" 
-                 width="45" 
-                 height="25" 
-                 material="shader: flat; color: #1a1a1a; side: double;"
-                 visible="false">
-        </a-plane>
-      </a-entity>
+      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" position="0 0 0"></a-entity>
     </a-scene>
 
     <script>
-      const textureVideo = document.getElementById('webcam-texture');
+      const nativeVideo = document.getElementById('webcam-video');
       const overlay = document.getElementById('overlay');
       const startBtn = document.getElementById('startBtn');
-      const arBgPlane = document.getElementById('ar-bg-plane');
+      const scene = document.querySelector('a-scene');
       
       const overlayTitle = document.getElementById('overlay-title');
       const overlayDesc = document.getElementById('overlay-desc');
 
       const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+
+      // DOM Transparency Enforcement Routine
+      const forceSceneClearTransparency = () => {
+        if (scene) {
+          scene.style.backgroundColor = "transparent";
+          scene.style.background = "transparent";
+        }
+        document.querySelectorAll('.a-canvas').forEach(canvas => {
+          canvas.style.backgroundColor = "transparent";
+          canvas.style.background = "transparent";
+        });
+        if (scene && scene.renderer) {
+          scene.renderer.setClearColor(0x000000, 0);
+        }
+      };
 
       if (isMobile) {
         overlayTitle.innerText = "Mobile Exhibition Guide";
@@ -369,19 +389,19 @@
           } 
         })
         .then((stream) => {
-          textureVideo.srcObject = stream;
-
-          textureVideo.addEventListener('playing', () => {
-            // Unhide the camera background plane and map the live hardware stream to it smoothly
-            arBgPlane.setAttribute('visible', 'true');
-            arBgPlane.setAttribute('src', '#webcam-texture');
+          nativeVideo.srcObject = stream;
+          
+          nativeVideo.addEventListener('playing', () => {
+            forceSceneClearTransparency();
+            // Display the regular, flat native video background element
+            nativeVideo.style.display = "block";
           }, { once: true });
 
-          textureVideo.play().catch(e => console.log(e));
+          nativeVideo.play().catch(e => console.log(e));
         })
         .catch((err) => {
           console.error("Camera access denied:", err);
-          alert("Camera initialization failed. Make sure your browser settings allow camera permission.");
+          alert("Camera initialization failed. Please verify browser options.");
         });
       }
 
@@ -389,8 +409,10 @@
         overlay.style.display = 'none';
 
         if (isMobile) {
+          forceSceneClearTransparency();
           activateMobilePermissions();
         } else {
+          if (scene) scene.style.backgroundColor = "#1a1a1a";
           const cam = document.querySelector('[camera]');
           if (cam) cam.setAttribute('look-controls', 'touchEnabled: true');
         }
