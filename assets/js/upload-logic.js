@@ -132,20 +132,23 @@ const payload = {
                     body: JSON.stringify(payload)
                 });
                 
-                // Cache info locally safely
+                // ... inside your uploadForm submit logic, right after fetch completes successfully:
                 localStorage.setItem("submittedUploadEmail", participantEmail);
                 localStorage.setItem("submittedUploadName", participantName);
-                
+
                 uploadForm.reset();
                 document.querySelectorAll('.preview-control-box').forEach(box => box.classList.add('d-none'));
                 document.querySelectorAll('.preview-trigger').forEach(inp => inp.classList.remove('d-none'));
-                
+
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Upload & Submit Portfolio";
                 feedback.classList.add('d-none');
 
                 uploadForm.classList.add("d-none");
                 uploadDashboard.classList.remove("d-none");
+
+                // START THE 5-SECOND COUNTDOWN GRACE PERIOD FOR THE TIMELINE NOW:
+                submissionFinishedTime = new Date().getTime();
 
             } catch (err) {
                 console.error(err);
