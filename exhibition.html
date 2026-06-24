@@ -66,7 +66,7 @@
           this.touchStartX = 0;
           this.touchYawOffset = 0;
           this.sensitivity = 0.4; // Responsive pan speed
-          this.yawLimit = 45;      // Restricts local swipe panning limits 
+          this.yawLimit = 100;      // Restricts local swipe panning limits 
 
           window.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
@@ -121,15 +121,15 @@
         <img id="imgR4" src="/assets/img/2025/m merit (2).jpg" crossorigin="anonymous">
       </a-assets>
 
-      <a-image src="#imgL1" position="-3 0  3" rotation="0 90 0" width="3.5" height="2"></a-image>
-      <a-image src="#imgL2" position="-3 0  1" rotation="0 90 0" width="3.5" height="2"></a-image>
-      <a-image src="#imgL3" position="-3 0 -1" rotation="0 90 0" width="3.5" height="2"></a-image>
-      <a-image src="#imgL4" position="-3 0 -3" rotation="0 90 0" width="3.5" height="2"></a-image>
+      <a-image src="#imgL1" position="-3 0  3" rotation="0 90 0" width="3.2" height="1.8"></a-image>
+      <a-image src="#imgL2" position="-3 0  1" rotation="0 90 0" width="3.2" height="1.8"></a-image>
+      <a-image src="#imgL3" position="-3 0 -1" rotation="0 90 0" width="3.2" height="1.8"></a-image>
+      <a-image src="#imgL4" position="-3 0 -3" rotation="0 90 0" width="3.2" height="1.8"></a-image>
 
-      <a-image src="#imgR1" position="3 0  3" rotation="0 -90 0" width="3.5" height="2"></a-image>
-      <a-image src="#imgR2" position="3 0  1" rotation="0 -90 0" width="3.5" height="2"></a-image>
-      <a-image src="#imgR3" position="3 0 -1" rotation="0 -90 0" width="3.5" height="2"></a-image>
-      <a-image src="#imgR4" position="3 0 -3" rotation="0 -90 0" width="3.5" height="2"></a-image>
+      <a-image src="#imgR1" position="3 0  3" rotation="0 -90 0" width="3.2" height="1.8"></a-image>
+      <a-image src="#imgR2" position="3 0  1" rotation="0 -90 0" width="3.2" height="1.8"></a-image>
+      <a-image src="#imgR3" position="3 0 -1" rotation="0 -90 0" width="3.2" height="1.8"></a-image>
+      <a-image src="#imgR4" position="3 0 -3" rotation="0 -90 0" width="3.2" height="1.8"></a-image>
 
       <a-entity id="camera-rig" bounded-touch-pan>
         <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;"></a-entity>
