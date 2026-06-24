@@ -60,60 +60,71 @@
     </style>
 
     <script>
-      AFRAME.registerComponent('infinite-touch-scroll', {
+      // Global state to sync touch interaction across all tracking entities
+      window.galleryState = {
+        isUserTouching: false,
+        touchStartX: 0,
+        deltaX: 0,
+        sensitivity: 0.02,
+        autoScrollSpeed: 0.015 // Speed of the conveyor belt loop
+      };
+
+      // Global touch listeners
+      window.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          window.galleryState.isUserTouching = true;
+          window.galleryState.touchStartX = e.touches[0].clientX;
+          window.galleryState.deltaX = 0;
+        }
+      });
+
+      window.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1 && window.galleryState.isUserTouching) {
+          window.galleryState.deltaX = e.touches[0].clientX - window.galleryState.touchStartX;
+          window.galleryState.touchStartX = e.touches[0].clientX;
+        }
+      });
+
+      window.addEventListener('touchend', () => {
+        window.galleryState.isUserTouching = false;
+        window.galleryState.deltaX = 0;
+      });
+
+      // Component attached to every photo to turn it into an independent looping conveyor belt node
+      AFRAME.registerComponent('conveyor-item', {
         init: function () {
-          this.touchStartX = 0;
-          this.currentZOffset = 0;
-          this.sensitivity = 0.02;
-          this.autoScrollSpeed = 0.005; // Base auto-scrolling speed
-          this.isUserTouching = false;
-          
-          // Loop threshold based on our 4-photo layout spacing
-          this.loopThreshold = 8.0; 
-
-          window.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
-              this.isUserTouching = true;
-              this.touchStartX = e.touches[0].clientX;
-            }
-          });
-
-          window.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 1 && this.isUserTouching) {
-              let deltaX = e.touches[0].clientX - this.touchStartX;
-              this.touchStartX = e.touches[0].clientX;
-
-              this.currentZOffset += deltaX * this.sensitivity;
-              this.handleLooping();
-            }
-          });
-
-          window.addEventListener('touchend', () => {
-            this.isUserTouching = false;
-          });
-        },
-
-        handleLooping: function () {
-          // Instantly loops the coordinate index once it crosses the threshold boundaries
-          if (this.currentZOffset > this.loopThreshold) {
-            this.currentZOffset = -this.loopThreshold;
-          } else if (this.currentZOffset < -this.loopThreshold) {
-            this.currentZOffset = this.loopThreshold;
-          }
-
-          this.el.setAttribute('position', {
-            x: 0,
-            y: 0,
-            z: this.currentZOffset
-          });
+          // Total span boundaries for 4 items spaced 4 units apart (Total distance = 16)
+          this.minZ = -8.0;
+          this.maxZ = 8.0;
+          this.totalSpan = 16.0;
         },
 
         tick: function () {
-          // If the user isn't interacting, scroll automatically
-          if (!this.isUserTouching) {
-            this.currentZOffset -= this.autoScrollSpeed;
-            this.handleLooping();
+          let position = this.el.getAttribute('position');
+          let currentZ = position.z;
+
+          if (window.galleryState.isUserTouching) {
+            // Apply manual swipe movement
+            currentZ += window.galleryState.deltaX * window.galleryState.sensitivity;
+          } else {
+            // Apply constant automatic crawling movement
+            currentZ -= window.galleryState.autoScrollSpeed;
           }
+
+          // Individual recycling logic: if an image goes past the front edge, wrap it to the back
+          if (currentZ < this.minZ) {
+            currentZ += this.totalSpan;
+          }
+          // If dragged backward past the back edge, wrap it to the front
+          else if (currentZ > this.maxZ) {
+            currentZ -= this.totalSpan;
+          }
+
+          this.el.setAttribute('position', {
+            x: position.x,
+            y: position.y,
+            z: currentZ
+          });
         }
       });
     </script>
@@ -143,19 +154,17 @@
         <img id="imgR4" src="/assets/img/2025/m merit (2).jpg" crossorigin="anonymous">
       </a-assets>
 
-      <a-image src="#imgL1" position="-3 0 6.0" rotation="0 90 0" width="3.2" height="1.8"></a-image>
-      <a-image src="#imgL2" position="-3 0 2.0" rotation="0 90 0" width="3.2" height="1.8"></a-image>
-      <a-image src="#imgL3" position="-3 0 -2.0" rotation="0 90 0" width="3.2" height="1.8"></a-image>
-      <a-image src="#imgL4" position="-3 0 -6.0" rotation="0 90 0" width="3.2" height="1.8"></a-image>
+      <a-image src="#imgL1" position="-3 0 6.0" rotation="0 90 0" width="3.2" height="1.8" conveyor-item></a-image>
+      <a-image src="#imgL2" position="-3 0 2.0" rotation="0 90 0" width="3.2" height="1.8" conveyor-item></a-image>
+      <a-image src="#imgL3" position="-3 0 -2.0" rotation="0 90 0" width="3.2" height="1.8" conveyor-item></a-image>
+      <a-image src="#imgL4" position="-3 0 -6.0" rotation="0 90 0" width="3.2" height="1.8" conveyor-item></a-image>
 
-      <a-image src="#imgR1" position="3 0 6.0" rotation="0 -90 0" width="3.2" height="1.8"></a-image>
-      <a-image src="#imgR2" position="3 0 2.0" rotation="0 -90 0" width="3.2" height="1.8"></a-image>
-      <a-image src="#imgR3" position="3 0 -2.0" rotation="0 -90 0" width="3.2" height="1.8"></a-image>
-      <a-image src="#imgR4" position="3 0 -6.0" rotation="0 -90 0" width="3.2" height="1.8"></a-image>
+      <a-image src="#imgR1" position="3 0 6.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
+      <a-image src="#imgR2" position="3 0 2.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
+      <a-image src="#imgR3" position="3 0 -2.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
+      <a-image src="#imgR4" position="3 0 -6.0" rotation="0 -90 0" width="3.2" height="1.8" conveyor-item></a-image>
 
-      <a-entity id="camera-slider-rig" infinite-touch-scroll>
-        <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;"></a-entity>
-      </a-entity>
+      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;"></a-entity>
     </a-scene>
 
     <script>
