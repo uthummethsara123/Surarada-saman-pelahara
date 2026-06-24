@@ -26,7 +26,7 @@
         height: 100vh;
         object-fit: cover;
         z-index: -1;
-        display: none; /* Controlled by JS once stream activates */
+        display: none;
       }
 
       /* Forces WebGL canvases to remain transparent */
@@ -194,7 +194,6 @@
           const assetsEl = document.querySelector('a-assets');
           const startBtn = document.getElementById('startBtn');
 
-          // Explicitly command the internal WebGL instance to accept alpha transparent pipelines
           sceneEl.addEventListener('render-target-loaded', () => {
             if (sceneEl.renderer) {
               sceneEl.renderer.setClearColor(0x000000, 0);
@@ -338,7 +337,7 @@
 
     <a-scene vr-mode-ui="enabled: false" embedded renderer="alpha: true; colorManagement: true;" gallery-loader>
       <a-assets>
-        <img id="logo-img" src="/assets/img/logo.png" crossorigin="anonymous">
+        <img id="logo-img" src="assets/img/logo.png" crossorigin="anonymous">
       </a-assets>
 
       <a-image src="#logo-img" position="0 0 -2" width="1.5" height="1.5" material="side: double; transparent: true;"></a-image>
@@ -357,7 +356,6 @@
 
       const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
-      // DOM Transparency Enforcement Routine
       const forceSceneClearTransparency = () => {
         if (scene) {
           scene.style.backgroundColor = "transparent";
