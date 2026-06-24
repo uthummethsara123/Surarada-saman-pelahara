@@ -69,6 +69,7 @@
         autoScrollSpeed: 0.015 
       };
 
+      // --- MOBILE TOUCH CONTROLS ---
       window.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) {
           window.galleryState.isUserTouching = true;
@@ -80,20 +81,7 @@
 
       window.addEventListener('touchmove', (e) => {
         if (e.touches.length === 1 && window.galleryState.isUserTouching) {
-          let currentX = e.touches[0].clientX;
-          let currentY = e.touches[0].clientY;
-          
-          let diffX = currentX - window.galleryState.touchStartX;
-          let diffY = currentY - window.galleryState.touchStartY;
-
-          if (Math.abs(diffX) > Math.abs(diffY)) {
-            window.galleryState.deltaZ = diffX;
-          } else {
-            window.galleryState.deltaZ = -diffY; 
-          }
-
-          window.galleryState.touchStartX = currentX;
-          window.galleryState.touchStartY = currentY;
+          handleInteractionMove(e.touches[0].clientX, e.touches[0].clientY);
         }
       });
 
@@ -101,6 +89,50 @@
         window.galleryState.isUserTouching = false;
         window.galleryState.deltaZ = 0;
       });
+
+      // --- LAPTOP RIGHT-CLICK CONTROLS ---
+      window.addEventListener('mousedown', (e) => {
+        // e.button === 2 explicitly checks for the Right Mouse Button click
+        if (e.button === 2) {
+          window.galleryState.isUserTouching = true;
+          window.galleryState.touchStartX = e.clientX;
+          window.galleryState.touchStartY = e.clientY;
+          window.galleryState.deltaZ = 0;
+        }
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (window.galleryState.isUserTouching) {
+          handleInteractionMove(e.clientX, e.clientY);
+        }
+      });
+
+      window.addEventListener('mouseup', (e) => {
+        if (e.button === 2) {
+          window.galleryState.isUserTouching = false;
+          window.galleryState.deltaZ = 0;
+        }
+      });
+
+      // Suppress standard right-click context menu popup so it doesn't get in the way
+      window.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+      });
+
+      // Unified calculation handler for delta tracking
+      function handleInteractionMove(currentX, currentY) {
+        let diffX = currentX - window.galleryState.touchStartX;
+        let diffY = currentY - window.galleryState.touchStartY;
+
+        if (Math.abs(diffX) > Math.abs(diffY)) {
+          window.galleryState.deltaZ = diffX;
+        } else {
+          window.galleryState.deltaZ = -diffY; 
+        }
+
+        window.galleryState.touchStartX = currentX;
+        window.galleryState.touchStartY = currentY;
+      }
 
       AFRAME.registerComponent('conveyor-item', {
         init: function () {
@@ -185,7 +217,7 @@
 
       if (!isMobile) {
         overlayTitle.innerText = "Mobile Phone Recommended";
-        overlayDesc.innerHTML = "For the best experience, please open this link on your mobile phone.<br><br>You can still enter on desktop by dragging your mouse to look around.";
+        overlayDesc.innerHTML = "For the best experience, please open this link on your mobile phone.<br><br>On desktop, right-click and hold your mouse button to drag/scroll through photos while looking around.";
         startBtn.innerText = "Continue anyway";
       }
 
