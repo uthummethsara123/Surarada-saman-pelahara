@@ -17,13 +17,12 @@
         background-color: transparent !important;
       }
 
-      /* Guarantees that A-Frame's generated canvas does not apply a background block */
-      a-scene, .a-canvas {
+      /* Forces all layers to remain completely transparent */
+      a-scene, .a-canvas, .a-grabbing {
         background-color: transparent !important;
         background: transparent !important;
       }
 
-      /* Hidden by default, activated only for mobile screens */
       #webcam {
         display: none;
         position: absolute;
@@ -35,7 +34,6 @@
         z-index: -2;
       }
 
-      /* Media Query: Target mobile screens to display the live stream background layout */
       @media (max-width: 767px) {
         #webcam {
           display: block;
@@ -88,7 +86,7 @@
         rightTrackMaxSpan: 0
       };
 
-      // --- MOBILE TOUCH CONTROLS ---
+      // --- TOUCH CONTROLS ---
       window.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) {
           window.galleryState.isUserTouching = true;
@@ -109,7 +107,7 @@
         window.galleryState.deltaZ = 0;
       });
 
-      // --- LAPTOP RIGHT-CLICK CONTROLS ---
+      // --- MOUSE CONTROLS ---
       window.addEventListener('mousedown', (e) => {
         if (e.button === 2) {
           window.galleryState.isUserTouching = true;
@@ -331,7 +329,7 @@
 
     <video id="webcam" autoplay playsinline muted></video>
 
-    <a-scene vr-mode-ui="enabled: false" embedded="true" renderer="alpha: true;" gallery-loader>
+    <a-scene vr-mode-ui="enabled: false" embedded renderer="alpha: true;" gallery-loader>
       <a-assets>
         </a-assets>
 
@@ -349,6 +347,23 @@
 
       const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
+      // DOM ANTI-WHITE BACKGROUND GUARD
+      // This forces transparency whenever A-Frame touches the layout
+      const forceTransparency = () => {
+        if (scene) scene.style.backgroundColor = "transparent";
+        const canvases = document.querySelectorAll('.a-canvas');
+        canvases.forEach(c => {
+          c.style.backgroundColor = "transparent";
+          c.style.background = "transparent";
+        });
+      };
+
+      // Watch for runtime styling changes and instantly correct them
+      const observer = new MutationObserver(forceTransparency);
+      observer.observe(document.body, { attributes: true, childList: true, subtree: true });
+      window.addEventListener('DOMContentLoaded', forceTransparency);
+      window.addEventListener('load', forceTransparency);
+
       if (isMobile) {
         overlayTitle.innerText = "Mobile Exhibition Guide";
         overlayDesc.innerHTML = "• Move your phone to look around the space.<br>• Swipe your finger left/right to scroll the conveyor belt photos manually.<br><br>Camera and motion permissions are required to blend the art with your surroundings.";
@@ -361,18 +376,22 @@
         overlay.style.display = 'none';
 
         if (isMobile) {
+          forceTransparency();
           navigator.mediaDevices.getUserMedia({ 
             video: { facingMode: 'environment' } 
           })
           .then((stream) => {
             video.srcObject = stream;
             video.play();
+            setTimeout(forceTransparency, 100);
+            setTimeout(forceTransparency, 500);
           })
           .catch((err) => {
             console.error("Camera error:", err);
             alert("Could not access camera. Please check permissions or run via HTTPS.");
           });
         } else {
+          observer.disconnect(); // Turn off filter on desktops
           video.style.display = 'none';
           scene.style.backgroundColor = "#1a1a1a";
           
