@@ -227,8 +227,24 @@ const runTimelineEngine = () => {
     const feedback = document.getElementById("uploadFeedback");
     const countdownContainer = document.querySelector(".countdown-container");
     const timerTitle = document.querySelector(".timer-title");
+    const submitBtn = document.getElementById('uploadSubmitBtn');
+
+    // Check if an upload operation is actively running right now
+    const isCurrentlyUploading = submitBtn && submitBtn.disabled === true;
 
     if (now >= DEADLINE_DATE) {
+        // If they are mid-upload, bypass rendering the closed block layout until the request completes
+        if (isCurrentlyUploading) {
+            if (hoursEl) hoursEl.innerText = "00";
+            if (minutesEl) minutesEl.innerText = "00";
+            if (secondsEl) secondsEl.innerText = "00";
+            if (timerTitle) {
+                timerTitle.innerText = "Finishing Upload...";
+                timerTitle.style.color = "#ef4444";
+            }
+            return; // Exit early to let the ongoing upload stream finish cleanly
+        }
+
         clearInterval(window.timelineInterval);
         
         if (hoursEl) hoursEl.innerText = "00";
