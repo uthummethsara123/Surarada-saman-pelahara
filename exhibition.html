@@ -63,25 +63,42 @@
       // Global state to sync touch interaction across all tracking entities
       window.galleryState = {
         isUserTouching: false,
-        touchStartX: 0,
+        touchStartPos: 0,
         deltaX: 0,
         sensitivity: 0.02,
-        autoScrollSpeed: 0.015 // Speed of the conveyor belt loop
+        autoScrollSpeed: 0.015 
       };
 
-      // Global touch listeners
+      // Helper function to check if the screen layout is horizontal (landscape)
+      function isLandscape() {
+        if (screen.orientation && screen.orientation.type) {
+          return screen.orientation.type.includes('landscape');
+        }
+        return window.innerHeight < window.innerWidth;
+      }
+
+      // Adaptive touch listeners tracking orientation modes
       window.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) {
           window.galleryState.isUserTouching = true;
-          window.galleryState.touchStartX = e.touches[0].clientX;
+          // In landscape mode, track Y axis swipes. In portrait, track X axis swipes.
+          window.galleryState.touchStartPos = isLandscape() ? e.touches[0].clientY : e.touches[0].clientX;
           window.galleryState.deltaX = 0;
         }
       });
 
       window.addEventListener('touchmove', (e) => {
         if (e.touches.length === 1 && window.galleryState.isUserTouching) {
-          window.galleryState.deltaX = e.touches[0].clientX - window.galleryState.touchStartX;
-          window.galleryState.touchStartX = e.touches[0].clientX;
+          let currentPos = isLandscape() ? e.touches[0].clientY : e.touches[0].clientX;
+          
+          // Reverse direction calculation in landscape to maintain natural pulling feel
+          if (isLandscape()) {
+            window.galleryState.deltaX = currentPos - window.galleryState.touchStartPos;
+          } else {
+            window.galleryState.deltaX = currentPos - window.galleryState.touchStartPos;
+          }
+          
+          window.galleryState.touchStartPos = currentPos;
         }
       });
 
@@ -93,7 +110,6 @@
       // Component attached to every photo to turn it into an independent looping conveyor belt node
       AFRAME.registerComponent('conveyor-item', {
         init: function () {
-          // Total span boundaries for 4 items spaced 4 units apart (Total distance = 16)
           this.minZ = -8.0;
           this.maxZ = 8.0;
           this.totalSpan = 16.0;
@@ -104,19 +120,14 @@
           let currentZ = position.z;
 
           if (window.galleryState.isUserTouching) {
-            // Apply manual swipe movement
             currentZ += window.galleryState.deltaX * window.galleryState.sensitivity;
           } else {
-            // Apply constant automatic crawling movement
             currentZ -= window.galleryState.autoScrollSpeed;
           }
 
-          // Individual recycling logic: if an image goes past the front edge, wrap it to the back
           if (currentZ < this.minZ) {
             currentZ += this.totalSpan;
-          }
-          // If dragged backward past the back edge, wrap it to the front
-          else if (currentZ > this.maxZ) {
+          } else if (currentZ > this.maxZ) {
             currentZ -= this.totalSpan;
           }
 
@@ -180,7 +191,7 @@
 
       if (!isMobile) {
         overlayTitle.innerText = "Mobile Phone Recommended";
-        overlayDesc.innerHTML = "For the best experience, please open this link on your mobile phone to look around using your device camera.<br><br>You can still enter on desktop by dragging your mouse to look around.";
+        overlayDesc.innerHTML = "For the best experience, please open this link on your mobile phone.<br><br>You can still enter on desktop by dragging your mouse to look around.";
         startBtn.innerText = "Continue anyway";
       }
 
