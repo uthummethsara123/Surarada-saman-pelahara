@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <title>Virtual Exhibition - Live Stream</title>
     
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
@@ -14,30 +14,18 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background-color: transparent !important;
+        background-color: #000000;
       }
 
-      /* Forces all layers to remain completely transparent */
-      a-scene, .a-canvas, .a-grabbing {
-        background-color: transparent !important;
-        background: transparent !important;
-      }
-
-      /* Optimized for iOS: We control visibility via opacity and visibility instead of 'display:none' so iOS allows the video to play */
+      /* Native video stream collector hidden safely away from rendering tree */
       #webcam {
         position: absolute;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        object-fit: cover;
-        z-index: -2;
-        opacity: 0;
-        visibility: hidden;
+        width: 1px;
+        height: 1px;
+        opacity: 0.01;
         pointer-events: none;
       }
 
-      /* Overlay Styles */
       #overlay {
         position: fixed;
         top: 0; left: 0; width: 100%; height: 100%;
@@ -67,6 +55,10 @@
         cursor: pointer;
         font-weight: bold;
         margin-top: 20px;
+      }
+      #startBtn:disabled {
+        background-color: #555;
+        cursor: not-allowed;
       }
     </style>
 
@@ -192,14 +184,6 @@
           const sceneEl = this.el;
           const assetsEl = document.querySelector('a-assets');
           const startBtn = document.getElementById('startBtn');
-
-          // CAMERA TRANSPARENCY FIX
-          sceneEl.addEventListener('render-target-loaded', () => {
-            if (sceneEl.renderer) {
-              sceneEl.renderer.setClearColor(0x000000, 0);
-              sceneEl.renderer.alpha = true;
-            }
-          });
 
           startBtn.disabled = true;
           startBtn.innerText = "Connecting Live Feed...";
@@ -333,42 +317,30 @@
       </div>
     </div>
 
-    <video id="webcam" autoplay playsinline muted></video>
+    <video id="webcam" autoplay playsinline muted loop></video>
 
-    <a-scene vr-mode-ui="enabled: false" embedded renderer="alpha: true; colorManagement: true;" gallery-loader>
-      <a-assets></a-assets>
+    <a-scene vr-mode-ui="enabled: false" embedded renderer="colorManagement: true;" gallery-loader>
+      <a-assets>
+        <video id="webcam-texture" autoplay playsinline muted loop></video>
+      </a-assets>
+
+      <a-sky id="ar-bg" color="#1a1a1a" rotation="0 90 0"></a-sky>
 
       <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" position="0 0 0"></a-entity>
     </a-scene>
 
     <script>
       const video = document.getElementById('webcam');
+      const textureVideo = document.getElementById('webcam-texture');
       const overlay = document.getElementById('overlay');
       const startBtn = document.getElementById('startBtn');
       const scene = document.querySelector('a-scene');
+      const arBg = document.getElementById('ar-bg');
       
       const overlayTitle = document.getElementById('overlay-title');
       const overlayDesc = document.getElementById('overlay-desc');
 
       const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-
-      // DOM ANTI-WHITE BACKGROUND GUARD
-      const forceTransparency = () => {
-        if (scene) scene.style.backgroundColor = "transparent";
-        const canvases = document.querySelectorAll('.a-canvas');
-        canvases.forEach(c => {
-          c.style.backgroundColor = "transparent";
-          c.style.background = "transparent";
-        });
-        if (scene && scene.renderer) {
-          scene.renderer.setClearColor(0x000000, 0);
-        }
-      };
-
-      const observer = new MutationObserver(forceTransparency);
-      observer.observe(document.body, { attributes: true, childList: true, subtree: true });
-      window.addEventListener('DOMContentLoaded', forceTransparency);
-      window.addEventListener('load', forceTransparency);
 
       if (isMobile) {
         overlayTitle.innerText = "Mobile Exhibition Guide";
@@ -378,20 +350,19 @@
         overlayDesc.innerHTML = "• <b>Look Around:</b> Click and drag with your <u>Left Mouse Button</u>.<br>• <b>Scroll Photos:</b> Click and hold your <u>Right Mouse Button</u> while dragging your trackpad/mouse left or right.";
       }
 
-      // FUNCTION TO BOOTSTRAP IOS PERMISSIONS
-      function activatePermissions() {
-        // Request Device Motion for iPhone Gyroscope lookup
+      function activateMobilePermissions() {
+        // 1. Device Orientation Activation
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
           DeviceOrientationEvent.requestPermission()
             .then(response => {
-              if (response === 'granted') {
-                console.log("iOS Device Orientation Activated");
+              if (response !== 'granted') {
+                console.warn("Motion detection permissions denied.");
               }
             })
             .catch(console.error);
         }
 
-        // Request Camera
+        // 2. Dual Camera Mapping Pipeline
         navigator.mediaDevices.getUserMedia({ 
           video: { 
             facingMode: 'environment',
@@ -400,17 +371,22 @@
           } 
         })
         .then((stream) => {
+          // Bind the hardware stream to both components safely
           video.srcObject = stream;
-          let playPromise = video.play();
-          if (playPromise !== undefined) {
-            playPromise.catch(error => console.error("Video stalled:", error));
-          }
-          setTimeout(forceTransparency, 100);
-          setTimeout(forceTransparency, 500);
+          textureVideo.srcObject = stream;
+          
+          video.play().catch(e => console.log(e));
+          textureVideo.play().then(() => {
+            // Apply the active webcam canvas directly to the background shell
+            arBg.removeAttribute('color');
+            arBg.setAttribute('src', '#webcam-texture');
+          }).catch(error => {
+            console.error("Texture stream execution stalled:", error);
+          });
         })
         .catch((err) => {
-          console.error("Camera error:", err);
-          alert("Could not access camera. Make sure your browser settings allow camera permissions for this domain over HTTPS.");
+          console.error("Camera access failed:", err);
+          alert("Could not pull camera stream. Please check browser settings or verify HTTPS connectivity.");
         });
       }
 
@@ -418,18 +394,9 @@
         overlay.style.display = 'none';
 
         if (isMobile) {
-          forceTransparency();
-          video.style.opacity = "1";
-          video.style.visibility = "visible";
-          
-          // Fire mobile sensor pipeline safely inside click handler
-          activatePermissions();
+          activateMobilePermissions();
         } else {
-          observer.disconnect(); 
-          video.style.opacity = "0";
-          video.style.visibility = "hidden";
-          scene.style.backgroundColor = "#1a1a1a";
-          
+          arBg.setAttribute('color', '#1a1a1a');
           const cam = document.querySelector('[camera]');
           if (cam) cam.setAttribute('look-controls', 'touchEnabled: true');
         }
