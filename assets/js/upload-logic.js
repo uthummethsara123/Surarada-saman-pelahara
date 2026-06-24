@@ -1,5 +1,49 @@
 const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oGEeijewaNR0t8a5vARJkiuBWpOuMJVcowQdkDdaWGofaar8BRuG88VGGtQ/exec";
 
+/**
+ * HIGH-PERFORMANCE QUALITY COMPRESSOR (PRESERVES DIMENSIONS)
+ * Compresses image file streams to optimize transfer payloads without altering width/height.
+ */
+function compressImageQuality(file, targetQuality = 0.82) {
+    return new Promise((resolve, reject) => {
+        if (!file.type.match(/image.*/)) {
+            resolve(file);
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                // Maintain full original dimensions for the judging panel
+                canvas.width = img.width;
+                canvas.height = img.height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+
+                // Export to high-quality compressed JPEG blob
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        resolve(optimizedFile);
+                    } else {
+                        resolve(file);
+                    }
+                }, 'image/jpeg', targetQuality);
+            };
+            img.onerror = (err) => reject(err);
+        };
+        reader.onerror = (err) => reject(err);
+    });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const uploadForm = document.getElementById('uploadForm');
     const uploadDashboard = document.getElementById('uploadSubmittedDashboard');
@@ -72,20 +116,20 @@ document.addEventListener("DOMContentLoaded", () => {
             const competitionScope = document.getElementById('competitionScope').value;
 
             submitBtn.disabled = true;
-            submitBtn.innerText = "Uploading images... Please wait...";
-            feedback.className = "text-center mt-3 text-warning";
-            feedback.innerText = "Processing submission...";
+            submitBtn.innerText = "Optimizing data streams...";
+            feedback.className = "text-center mt-3 text-warning fw-bold";
+            feedback.innerText = "Processing full resolution portfolio images...";
             feedback.classList.remove('d-none');
 
-const payload = {
-    action: "submitUpload",
-    participantEmail: participantEmail,
-    participantName: participantName,
-    certificateName: document.getElementById('certificateName').value.trim(), // ADD THIS LINE
-    schoolName: schoolName,
-    competitionScope: competitionScope,
-    files: []
-};
+            const payload = {
+                action: "submitUpload",
+                participantEmail: participantEmail,
+                participantName: participantName,
+                certificateName: document.getElementById('certificateName').value.trim(),
+                schoolName: schoolName,
+                competitionScope: competitionScope,
+                files: []
+            };
 
             const toBase64 = file => new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -101,7 +145,12 @@ const payload = {
 
                 for (let input of fileInputs) {
                     if (input.files.length > 0) {
-                        const file = input.files[0];
+                        let file = input.files[0];
+                        
+                        // 1. Optimize data stream weight while KEEPING full dimensional scale
+                        file = await compressImageQuality(file);
+                        
+                        // 2. Transcode memory stream safely into string packages
                         const base64Str = await toBase64(file);
                         
                         const customTitleInput = document.getElementById("title_" + input.name);
@@ -109,22 +158,21 @@ const payload = {
                         
                         finalizedTitle = finalizedTitle.replace(/[^a-zA-Z0-9_\-\s]/g, "");
                         const cleanRawTitleForSheet = finalizedTitle;
-                        const extension = file.name.substring(file.name.lastIndexOf('.')) || ".jpg";
+                        const extension = ".jpg"; 
                         finalizedTitle += extension;
 
                         payload.files.push({
                             category: input.name.split('_')[0],
                             rawTitle: cleanRawTitleForSheet.replace(/\s+/g, "_"), 
                             filename: `${safeName}_${input.name}_${finalizedTitle.replace(/\s+/g, "_")}`,
-                            mimeType: file.type,
+                            mimeType: "image/jpeg",
                             bytes: base64Str
                         });
                     }
                 }
 
-                feedback.innerText = "submitting portfolio to Google Drive storage...";
+                feedback.innerText = "Submitting portfolio data to Google Drive...";
 
-                // Restored to working 'no-cors' setup
                 await fetch(SUBMISSION_API_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -132,7 +180,6 @@ const payload = {
                     body: JSON.stringify(payload)
                 });
                 
-                // Cache info locally safely
                 localStorage.setItem("submittedUploadEmail", participantEmail);
                 localStorage.setItem("submittedUploadName", participantName);
                 
