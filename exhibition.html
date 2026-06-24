@@ -165,70 +165,87 @@
         }
       });
 
-      // DYNAMIC LOADER INTERACTION FOR GOOGLE SHEET EXTRACTION
-      AFRAME.registerComponent('gallery-loader', {
-        init: function () {
-          const sceneEl = this.el;
-          const assetsEl = document.querySelector('a-assets');
-          const startBtn = document.getElementById('startBtn');
+// DYNAMIC LOADER INTERACTION FOR GOOGLE SHEET EXTRACTION
+AFRAME.registerComponent('gallery-loader', {
+  init: function () {
+    const sceneEl = this.el;
+    const assetsEl = document.querySelector('a-assets');
+    const startBtn = document.getElementById('startBtn');
 
-          startBtn.disabled = true;
-          startBtn.innerText = "Connecting Live Feed...";
+    startBtn.disabled = true;
+    startBtn.innerText = "Connecting Live Feed...";
 
-          fetch(LIVE_GET_API_URL)
-            .then(res => res.json())
-            .then(images => {
-              if(!images || images.length === 0) {
-                // Fallback text if sheet is empty at start line
-                document.getElementById('overlay-desc').innerText = "No submitted pictures found in database yet.";
-                startBtn.innerText = "Gallery Empty";
-                return;
-              }
-
-              images.forEach((imgData, index) => {
-                // 1. Inject assets dynamically
-                let imgAsset = document.createElement('img');
-                imgAsset.setAttribute('id', `live-img-${index}`);
-                imgAsset.setAttribute('src', imgData.src);
-                imgAsset.setAttribute('crossorigin', 'anonymous');
-                assetsEl.appendChild(imgAsset);
-
-                // 2. Build A-Frame visual projection entities
-                let aImg = document.createElement('a-image');
-                let isLeft = index % 2 === 0;
-                
-                let xPos = isLeft ? "-3" : "3";
-                let rotation = isLeft ? "0 90 0" : "0 -90 0";
-                
-                // Perfect staggered rows calculation down the conveyor line
-                let rowIndex = Math.floor(index / 2);
-                let zPos = 6.0 - (rowIndex * 4.0);
-
-                aImg.setAttribute('src', `#live-img-${index}`);
-                aImg.setAttribute('position', `${xPos} 0 ${zPos}`);
-                aImg.setAttribute('rotation', rotation);
-                aImg.setAttribute('width', '3.2');
-                aImg.setAttribute('height', '1.8');
-                aImg.setAttribute('conveyor-item', `totalCount: ${images.length}`);
-                
-                if (isLeft) {
-                  aImg.setAttribute('material', 'side: double');
-                }
-
-                sceneEl.appendChild(aImg);
-              });
-
-              // Re-enable interface after engine parses live feed
-              startBtn.disabled = false;
-              const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-              startBtn.innerText = isMobile ? "Enter Exhibition" : "Start Exhibition";
-            })
-            .catch(err => {
-              console.error("Live fetch failed:", err);
-              document.getElementById('overlay-desc').innerText = "Error syncing submissions with Google Sheet.";
-            });
+    fetch(LIVE_GET_API_URL)
+      .then(res => res.json())
+      .then(images => {
+        if(!images || images.length === 0) {
+          document.getElementById('overlay-desc').innerText = "No submitted pictures found in database yet.";
+          startBtn.innerText = "Gallery Empty";
+          return;
         }
+
+        images.forEach((imgData, index) => {
+          // 1. Inject assets dynamically
+          let imgAsset = document.createElement('img');
+          imgAsset.setAttribute('id', `live-img-${index}`);
+          imgAsset.setAttribute('src', imgData.src);
+          imgAsset.setAttribute('crossorigin', 'anonymous');
+          assetsEl.appendChild(imgAsset);
+
+          // 2. Build A-Frame visual projection entities
+          let aImg = document.createElement('a-image');
+          let isLeft = index % 2 === 0;
+          
+          let xPos = isLeft ? "-3" : "3";
+          let rotation = isLeft ? "0 90 0" : "0 -90 0";
+          
+          let rowIndex = Math.floor(index / 2);
+          let zPos = 6.0 - (rowIndex * 4.0);
+
+          aImg.setAttribute('src', `#live-img-${index}`);
+          aImg.setAttribute('position', `${xPos} 0 ${zPos}`);
+          aImg.setAttribute('rotation', rotation);
+          aImg.setAttribute('conveyor-item', `totalCount: ${images.length}`);
+          
+          if (isLeft) {
+            aImg.setAttribute('material', 'side: double');
+          }
+
+          // --- SMART AUTO-BOX ASPECT FIT LOGIC ---
+          // Wait for the actual picture binary file to load in the browser memory
+          imgAsset.addEventListener('load', function() {
+            let width = imgAsset.naturalWidth;
+            let height = imgAsset.naturalHeight;
+            let aspectRatio = width / height;
+
+            // Target max frame constraints
+            let maxBoundaryWidth = 3.2;
+            let maxBoundaryHeight = 1.8;
+
+            if (aspectRatio > (maxBoundaryWidth / maxBoundaryHeight)) {
+              // Image is wider than our 16:9 boundary frame frame (Ultra-wide landscape)
+              aImg.setAttribute('width', maxBoundaryWidth);
+              aImg.setAttribute('height', maxBoundaryWidth / aspectRatio);
+            } else {
+              // Image is square or portrait tall
+              aImg.setAttribute('height', maxBoundaryHeight);
+              aImg.setAttribute('width', maxBoundaryHeight * aspectRatio);
+            }
+          });
+
+          sceneEl.appendChild(aImg);
+        });
+
+        startBtn.disabled = false;
+        const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+        startBtn.innerText = isMobile ? "Enter Exhibition" : "Start Exhibition";
+      })
+      .catch(err => {
+        console.error("Live fetch failed:", err);
+        document.getElementById('overlay-desc').innerText = "Error syncing submissions with Google Sheet.";
       });
+  }
+});
     </script>
   </head>
   <body>
