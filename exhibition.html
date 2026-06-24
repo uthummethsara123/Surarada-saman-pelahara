@@ -27,7 +27,6 @@
         z-index: -1;
       }
 
-      /* Splash screen to trigger browser permissions */
       #overlay {
         position: fixed;
         top: 0; left: 0; width: 100%; height: 100%;
@@ -61,22 +60,20 @@
     </style>
 
     <script>
-      // Overriding standard A-Frame tracking with bounded swipe logic
-      AFRAME.registerComponent('bounded-touch-look', {
+      // Custom component that safely handles finger swipe offsets on the outer rig
+      AFRAME.registerComponent('bounded-touch-pan', {
         init: function () {
           this.touchStartX = 0;
           this.touchYawOffset = 0;
-          this.sensitivity = 0.25; // Controls drag speed
-          this.yawLimit = 45;      // Stop sweeping after 45 degrees left or right
+          this.sensitivity = 0.4; // Responsive pan speed
+          this.yawLimit = 45;      // Restricts local swipe panning limits 
 
-          // Capture touch coordinates on start
           window.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
               this.touchStartX = e.touches[0].clientX;
             }
           });
 
-          // Calculate horizontal drag and enforce boundaries
           window.addEventListener('touchmove', (e) => {
             if (e.touches.length === 1) {
               let deltaX = e.touches[0].clientX - this.touchStartX;
@@ -84,26 +81,17 @@
 
               this.touchYawOffset += deltaX * this.sensitivity;
               
-              // Prevent 360 degree spinning
+              // Hard limit local touch dragging so it doesn't spin freely
               this.touchYawOffset = Math.max(-this.yawLimit, Math.min(this.yawLimit, this.touchYawOffset));
+              
+              // Update the Rig's rotation, leaving the internal camera free to track 360
+              this.el.setAttribute('rotation', {
+                x: 0,
+                y: this.touchYawOffset,
+                z: 0
+              });
             }
           });
-        },
-        
-        tick: function () {
-          let lookControls = this.el.components['look-controls'];
-          
-          if (lookControls) {
-            // Read A-Frame's raw internal rotation vectors
-            let pitch = lookControls.pitchObject.rotation.x;
-            let gyroYaw = lookControls.yawObject.rotation.y;
-
-            // Convert our touch offset from degrees into standard radians
-            let touchYawRad = this.touchYawOffset * (Math.PI / 180);
-
-            // Inject the calculated combined angle straight into the renderer
-            this.el.object3D.rotation.set(pitch, gyroYaw + touchYawRad, 0);
-          }
         }
       });
     </script>
@@ -143,7 +131,9 @@
       <a-image src="#imgR3" position="3 0 -1" rotation="0 -90 0" width="2" height="1.5"></a-image>
       <a-image src="#imgR4" position="3 0 -3" rotation="0 -90 0" width="2" height="1.5"></a-image>
 
-      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" bounded-touch-look></a-entity>
+      <a-entity id="camera-rig" bounded-touch-pan>
+        <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;"></a-entity>
+      </a-entity>
     </a-scene>
 
     <script>
@@ -182,7 +172,7 @@
           video.style.display = 'none';
           scene.style.backgroundColor = "#1a1a1a";
           
-          // Re-enable touch for mouse dragging testing environments on desktop
+          // Fallback touch controls for desktop mouse testing
           const cam = document.querySelector('[camera]');
           if (cam) cam.setAttribute('look-controls', 'touchEnabled: true');
         }
