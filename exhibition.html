@@ -92,7 +92,6 @@
 
       // --- LAPTOP RIGHT-CLICK CONTROLS ---
       window.addEventListener('mousedown', (e) => {
-        // e.button === 2 explicitly checks for the Right Mouse Button click
         if (e.button === 2) {
           window.galleryState.isUserTouching = true;
           window.galleryState.touchStartX = e.clientX;
@@ -114,12 +113,10 @@
         }
       });
 
-      // Suppress standard right-click context menu popup so it doesn't get in the way
       window.addEventListener('contextmenu', (e) => {
         e.preventDefault();
       });
 
-      // Unified calculation handler for delta tracking
       function handleInteractionMove(currentX, currentY) {
         let diffX = currentX - window.galleryState.touchStartX;
         let diffY = currentY - window.galleryState.touchStartY;
@@ -171,7 +168,7 @@
     <div id="overlay">
       <div id="overlay-content">
         <h2 id="overlay-title">Virtual Exhibition</h2>
-        <p id="overlay-desc">This experience requires camera and motion access to position the artworks.</p>
+        <p id="overlay-desc">Loading instructions...</p>
         <button id="startBtn">Enter Exhibition</button>
       </div>
     </div>
@@ -215,10 +212,14 @@
 
       const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
-      if (!isMobile) {
-        overlayTitle.innerText = "Mobile Phone Recommended";
-        overlayDesc.innerHTML = "For the best experience, please open this link on your mobile phone.<br><br>On desktop, right-click and hold your mouse button to drag/scroll through photos while looking around.";
-        startBtn.innerText = "Continue anyway";
+      // Setup dynamic text instructions inside the modal based on screen hardware
+      if (isMobile) {
+        overlayTitle.innerText = "Mobile Exhibition Guide";
+        overlayDesc.innerHTML = "• Move your phone to look around the space.<br>• Swipe your finger left/right to scroll the conveyor belt photos manually.<br><br>Camera and motion permissions are required to blend the art with your surroundings.";
+      } else {
+        overlayTitle.innerText = "Laptop Exhibition Guide";
+        overlayDesc.innerHTML = "• <b>Look Around:</b> Click and drag with your <u>Left Mouse Button</u>.<br>• <b>Scroll Photos:</b> Click and hold your <u>Right Mouse Button</u> while dragging your trackpad/mouse left or right.";
+        startBtn.innerText = "Start Exhibition";
       }
 
       startBtn.addEventListener('click', () => {
