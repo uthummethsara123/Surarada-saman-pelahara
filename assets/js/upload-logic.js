@@ -5,7 +5,7 @@ const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oG
 // ==========================================================
 const START_DATE = new Date("2026-06-24T18:00:00").getTime();
 // Admin: Extend this date forward whenever you want to grant extra submission time
-const DEADLINE_DATE = new Date("2026-06-25T10:06:00").getTime();
+const DEADLINE_DATE = new Date("2026-06-25T10:09:00").getTime();
 
 let userIsActivelyWorking = false; // Tracks if they are typing, changing inputs, or selecting photos
 let submissionFinishedTime = null; // Tracks when a successful submit occurs
@@ -15,19 +15,17 @@ let completedAfterDeadline = false; // Flags whether the user finished late to a
 const styleSheet = document.createElement("style");
 styleSheet.innerText = `
     @keyframes lateWarningFlash {
-        0% { background-color: rgba(255, 255, 255, 0.03); border-color: rgba(239, 68, 68, 0.4); }
-        50% { background-color: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.85); box-shadow: 0 0 15px rgba(255, 255, 255, 0.4); }
-        100% { background-color: rgba(255, 255, 255, 0.03); border-color: rgba(239, 68, 68, 0.4); }
+        0% { background-color: rgba(255, 255, 255, 0.02); border-color: rgba(239, 68, 68, 0.3); }
+        50% { background-color: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.8); box-shadow: 0 0 12px rgba(255, 255, 255, 0.3); }
+        100% { background-color: rgba(255, 255, 255, 0.02); border-color: rgba(239, 68, 68, 0.3); }
     }
-    .late-flashing-container {
+    #uploadForm.late-flashing-container {
         animation: lateWarningFlash 1.2s infinite ease-in-out !important;
     }
-    .status-indicator-wrapper {
+    .remove-btn-wrapper {
         display: inline-flex !important;
         align-items: center !important;
-        justify-content: center !important;
         vertical-align: middle !important;
-        margin-left: 10px !important;
     }
     .progress-circle-container {
         display: inline-flex;
@@ -36,6 +34,7 @@ styleSheet.innerText = `
         width: 28px;
         height: 28px;
         position: relative;
+        margin-left: 8px;
     }
     .progress-circle-svg {
         transform: rotate(-90deg);
@@ -59,6 +58,7 @@ styleSheet.innerText = `
         color: #10b981 !important;
         font-size: 1.35rem !important;
         display: none;
+        margin-left: 8px;
         vertical-align: middle;
     }
 `;
@@ -92,13 +92,16 @@ document.addEventListener("DOMContentLoaded", () => {
         uploadForm.addEventListener('click', markAsActive);
     }
 
-    // Dynamically insert status indicators cleanly into a horizontal Flex container right next to the remove buttons
+    // Wrap the remove button and tracking indicators together dynamically to guarantee inline placement on the right side
     document.querySelectorAll('.remove-btn').forEach(btn => {
-        const wrapper = document.createElement('span');
-        wrapper.className = 'status-indicator-wrapper';
-        btn.after(wrapper);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'remove-btn-wrapper';
+        btn.parentNode.insertBefore(wrapper, btn);
+        wrapper.appendChild(btn);
         
-        wrapper.innerHTML = `
+        const indicators = document.createElement('span');
+        indicators.className = 'd-inline-flex align-items-center';
+        indicators.innerHTML = `
             <div class="progress-circle-container d-none" id="circle_container_${btn.getAttribute('data-target')}">
                 <svg class="progress-circle-svg">
                     <circle class="progress-circle-bg" cx="14" cy="14" r="12"></circle>
@@ -107,6 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
             <i class="fas fa-check-circle upload-success-tick" id="tick_${btn.getAttribute('data-target')}"></i>
         `;
+        wrapper.appendChild(indicators);
     });
 
     // Initial check on load
@@ -135,7 +139,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     titleField.value = cleanNameWithoutExtension; 
                     input.classList.add('d-none');
 
-                    // Reset indicators
                     const container = document.getElementById(`circle_container_${inputName}`);
                     if(container) container.classList.add('d-none');
                     const tick = document.getElementById(`tick_${inputName}`);
@@ -205,18 +208,22 @@ document.addEventListener("DOMContentLoaded", () => {
                         const file = input.files[0];
                         const targetId = input.name;
 
+                        // Auto-scroll context to current active asset row
+                        const parentWrapperRow = document.getElementById("wrapper_" + targetId);
+                        if (parentWrapperRow) {
+                            parentWrapperRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+
                         feedback.innerText = `Uploading ${targetId.split('_')[0]} item asset...`;
                         
                         const circleContainer = document.getElementById(`circle_container_${targetId}`);
                         const circleBar = document.getElementById(`circle_bar_${targetId}`);
                         
                         if(circleContainer) circleContainer.classList.remove('d-none');
-
-                        // Animate uploading state changes
-                        if(circleBar) circleBar.style.strokeDashoffset = "55"; // Loading state
+                        if(circleBar) circleBar.style.strokeDashoffset = "55"; 
                         
                         const base64Str = await toBase64(file);
-                        if(circleBar) circleBar.style.strokeDashoffset = "25"; // Sending state
+                        if(circleBar) circleBar.style.strokeDashoffset = "25"; 
                         
                         const customTitleInput = document.getElementById("title_" + targetId);
                         let finalizedTitle = customTitleInput && customTitleInput.value.trim() ? customTitleInput.value.trim() : "untitled";
@@ -268,6 +275,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 uploadForm.classList.add("d-none");
                 uploadDashboard.classList.remove("d-none");
+
+                // Auto scroll to success checkmark view dashboard card
+                if (uploadDashboard) {
+                    uploadDashboard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
 
                 const completionTimestamp = new Date().getTime();
                 if (completionTimestamp >= DEADLINE_DATE) {
@@ -362,7 +374,6 @@ const runTimelineEngine = () => {
     const isCurrentlyUploading = submitBtn && submitBtn.disabled === true;
     const initialSubmissionDetected = localStorage.getItem("submittedUploadEmail") !== null;
 
-    // RULE 1: If already submitted beforehand, stay locked on success dashboard
     if (initialSubmissionDetected && !completedAfterDeadline) {
         if (uploadForm) uploadForm.classList.remove("late-flashing-container");
         if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
@@ -381,7 +392,6 @@ const runTimelineEngine = () => {
     }
 
     if (now >= DEADLINE_DATE) {
-        // CONDITION A: If they are actively filling data or uploading late, let them finish
         if (userIsActivelyWorking || isCurrentlyUploading) {
             if (hoursEl) hoursEl.innerText = "00";
             if (minutesEl) minutesEl.innerText = "00";
@@ -391,7 +401,7 @@ const runTimelineEngine = () => {
                 timerTitle.style.color = "#ef4444";
             }
 
-            // Flash form blocks ONLY if filling, stop immediately on upload trigger
+            // Flash container background only if typing, stop when upload runs
             if (userIsActivelyWorking && !isCurrentlyUploading) {
                 if (uploadForm) uploadForm.classList.add("late-flashing-container");
                 if (countdownContainer) countdownContainer.classList.add("late-flashing-container");
@@ -402,7 +412,6 @@ const runTimelineEngine = () => {
             return; 
         }
 
-        // CONDITION B: Late submission finished! Run 5-second window
         const isWithinFiveSecondGrace = completedAfterDeadline && submissionFinishedTime !== null && (now - submissionFinishedTime < 5000);
         if (isWithinFiveSecondGrace) {
             if (uploadForm) uploadForm.classList.remove("late-flashing-container");
@@ -417,7 +426,6 @@ const runTimelineEngine = () => {
             return; 
         }
 
-        // CONDITION C: Otherwise, clean up and close portal
         if (uploadForm) uploadForm.classList.remove("late-flashing-container");
         if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
         clearInterval(window.timelineInterval);
@@ -446,7 +454,6 @@ const runTimelineEngine = () => {
         return; 
     }
 
-    // Default running countdown configuration
     if (uploadForm) uploadForm.classList.remove("late-flashing-container");
     if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
     if (!hoursEl || !minutesEl || !secondsEl) return;
