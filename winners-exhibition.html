@@ -565,13 +565,17 @@
             let forwardWalk = 0;
             let strafeWalk = 0;
 
-            // Adjust axes mapping to match screen layout dimensions perfectly
+            // Strict orientation directional re-mapping logic
             if (window.innerWidth > window.innerHeight) {
-              // Horizontal / Landscape Mode (Speed boosted to 0.0018)
+              // LANDSCAPE MODE (Wide horizontal layout)
+              // Moving up/down along short side (diffY) -> Moves Forward / Backward
+              // Moving left/right along long side (diffX) -> Moves Left / Right (Strafe)
               forwardWalk = diffY * 0.0018;
               strafeWalk = diffX * 0.0018;
             } else {
-              // Vertical / Portrait Mode (Speed boosted to 0.0018)
+              // PORTRAIT MODE (Tall vertical layout)
+              // Moving up/down along long side (diffY) -> Moves Forward / Backward
+              // Moving left/right along short side (diffX) -> Moves Left / Right (Strafe)
               forwardWalk = diffY * 0.0018;
               strafeWalk = diffX * 0.0018;
             }
