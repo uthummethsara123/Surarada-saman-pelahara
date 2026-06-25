@@ -549,7 +549,7 @@
         rig.setAttribute('position', { x: nextX, y: currentPos.y, z: nextZ });
       }
 
-      // 1. MOBILE TOUCH EVENT REGISTRATION
+      // 1. ADVANCED MOBILITY ORIENTATION TRACKING LISTENERS
       if (isMobile) {
         window.addEventListener('touchstart', (e) => {
           if (e.touches.length === 1) {
@@ -564,22 +564,38 @@
             let currentX = e.touches[0].clientX;
             let currentY = e.touches[0].clientY;
             
+            // X is horizontal, Y is vertical screen axis
             let diffX = currentX - touchStartX;
-            let diffY = touchStartY - currentY; 
+            let diffY = currentY - touchStartY; 
 
-            // Dynamic layout orientation calculations mapping context
-            if (window.innerWidth > window.innerHeight) {
-              // LANDSCAPE VIEW:
-              // Short dimension (diffY) -> Tracks your forward / backward velocity
-              // Long dimension (diffX) -> Tracks your sideways strafe velocity
-              mobileForwardVelocity = diffY * 0.0020;
-              mobileStrafeVelocity = diffX * 0.0020;
-            } else {
-              // PORTRAIT VIEW:
-              // Long dimension (diffY) -> Tracks your forward / backward velocity
-              // Short dimension (diffX) -> Tracks your sideways strafe velocity
-              mobileForwardVelocity = diffY * 0.0020;
-              mobileStrafeVelocity = diffX * 0.0020;
+            // Calculate total touch drag length distance
+            let totalDistance = Math.sqrt(diffX * diffX + diffY * diffY);
+            
+            if (totalDistance > 5) { // Threshold to prevent shaking artifacts
+              // Find screen drag angle
+              let dragAngle = Math.atan2(diffY, diffX);
+              
+              // Scale target movement propulsion speed metrics factor safely
+              let speedFactor = Math.min(totalDistance * 0.0003, 0.04);
+
+              // Detect actual hardware orientation layout window angle profiles
+              // window.orientation is 90/-90 in landscape mode, 0 in portrait mode
+              let screenOrientationAngle = window.orientation || 0;
+
+              if (Math.abs(screenOrientationAngle) === 90) {
+                // LANDSCAPE MODE ORIENTATION MAP:
+                // Flipping screen layout offsets vector tracking arrays exactly by 90 degrees
+                let adjustedAngle = dragAngle + (screenOrientationAngle === 90 ? -Math.PI / 2 : Math.PI / 2);
+                
+                // Forces Up/Down swipes down the short dimension to move forward/back
+                // Forces Left/Right swipes along the long dimension to slide sideways
+                mobileForwardVelocity = -Math.cos(adjustedAngle) * speedFactor;
+                mobileStrafeVelocity = -Math.sin(adjustedAngle) * speedFactor;
+              } else {
+                // PORTRAIT MODE STANDARD MAP:
+                mobileForwardVelocity = -diffY * 0.0020;
+                mobileStrafeVelocity = diffX * 0.0020;
+              }
             }
           }
         }, { passive: true });
@@ -597,7 +613,7 @@
         });
       }
 
-      // 2. DESKTOP KEYBOARD LISTENERS
+      // 2. DESKTOP KEYBOARD ENGINE CONFIGURATION
       else {
         document.getElementById('main-camera').setAttribute('look-controls', 'pointerLockEnabled: true; touchEnabled: false;');
 
@@ -619,19 +635,17 @@
         });
       }
 
-      // 3. CORE GLOBAL UNIFIED RUNTIME FRAME LOOP ENGINE (Runs on Mobile and Desktop)
+      // 3. 60 FPS MASTER CONTINUOUS RENDERING LOOP
       function masterApplicationLoop() {
         let forward = 0;
         let strafe = 0;
 
         if (isMobile) {
-          // Slide & Hold checks loop coordinates frame-by-frame continuously here
           if (isMobileTouching) {
             forward = mobileForwardVelocity;
             strafe = mobileStrafeVelocity;
           }
         } else {
-          // Desktop Keyboard processing routes
           if (activeKeys['w'] || activeKeys['arrowup']) forward += moveSpeed;
           if (activeKeys['s'] || activeKeys['arrowdown']) forward -= moveSpeed;
           if (activeKeys['d'] || activeKeys['arrowright']) strafe += moveSpeed;
@@ -645,7 +659,6 @@
         requestAnimationFrame(masterApplicationLoop);
       }
 
-      // Starts your global rendering loops correctly across all platform setups on document load
       document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(masterApplicationLoop);
       });
@@ -695,7 +708,7 @@
         }
       });
 
-      // Sign components canvas interactions initialization block
+      // Interactive components setup
       document.addEventListener('DOMContentLoaded', () => {
         const exhibitionSign = document.getElementById('btn-to-exhibition');
         const signGlow = document.getElementById('sign-glow');
