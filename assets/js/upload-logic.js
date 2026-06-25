@@ -524,9 +524,23 @@ const runTimelineEngine = () => {
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-        hoursEl.innerText = hours < 10 ? "0" + hours : hours;
-        minutesEl.innerText = minutes < 10 ? "0" + minutes : minutes;
-        secondsEl.innerText = seconds < 10 ? "0" + seconds : seconds;
+        if (hoursEl) hoursEl.innerText = hours < 10 ? "0" + hours : hours;
+        if (minutesEl) minutesEl.innerText = minutes < 10 ? "0" + minutes : minutes;
+        if (secondsEl) secondsEl.innerText = seconds < 10 ? "0" + seconds : seconds;
+
+        // Safely check and inject the blue official target announcement info inside the box container if not present
+        if (countdownContainer) {
+            let infoBox = countdownContainer.querySelector('.official-portal-announcement');
+            if (!infoBox) {
+                infoBox = document.createElement('div');
+                infoBox.className = 'official-portal-announcement text-center mt-3 p-2 rounded small fw-bold';
+                infoBox.style.backgroundColor = 'rgba(56, 189, 248, 0.15)'; // Elegant light translucent blue tint
+                infoBox.style.border = '1px solid rgba(56, 189, 248, 0.3)';
+                infoBox.style.color = '#38bdf8'; // Sky blue text matching your styling theme
+                countdownContainer.appendChild(infoBox);
+            }
+            infoBox.innerHTML = `<i class="fas fa-calendar-alt me-2"></i>Official Submission Portal Deadline: July 26th at 12:00 PM`;
+        }
     }
 };
 
