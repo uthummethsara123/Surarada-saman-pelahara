@@ -1,5 +1,16 @@
 const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oGEeijewaNR0t8a5vARJkiuBWpOuMJVcowQdkDdaWGofaar8BRuG88VGGtQ/exec";
 
+// ==========================================================
+// MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
+// ==========================================================
+const START_DATE = new Date("2026-06-24T18:00:00").getTime();
+// Admin: Extend this date forward whenever you want to grant extra submission time
+const DEADLINE_DATE = new Date("2026-06-25T09:27:00").getTime();
+
+let userIsActivelyWorking = false; // Tracks if they are typing, changing inputs, or selecting photos
+let submissionFinishedTime = null; // Tracks when a successful submit occurs
+let completedAfterDeadline = false; // Flags whether the user finished late to apply the 5-sec rule
+
 document.addEventListener("DOMContentLoaded", () => {
     const uploadForm = document.getElementById('uploadForm');
     const uploadDashboard = document.getElementById('uploadSubmittedDashboard');
@@ -16,6 +27,19 @@ document.addEventListener("DOMContentLoaded", () => {
         uploadModalObj = new bootstrap.Modal(modalEl);
     }
 
+    // --- ACTIVELY MONITOR USER ENGAGEMENT ---
+    if (uploadForm) {
+        const markAsActive = () => { 
+            if (submissionFinishedTime === null) {
+                userIsActivelyWorking = true; 
+            }
+        };
+        uploadForm.addEventListener('input', markAsActive);
+        uploadForm.addEventListener('change', markAsActive);
+        uploadForm.addEventListener('click', markAsActive);
+    }
+
+    // Initial check on load
     const savedUploadEmail = localStorage.getItem("submittedUploadEmail");
     if (savedUploadEmail && uploadDashboard) {
         if (uploadForm) uploadForm.classList.add("d-none");
@@ -77,15 +101,15 @@ document.addEventListener("DOMContentLoaded", () => {
             feedback.innerText = "Processing submission...";
             feedback.classList.remove('d-none');
 
-const payload = {
-    action: "submitUpload",
-    participantEmail: participantEmail,
-    participantName: participantName,
-    certificateName: document.getElementById('certificateName').value.trim(), // ADD THIS LINE
-    schoolName: schoolName,
-    competitionScope: competitionScope,
-    files: []
-};
+            const payload = {
+                action: "submitUpload",
+                participantEmail: participantEmail,
+                participantName: participantName,
+                certificateName: document.getElementById('certificateName').value.trim(),
+                schoolName: schoolName,
+                competitionScope: competitionScope,
+                files: []
+            };
 
             const toBase64 = file => new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -124,7 +148,6 @@ const payload = {
 
                 feedback.innerText = "submitting portfolio to Google Drive storage...";
 
-                // Restored to working 'no-cors' setup
                 await fetch(SUBMISSION_API_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -132,7 +155,6 @@ const payload = {
                     body: JSON.stringify(payload)
                 });
                 
-                // ... inside your uploadForm submit logic, right after fetch completes successfully:
                 localStorage.setItem("submittedUploadEmail", participantEmail);
                 localStorage.setItem("submittedUploadName", participantName);
 
@@ -144,15 +166,19 @@ const payload = {
                 submitBtn.innerText = "Upload & Submit Portfolio";
                 feedback.classList.add('d-none');
 
-                // ... [Existing successful submit logic inside the try block] ...
                 uploadForm.classList.add("d-none");
                 uploadDashboard.classList.remove("d-none");
 
-                // Turn off the typing/working lock so the page knows it is safe to close out
-                userIsActivelyWorking = false; 
+                const completionTimestamp = new Date().getTime();
+                // If they completed it past the current setup deadline, mark as true for the 5-sec rule
+                if (completionTimestamp >= DEADLINE_DATE) {
+                    completedAfterDeadline = true;
+                } else {
+                    completedAfterDeadline = false;
+                }
 
-                // Start the 5-second countdown grace window right now
-                submissionFinishedTime = new Date().getTime();
+                userIsActivelyWorking = false; 
+                submissionFinishedTime = completionTimestamp;
 
             } catch (err) {
                 console.error(err);
@@ -196,6 +222,10 @@ const payload = {
                 localStorage.removeItem("submittedUploadEmail");
                 localStorage.removeItem("submittedUploadName");
 
+                submissionFinishedTime = null;
+                userIsActivelyWorking = false;
+                completedAfterDeadline = false;
+
                 if (uploadForm) uploadForm.reset();
                 if (uploadModalObj) uploadModalObj.hide();
                 if (uploadDashboard) uploadDashboard.classList.add("d-none");
@@ -217,15 +247,6 @@ const payload = {
     }
 });
 
-// ==========================================================
-// MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
-// ==========================================================
-const START_DATE = new Date("2026-06-24T18:00:00").getTime();
-const DEADLINE_DATE = new Date("2026-06-25T09:27:00").getTime();
-
-let userIsActivelyWorking = false; // Tracks if they are typing, changing inputs, or uploading
-let submissionFinishedTime = null; // Tracks when a successful submit occurs
-
 const runTimelineEngine = () => {
     const now = new Date().getTime();
     
@@ -239,26 +260,41 @@ const runTimelineEngine = () => {
     const timerTitle = document.querySelector(".timer-title");
     const submitBtn = document.getElementById('uploadSubmitBtn');
 
-    // Check if the user is in the middle of sending server requests
     const isCurrentlyUploading = submitBtn && submitBtn.disabled === true;
+    const initialSubmissionDetected = localStorage.getItem("submittedUploadEmail") !== null;
 
-    // Check if a success window is still inside its 5-second viewing slot
-    const isWithinFiveSecondGrace = submissionFinishedTime !== null && (now - submissionFinishedTime < 5000);
+    // RULE 1: If this participant has ALREADY successfully submitted beforehand (early or in a previous slot),
+    // always lock them onto the success screen showing "Portfolio Securely Uploaded!".
+    // They will NOT see the form or the countdown ticker, even if you give extra time to others.
+    if (initialSubmissionDetected && !completedAfterDeadline) {
+        if (hoursEl) hoursEl.innerText = "00";
+        if (minutesEl) minutesEl.innerText = "00";
+        if (secondsEl) secondsEl.innerText = "00";
+        if (timerTitle) {
+            timerTitle.innerText = "Portfolio Securely Uploaded!";
+            timerTitle.style.color = "#10b981"; // Emerald Green
+        }
+        if (uploadForm) uploadForm.classList.add('d-none');
+        if (uploadDashboard) uploadDashboard.classList.remove('d-none');
+        if (feedback) feedback.classList.add('d-none');
+        return;
+    }
 
     if (now >= DEADLINE_DATE) {
-        // CONDITION A: If they are actively typing OR uploading right now, let them finish
+        // CONDITION A: If they are actively filling data or uploading late, let them finish
         if (userIsActivelyWorking || isCurrentlyUploading) {
             if (hoursEl) hoursEl.innerText = "00";
             if (minutesEl) minutesEl.innerText = "00";
             if (secondsEl) secondsEl.innerText = "00";
             if (timerTitle) {
                 timerTitle.innerText = isCurrentlyUploading ? "Finishing Upload..." : "Complete Your Submission...";
-                timerTitle.style.color = "#ef4444"; // Soft warning red
+                timerTitle.style.color = "#ef4444";
             }
-            return; // Exit early: keep the form alive and accessible
+            return; 
         }
 
-        // CONDITION B: If they just submitted successfully, show the success box for 5 seconds
+        // CONDITION B: Late submission finished! Run the special 5-second viewing clock
+        const isWithinFiveSecondGrace = completedAfterDeadline && submissionFinishedTime !== null && (now - submissionFinishedTime < 5000);
         if (isWithinFiveSecondGrace) {
             if (hoursEl) hoursEl.innerText = "00";
             if (minutesEl) minutesEl.innerText = "00";
@@ -267,10 +303,10 @@ const runTimelineEngine = () => {
                 timerTitle.innerText = "Closing Portal...";
                 timerTitle.style.color = "#ef4444";
             }
-            return; // Exit early: let them see the successful box
+            return; 
         }
 
-        // CONDITION C: Completely close down and show the lockout screen
+        // CONDITION C: Otherwise, clear layout and throw up the lock wall
         clearInterval(window.timelineInterval);
         
         if (hoursEl) hoursEl.innerText = "00";
@@ -297,7 +333,7 @@ const runTimelineEngine = () => {
         return; 
     }
 
-    // Default running countdown processing...
+    // Default running countdown processing for active users during regular or extra time slots
     if (!hoursEl || !minutesEl || !secondsEl) return;
 
     if (now < START_DATE) {
@@ -318,7 +354,8 @@ const runTimelineEngine = () => {
             timerTitle.style.color = "#38bdf8"; 
         }
     } else {
-        if (uploadForm && !localStorage.getItem("submittedUploadEmail")) {
+        // Show form for users who have not submitted yet
+        if (uploadForm && !initialSubmissionDetected) {
             uploadForm.classList.remove('d-none');
         }
         if (countdownContainer) countdownContainer.classList.remove('d-none');
