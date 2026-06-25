@@ -374,9 +374,23 @@ const runTimelineEngine = () => {
     const isCurrentlyUploading = submitBtn && submitBtn.disabled === true;
     const initialSubmissionDetected = localStorage.getItem("submittedUploadEmail") !== null;
 
+    // Inject/Update the official announcement message box dynamically so it is always present
+    if (countdownContainer) {
+        let infoBox = countdownContainer.querySelector('.official-portal-announcement');
+        if (!infoBox) {
+            infoBox = document.createElement('div');
+            infoBox.className = 'official-portal-announcement text-center mt-3 p-2 rounded small fw-bold mx-auto';
+            infoBox.style.backgroundColor = 'rgba(56, 189, 248, 0.12)'; 
+            infoBox.style.border = '1px solid rgba(56, 189, 248, 0.25)';
+            infoBox.style.color = '#38bdf8';
+            infoBox.style.maxWidth = '320px';
+            countdownContainer.appendChild(infoBox);
+        }
+        infoBox.innerHTML = `<i class="fas fa-calendar-alt me-2"></i>Official Submission Portal Deadline:<br>July 26th at 12:00 PM`;
+    }
+
     // RULE 1: Handle users who have already submitted previously
     if (initialSubmissionDetected) {
-        // Clear flashing classes just in case
         if (uploadForm) uploadForm.classList.remove("late-flashing-container");
         if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
 
@@ -405,12 +419,11 @@ const runTimelineEngine = () => {
             return;
         }
 
-        // FIX: If deadline hasn't passed, keep dashboard visibility but DO NOT skip the timer logic below!
+        // If deadline hasn't passed, lock form to dashboard, but let countdown flow below
         if (!completedAfterDeadline) {
             if (uploadForm) uploadForm.classList.add('d-none');
             if (uploadDashboard) uploadDashboard.classList.remove('d-none');
             if (feedback) feedback.classList.add('d-none');
-            // We don't return here anymore so the code below can keep calculating the real timer values
         }
     }
 
@@ -508,14 +521,13 @@ const runTimelineEngine = () => {
         if (countdownContainer) countdownContainer.classList.remove('d-none');
         if (feedback) feedback.classList.add('d-none'); 
 
-        // Update title contextual color based on status
         if (timerTitle) {
             if (initialSubmissionDetected) {
                 timerTitle.innerText = "Portfolio Secured! (Time Left)";
-                timerTitle.style.color = "#10b981"; // Keep it success green
+                timerTitle.style.color = "#10b981"; 
             } else {
                 timerTitle.innerText = "Portal Closes in...";
-                timerTitle.style.color = "#f59e0b"; // Warning amber
+                timerTitle.style.color = "#f59e0b"; 
             }
         }
 
@@ -524,23 +536,9 @@ const runTimelineEngine = () => {
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-        if (hoursEl) hoursEl.innerText = hours < 10 ? "0" + hours : hours;
-        if (minutesEl) minutesEl.innerText = minutes < 10 ? "0" + minutes : minutes;
-        if (secondsEl) secondsEl.innerText = seconds < 10 ? "0" + seconds : seconds;
-
-        // Safely check and inject the blue official target announcement info inside the box container if not present
-        if (countdownContainer) {
-            let infoBox = countdownContainer.querySelector('.official-portal-announcement');
-            if (!infoBox) {
-                infoBox = document.createElement('div');
-                infoBox.className = 'official-portal-announcement text-center mt-3 p-2 rounded small fw-bold';
-                infoBox.style.backgroundColor = 'rgba(56, 189, 248, 0.15)'; // Elegant light translucent blue tint
-                infoBox.style.border = '1px solid rgba(56, 189, 248, 0.3)';
-                infoBox.style.color = '#38bdf8'; // Sky blue text matching your styling theme
-                countdownContainer.appendChild(infoBox);
-            }
-            infoBox.innerHTML = `<i class="fas fa-calendar-alt me-2"></i>Official Submission Portal Deadline: July 26th at 12:00 PM`;
-        }
+        hoursEl.innerText = hours < 10 ? "0" + hours : hours;
+        minutesEl.innerText = minutes < 10 ? "0" + minutes : minutes;
+        secondsEl.innerText = seconds < 10 ? "0" + seconds : seconds;
     }
 };
 
