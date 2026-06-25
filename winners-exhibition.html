@@ -552,29 +552,37 @@
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
           }
-        }, { passive: true });
+        });
 
         window.addEventListener('touchmove', (e) => {
           if (e.touches.length === 1) {
             let currentX = e.touches[0].clientX;
             let currentY = e.touches[0].clientY;
             
-            // Calculate relative displacement from the starting touch coordinate
             let diffX = currentX - touchStartX;
-            let diffY = touchStartY - currentY; // Dragging up yields a positive value
+            let diffY = touchStartY - currentY; 
 
-            // Uniform mapping: dragging UP always moves forward; dragging SIDEWAYS always strafes.
-            // We increase the speed multiplier slightly (0.012) for highly responsive handling.
-            let forwardWalk = diffY * 0.012;
-            let strafeWalk = diffX * 0.012;
+            let forwardWalk = 0;
+            let strafeWalk = 0;
+
+            // Adjust axes mapping to match screen layout dimensions perfectly
+            if (window.innerWidth > window.innerHeight) {
+              // Horizontal / Landscape Mode
+              // Up/Down on small side (diffY) moves Forward/Backward
+              // Left/Right on long side (diffX) moves Left/Right (Strafe)
+              forwardWalk = diffY * 0.0004;
+              strafeWalk = diffX * 0.0004;
+            } else {
+              // Vertical / Portrait Mode
+              // Up/Down on long side (diffY) moves Forward/Backward
+              // Left/Right on small side (diffX) moves Left/Right (Strafe)
+              forwardWalk = diffY * 0.0004;
+              strafeWalk = diffX * 0.0004;
+            }
 
             moveRigWithStrictCarpetBounds(forwardWalk, strafeWalk);
-
-            // Re-anchor start positions to ensure continuous, fluid thumb dragging
-            touchStartX = currentX;
-            touchStartY = currentY;
           }
-        }, { passive: true });
+        });
       }
 
       else {
