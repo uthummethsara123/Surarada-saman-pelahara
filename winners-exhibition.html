@@ -520,7 +520,7 @@
       
       // Navigation states engine tracking
       const activeKeys = {};
-      const moveSpeed = 0.12; 
+      const moveSpeed = 0.16; // Increased speed for faster walking locomotion
 
       // Mobile button state monitors
       let isMovingUp = false;
@@ -574,14 +574,14 @@
 
       // 1. ATTACH EVENTS FOR MOBILE CONTROL BUTTON HOLD MECHANICS
       if (isMobile) {
-        // Toggle configuration orientation mapping
+        // Toggle configuration orientation mapping with simplified layout text strings
         toggleLayoutBtn.addEventListener('click', () => {
           isLandscapeMappingMode = !isLandscapeMappingMode;
           if (isLandscapeMappingMode) {
-            toggleLayoutBtn.innerHTML = "🔄 MODE: LANDSCAPE (SHORT SIDE FORWARD/BACK)";
+            toggleLayoutBtn.innerHTML = "🔄 MODE: LANDSCAPE";
             toggleLayoutBtn.className = "btn btn-sm btn-info";
           } else {
-            toggleLayoutBtn.innerHTML = "🔄 MODE: PORTRAIT (LONG SIDE FORWARD/BACK)";
+            toggleLayoutBtn.innerHTML = "🔄 MODE: PORTRAIT";
             toggleLayoutBtn.className = "btn btn-sm btn-warning";
           }
         });
@@ -634,9 +634,10 @@
           let rightValue = isMovingRight ? moveSpeed : 0;
 
           if (isLandscapeMappingMode) {
-            // LANDSCAPE REMAP MODE: Corrected vector mappings
+            // LANDSCAPE REMAP MODE: 
+            // Inverted order here too (downValue - upValue) to correctly mirror left and right
             forward = rightValue - leftValue; 
-            strafe = upValue - downValue;
+            strafe = downValue - upValue;
           } else {
             // PORTRAIT STANDARDS MODE:
             forward = upValue - downValue;
@@ -693,7 +694,7 @@
         overlay.style.display = 'none';
         
         if (isMobile) {
-          // Small descriptive text hint is explicitly kept hidden for mobile layouts
+          // Small descriptive text hint remains hidden for mobile layouts
           moveHint.style.display = 'none';
           mobileNavPad.style.display = 'block'; 
           forceSceneClearTransparency();
