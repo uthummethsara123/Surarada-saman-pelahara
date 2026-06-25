@@ -144,10 +144,14 @@ const payload = {
                 submitBtn.innerText = "Upload & Submit Portfolio";
                 feedback.classList.add('d-none');
 
+                // ... [Existing successful submit logic inside the try block] ...
                 uploadForm.classList.add("d-none");
                 uploadDashboard.classList.remove("d-none");
 
-                // START THE 5-SECOND COUNTDOWN GRACE PERIOD FOR THE TIMELINE NOW:
+                // Turn off the typing/working lock so the page knows it is safe to close out
+                userIsActivelyWorking = false; 
+
+                // Start the 5-second countdown grace window right now
                 submissionFinishedTime = new Date().getTime();
 
             } catch (err) {
@@ -217,7 +221,7 @@ const payload = {
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
 const START_DATE = new Date("2026-06-24T18:00:00").getTime();
-const DEADLINE_DATE = new Date("2026-06-25T09:28:00").getTime();
+const DEADLINE_DATE = new Date("2026-06-25T09:27:00").getTime();
 
 let userIsActivelyWorking = false; // Tracks if they are typing, changing inputs, or uploading
 let submissionFinishedTime = null; // Tracks when a successful submit occurs
