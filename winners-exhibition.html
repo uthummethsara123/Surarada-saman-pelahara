@@ -627,16 +627,15 @@
         let strafe = 0;
 
         if (isMobile) {
-          // Read button holds and interpret directions based on current Mode Toggle setting
+          // Read button holds
           let upValue = isMovingUp ? moveSpeed : 0;
           let downValue = isMovingDown ? moveSpeed : 0;
           let leftValue = isMovingLeft ? moveSpeed : 0;
           let rightValue = isMovingRight ? moveSpeed : 0;
 
           if (isLandscapeMappingMode) {
-            // LANDSCAPE REMAP MODE:
-            // Flipping axes rules cleanly: UP/DOWN moves along short dimensions, LEFT/RIGHT on long dimensions
-            forward = leftValue - rightValue; 
+            // LANDSCAPE REMAP MODE: Corrected vector mappings
+            forward = rightValue - leftValue; 
             strafe = upValue - downValue;
           } else {
             // PORTRAIT STANDARDS MODE:
@@ -694,9 +693,9 @@
         overlay.style.display = 'none';
         
         if (isMobile) {
-          moveHint.innerHTML = "Rotate phone to Look around · Hold On-Screen D-Pad to Walk";
-          moveHint.style.display = 'block';
-          mobileNavPad.style.display = 'block'; // Make button layout operational
+          // Small descriptive text hint is explicitly kept hidden for mobile layouts
+          moveHint.style.display = 'none';
+          mobileNavPad.style.display = 'block'; 
           forceSceneClearTransparency();
           activateMobilePermissions();
         } else {
