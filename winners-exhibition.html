@@ -528,7 +528,7 @@
         rig.setAttribute('position', { x: nextX, y: currentPos.y, z: nextZ });
       }
 
-      if (isMobile) {
+if (isMobile) {
         window.addEventListener('touchstart', (e) => {
           if (e.touches.length === 1) {
             touchStartX = e.touches[0].clientX;
@@ -544,13 +544,26 @@
             let diffX = currentX - touchStartX;
             let diffY = touchStartY - currentY; 
 
-            let forwardWalk = diffY * 0.0004;
-            let strafeWalk = diffX * 0.0004;
+            let forwardWalk = 0;
+            let strafeWalk = 0;
+
+            // Dynamically swap the controls depending on the screen orientation
+            if (window.innerWidth > window.innerHeight) {
+              // Horizontal / Landscape mode adjustment
+              forwardWalk = diffX * 0.0004;
+              strafeWalk = -diffY * 0.0004;
+            } else {
+              // Vertical / Portrait mode standard mapping
+              forwardWalk = diffY * 0.0004;
+              strafeWalk = diffX * 0.0004;
+            }
 
             moveRigWithStrictCarpetBounds(forwardWalk, strafeWalk);
           }
         });
-      } else {
+      }
+
+      else {
         document.getElementById('main-camera').setAttribute('look-controls', 'pointerLockEnabled: true; touchEnabled: false;');
 
         document.addEventListener('keydown', (e) => {
