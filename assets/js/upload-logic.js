@@ -213,14 +213,14 @@ const payload = {
     }
 });
 
-// ==========================================================================
-// MARATHON TIMELINE ENGINE (WITH DELAYED LOCKOUT FOR ACTIVE SUBMISSIONS)
-// ==========================================================================
+// ==========================================================
+// MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
+// ==========================================================
 const START_DATE = new Date("2026-06-24T18:00:00").getTime();
-const DEADLINE_DATE = new Date("2026-06-25T09:23:00").getTime();
+const DEADLINE_DATE = new Date("2026-06-25T09:28:00").getTime();
 
-// Keep a timestamp flag for when a late submission finishes successfully
-let submissionFinishedTime = null;
+let userIsActivelyWorking = false; // Tracks if they are typing, changing inputs, or uploading
+let submissionFinishedTime = null; // Tracks when a successful submit occurs
 
 const runTimelineEngine = () => {
     const now = new Date().getTime();
@@ -235,26 +235,26 @@ const runTimelineEngine = () => {
     const timerTitle = document.querySelector(".timer-title");
     const submitBtn = document.getElementById('uploadSubmitBtn');
 
-    // 1. Check if the participant is currently in the middle of uploading files
+    // Check if the user is in the middle of sending server requests
     const isCurrentlyUploading = submitBtn && submitBtn.disabled === true;
 
-    // 2. Check if an active form upload recently finished right at/after the deadline
+    // Check if a success window is still inside its 5-second viewing slot
     const isWithinFiveSecondGrace = submissionFinishedTime !== null && (now - submissionFinishedTime < 5000);
 
     if (now >= DEADLINE_DATE) {
-        // Condition A: If they are actively streaming/uploading, do not cut them off!
-        if (isCurrentlyUploading) {
+        // CONDITION A: If they are actively typing OR uploading right now, let them finish
+        if (userIsActivelyWorking || isCurrentlyUploading) {
             if (hoursEl) hoursEl.innerText = "00";
             if (minutesEl) minutesEl.innerText = "00";
             if (secondsEl) secondsEl.innerText = "00";
             if (timerTitle) {
-                timerTitle.innerText = "Finishing Upload...";
-                timerTitle.style.color = "#ef4444";
+                timerTitle.innerText = isCurrentlyUploading ? "Finishing Upload..." : "Complete Your Submission...";
+                timerTitle.style.color = "#ef4444"; // Soft warning red
             }
-            return; // Stay out of the closed display view to let the process complete
+            return; // Exit early: keep the form alive and accessible
         }
 
-        // Condition B: If they just finished successfully, let the Dashboard stay up for exactly 5 seconds
+        // CONDITION B: If they just submitted successfully, show the success box for 5 seconds
         if (isWithinFiveSecondGrace) {
             if (hoursEl) hoursEl.innerText = "00";
             if (minutesEl) minutesEl.innerText = "00";
@@ -263,10 +263,10 @@ const runTimelineEngine = () => {
                 timerTitle.innerText = "Closing Portal...";
                 timerTitle.style.color = "#ef4444";
             }
-            return; // Wait out the remaining duration of the 5-second grace window
+            return; // Exit early: let them see the successful box
         }
 
-        // Condition C: Otherwise, completely close out and secure the page layout
+        // CONDITION C: Completely close down and show the lockout screen
         clearInterval(window.timelineInterval);
         
         if (hoursEl) hoursEl.innerText = "00";
@@ -293,6 +293,7 @@ const runTimelineEngine = () => {
         return; 
     }
 
+    // Default running countdown processing...
     if (!hoursEl || !minutesEl || !secondsEl) return;
 
     if (now < START_DATE) {
@@ -311,13 +312,6 @@ const runTimelineEngine = () => {
         if (timerTitle) {
             timerTitle.innerText = "Portal Opens In...";
             timerTitle.style.color = "#38bdf8"; 
-        }
-
-        if (feedback) {
-            const openingAlertDate = new Date(START_DATE).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
-            feedback.className = "text-center mt-4 p-3 text-info border border-info rounded bg-dark font-monospace small";
-            feedback.innerHTML = `<i class="fas fa-calendar-alt me-2"></i>Official Start Time: ${openingAlertDate}`;
-            feedback.classList.remove('d-none');
         }
     } else {
         if (uploadForm && !localStorage.getItem("submittedUploadEmail")) {
