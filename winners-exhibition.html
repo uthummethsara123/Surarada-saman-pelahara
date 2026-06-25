@@ -565,19 +565,18 @@
             let forwardWalk = 0;
             let strafeWalk = 0;
 
-            // Strict orientation dimensional re-mapping logic
+            // Check if screen is flipped to horizontal (Landscape)
             if (window.innerWidth > window.innerHeight) {
-              // LANDSCAPE MODE (Wide view layout)
-              // Up/Down along the short side is diffY -> Maps to Forward / Backward
-              // Left/Right along the long side is diffX -> Maps to Left / Right (Strafe)
-              forwardWalk = diffY * 0.0018;
-              strafeWalk = diffX * 0.0018;
+              // LANDSCAPE MODE:
+              // Moving up/down on the short side (diffY) now goes Forward/Backward
+              // Moving left/right on the long side (diffX) now goes Left/Right
+              forwardWalk = diffY * 0.0020;
+              strafeWalk = diffX * 0.0020;
             } else {
-              // PORTRAIT MODE (Tall view layout)
-              // Up/Down along the long side is diffY -> Maps to Forward / Backward
-              // Left/Right along the short side is diffX -> Maps to Left / Right (Strafe)
-              forwardWalk = diffY * 0.0018;
-              strafeWalk = diffX * 0.0018;
+              // PORTRAIT MODE:
+              // Standard vertical behavior
+              forwardWalk = diffY * 0.0020;
+              strafeWalk = diffX * 0.0020;
             }
 
             moveRigWithStrictCarpetBounds(forwardWalk, strafeWalk);
