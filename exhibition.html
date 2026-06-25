@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <title>Virtual Exhibition - Live Stream</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="icon" type="image/png" href="/assets/img/logo.png">
     
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     
@@ -35,39 +39,79 @@
         background: transparent !important;
       }
 
+      /* Styled Grand Entrance Panel */
       #overlay {
         position: fixed;
         top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.85);
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        z-index: 999;
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
-        z-index: 999;
         color: white;
-        font-family: sans-serif;
+        font-family: system-ui, -apple-system, sans-serif;
         text-align: center;
         padding: 20px;
         box-sizing: border-box;
       }
 
-      #overlay-content {
-        max-width: 400px;
+      .overlay-logo {
+        width: 120px;
+        height: 120px;
+        object-fit: contain;
+        margin-bottom: 20px;
+        animation: pulse 2s infinite ease-in-out;
       }
 
-      #startBtn {
-        padding: 15px 30px;
-        font-size: 18px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: bold;
-        margin-top: 20px;
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.9; }
+        50% { transform: scale(1.05); opacity: 1; }
       }
-      #startBtn:disabled {
-        background-color: #555;
+
+      h2 {
+        margin: 0 0 10px 0;
+        font-size: 2rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #f59e0b;
+        text-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+      }
+
+      p {
+        margin: 0 0 30px 0;
+        font-size: 1rem;
+        color: #94a3b8;
+        max-width: 400px;
+        line-height: 1.5;
+      }
+
+      .start-btn {
+        background: #f59e0b;
+        color: #0f172a;
+        border: none;
+        padding: 14px 36px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        border-radius: 50px;
+        cursor: pointer;
+        box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .start-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px rgba(245, 158, 11, 0.5);
+        background: #fbbf24;
+      }
+
+      .start-btn:disabled {
+        background-color: #475569;
+        color: #94a3b8;
         cursor: not-allowed;
+        box-shadow: none;
       }
     </style>
 
@@ -326,11 +370,10 @@
   <body>
 
     <div id="overlay">
-      <div id="overlay-content">
-        <h2 id="overlay-title">Virtual Exhibition</h2>
-        <p id="overlay-desc">Synchronizing with live data panels...</p>
-        <button id="startBtn">Enter Exhibition</button>
-      </div>
+      <img src="/assets/img/logo.png" alt="Logo" class="overlay-logo" />
+      <h2 id="overlay-title">Virtual Exhibition</h2>
+      <p id="overlay-desc">Synchronizing with live data panels...</p>
+      <button id="startBtn" class="start-btn">Enter Exhibition</button>
     </div>
 
     <video id="webcam-video" autoplay playsinline muted loop></video>
