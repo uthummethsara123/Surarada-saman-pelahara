@@ -489,7 +489,7 @@
 
     </a-scene>
 
-    <script>
+<script>
       const overlay = document.getElementById('overlay');
       const startBtn = document.getElementById('startBtn');
       const moveHint = document.getElementById('move-hint');
@@ -501,6 +501,9 @@
       
       let touchStartX = 0;
       let touchStartY = 0;
+      let mobileForwardVelocity = 0;
+      let mobileStrafeVelocity = 0;
+      let isMobileTouching = false;
 
       const activeKeys = {};
       const moveSpeed = 0.12; 
@@ -546,44 +549,56 @@
         rig.setAttribute('position', { x: nextX, y: currentPos.y, z: nextZ });
       }
 
+      // 1. MOBILE TOUCH LIFECYCLE ENGINE
       if (isMobile) {
         window.addEventListener('touchstart', (e) => {
           if (e.touches.length === 1) {
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
+            isMobileTouching = true;
           }
-        });
+        }, { passive: true });
 
         window.addEventListener('touchmove', (e) => {
-          if (e.touches.length === 1) {
+          if (e.touches.length === 1 && isMobileTouching) {
             let currentX = e.touches[0].clientX;
             let currentY = e.touches[0].clientY;
             
             let diffX = currentX - touchStartX;
-            let diffY = touchStartY - currentY; 
+            let diffY = touchStartY - currentY; // Upward pull yields positive
 
-            let forwardWalk = 0;
-            let strafeWalk = 0;
-
-            // Check if screen is flipped to horizontal (Landscape)
+            // Check if screen is flipped horizontally (Landscape) vs vertically (Portrait)
             if (window.innerWidth > window.innerHeight) {
               // LANDSCAPE MODE:
-              // Moving up/down on the short side (diffY) now goes Forward/Backward
-              // Moving left/right on the long side (diffX) now goes Left/Right
-              forwardWalk = diffY * 0.0020;
-              strafeWalk = diffX * 0.0020;
+              // Short side is screen Y -> Up/Down slides go Forward/Backward
+              // Long side is screen X -> Left/Right slides go Left/Right (Strafe)
+              mobileForwardVelocity = diffY * 0.0020;
+              mobileStrafeVelocity = diffX * 0.0020;
             } else {
               // PORTRAIT MODE:
-              // Standard vertical behavior
-              forwardWalk = diffY * 0.0020;
-              strafeWalk = diffX * 0.0020;
+              // Long side is screen Y -> Up/Down slides go Forward/Backward
+              // Short side is screen X -> Left/Right slides go Left/Right (Strafe)
+              mobileForwardVelocity = diffY * 0.0020;
+              mobileStrafeVelocity = diffX * 0.0020;
             }
-
-            moveRigWithStrictCarpetBounds(forwardWalk, strafeWalk);
           }
+        }, { passive: true });
+
+        // Safely wipe movement velocity tracking maps instantly upon releasing input contact
+        window.addEventListener('touchend', () => {
+          isMobileTouching = false;
+          mobileForwardVelocity = 0;
+          mobileStrafeVelocity = 0;
+        });
+
+        window.addEventListener('touchcancel', () => {
+          isMobileTouching = false;
+          mobileForwardVelocity = 0;
+          mobileStrafeVelocity = 0;
         });
       }
 
+      // 2. DESKTOP INPUT LISTENERS
       else {
         document.getElementById('main-camera').setAttribute('look-controls', 'pointerLockEnabled: true; touchEnabled: false;');
 
@@ -596,21 +611,6 @@
           activeKeys[e.key.toLowerCase()] = false;
         });
 
-        function gameLoop() {
-          let forward = 0;
-          let strafe = 0;
-
-          if (activeKeys['w'] || activeKeys['arrowup']) forward += moveSpeed;
-          if (activeKeys['s'] || activeKeys['arrowdown']) forward -= moveSpeed;
-          if (activeKeys['d'] || activeKeys['arrowright']) strafe += moveSpeed;
-          if (activeKeys['a'] || activeKeys['arrowleft']) strafe -= moveSpeed;
-
-          if (forward !== 0 || strafe !== 0) {
-            moveRigWithStrictCarpetBounds(forward, strafe);
-          }
-          requestAnimationFrame(gameLoop);
-        }
-
         document.addEventListener('pointerlockchange', () => {
           if (document.pointerLockElement) {
             hudStatus.innerHTML = "• Controls: <b>WASD / Arrows</b> to Move<br>• Press <b>ESC</b> to free mouse cursor";
@@ -618,14 +618,39 @@
             hudStatus.innerHTML = "• View Mode Paused<br>• <b>Click scene</b> to lock cursor & walk again";
           }
         });
-
-        document.addEventListener('DOMContentLoaded', () => {
-            requestAnimationFrame(gameLoop);
-        });
       }
 
+      // 3. UNIFIED GLOBAL ANIMATION RUNTIME LOOP (60FPS Frame Propulsion)
+      function coreGlobalAppLoop() {
+        let forward = 0;
+        let strafe = 0;
+
+        if (isMobile) {
+          // Slide & Hold automatic movement values applied frame-by-frame
+          if (isMobileTouching) {
+            forward = mobileForwardVelocity;
+            strafe = mobileStrafeVelocity;
+          }
+        } else {
+          // Desktop Keyboard processing rules
+          if (activeKeys['w'] || activeKeys['arrowup']) forward += moveSpeed;
+          if (activeKeys['s'] || activeKeys['arrowdown']) forward -= moveSpeed;
+          if (activeKeys['d'] || activeKeys['arrowright']) strafe += moveSpeed;
+          if (activeKeys['a'] || activeKeys['arrowleft']) strafe -= moveSpeed;
+        }
+
+        if (forward !== 0 || strafe !== 0) {
+          moveRigWithStrictCarpetBounds(forward, strafe);
+        }
+        
+        requestAnimationFrame(coreGlobalAppLoop);
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        requestAnimationFrame(coreGlobalAppLoop);
+      });
+
       function activateMobilePermissions() {
-        // iOS strict compliance check for Motion sensors
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
           DeviceOrientationEvent.requestPermission()
             .then(permissionState => {
@@ -636,7 +661,6 @@
             .catch(console.error);
         }
 
-        // Initialize background hardware camera pipeline
         navigator.mediaDevices.getUserMedia({ 
           video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
         })
@@ -671,55 +695,45 @@
         }
       });
 
-
-
-      // Click navigation, hover glow, and canvas-rendered 3D tooltip engine
+      // Interactive components setup
       document.addEventListener('DOMContentLoaded', () => {
         const exhibitionSign = document.getElementById('btn-to-exhibition');
         const signGlow = document.getElementById('sign-glow');
         const signTooltip = document.getElementById('sign-tooltip');
 
-        // Dynamically build a small canvas image texture for the muted tooltip text
         if (signTooltip) {
           const canvas = document.createElement('canvas');
           canvas.width = 256;
           canvas.height = 64;
           const ctx = canvas.getContext('2d');
           
-          // Background Color: Muted Dark Slate Gray (#1e293b)
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           
-          // Clean Muted Text Color: Soft Gold tint (#f59e0b)
           ctx.fillStyle = '#f59e0b';
           ctx.font = 'bold 26px monospace';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText('CLICK ME', canvas.width / 2, canvas.height / 2);
           
-          // Inject canvas draw into the material pipeline
           signTooltip.setAttribute('material', 'src', canvas);
         }
 
         if (exhibitionSign) {
-          // When the viewer places the yellow circle cursor anywhere on the sign
           exhibitionSign.addEventListener('mouseenter', () => {
             if (signGlow) signGlow.setAttribute('material', 'opacity', '0.25');
             if (signTooltip) signTooltip.setAttribute('visible', 'true');
           });
 
-          // When the viewer looks away from the sign
           exhibitionSign.addEventListener('mouseleave', () => {
             if (signGlow) signGlow.setAttribute('material', 'opacity', '0');
             if (signTooltip) signTooltip.setAttribute('visible', 'false');
           });
 
-          // Direct click/tap navigation handler on parent container
           exhibitionSign.addEventListener('click', () => {
             window.location.href = 'exhibition.html';
           });
 
-          // Fallback listeners attached to nested elements to ensure mobile touch taps execute
           const innerClickables = exhibitionSign.querySelectorAll('.clickable');
           innerClickables.forEach(element => {
             element.addEventListener('click', (e) => {
@@ -729,9 +743,8 @@
           });
         }
       });
-
-
-
     </script>
+
+    
   </body>
 </html>
