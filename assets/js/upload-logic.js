@@ -3,9 +3,9 @@ const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oG
 // ==========================================================
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
-const START_DATE = new Date("2026-06-24T18:00:00").getTime();
+const START_DATE = new Date("2026-07-26T24:00:00").getTime();
 // Admin: Extend this date forward whenever you want to grant extra submission time
-const DEADLINE_DATE = new Date("2026-06-25T10:54:00").getTime();
+const DEADLINE_DATE = new Date("2026-07-27T02:00:00").getTime();
 
 let userIsActivelyWorking = false; // Tracks if they are typing, changing inputs, or selecting photos
 let submissionFinishedTime = null; // Tracks when a successful submit occurs
