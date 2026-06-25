@@ -18,7 +18,7 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background-color: #0b0f19;
+        background: linear-gradient(135deg, #440613 0%, #540818 100%);
         -webkit-tap-highlight-color: transparent;
       }
 
@@ -42,7 +42,7 @@
       #overlay {
         position: fixed;
         top: 0; left: 0; width: 100%; height: 100%;
-        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        background: linear-gradient(135deg, #440613 0%, #540818 100%);
         z-index: 999;
         display: flex;
         flex-direction: column;
@@ -200,21 +200,39 @@
         </a-entity>
       </a-entity>
 
-      <a-plane rotation="-90 0 0" width="30" height="120" color="#111827" material="roughness: 0.65; metalness: 0.2;" position="0 -0.01 -25"></a-plane>
+      <a-entity position="2.1 0 1.5" rotation="0 -45 0" class="clickable" id="btn-to-exhibition">
+        <a-cylinder color="#cbd5e1" radius="0.05" height="1.8" position="0 0.9 0" roughness="0.3"></a-cylinder>
+        <a-box color="#cbd5e1" width="0.4" height="0.1" depth="0.4" position="0 0.05 0"></a-box>
+        
+        <a-box class="clickable" color="#f59e0b" width="1.42" height="0.72" depth="0.06" position="0 1.6 0"></a-box>
+        <a-box class="clickable" color="#0f172a" width="1.4" height="0.7" depth="0.08" position="0 1.6 0">
+          <a-text class="clickable" value="PARTICIPANT'S\nEXHIBITION" align="center" color="#f59e0b" width="2.3" font="mozillavr" position="0 0.08 0.05"></a-text>
+          
+          <a-text class="clickable" value="-->" align="center" color="#f59e0b" width="3" font="monospace" position="0 -0.22 0.05"></a-text>
+        </a-box>
+
+        <a-plane id="sign-glow" width="1.46" height="0.76" position="0 1.6 0.05" 
+                 material="color: #f59e0b; shader: flat; opacity: 0; transparent: true; side: double;"></a-plane>
+
+        <a-plane id="sign-tooltip" width="0.65" height="0.18" position="0 2.1 0.05" visible="false"
+                 material="shader: flat; transparent: false; side: double; color: #1e293b;"></a-plane>
+      </a-entity>
+
+      <a-plane rotation="-90 0 0" width="30" height="120" color="#540818" material="roughness: 0.65; metalness: 0.2;" position="0 -0.01 -25"></a-plane>
 
       <a-plane id="gallery-carpet" rotation="-90 0 0" width="3.6" height="120" color="#991b1b" material="roughness: 0.9;" position="0 0 -25"></a-plane>
       <a-plane rotation="-90 0 0" width="0.1" height="120" color="#d97706" position="-1.81 0.005 -25"></a-plane>
       <a-plane rotation="-90 0 0" width="0.1" height="120" color="#d97706" position="1.81 0.005 -25"></a-plane>
 
-      <a-plane rotation="90 0 0" width="30" height="120" color="#0f172a" material="roughness: 0.8;" position="0 4.5 -25"></a-plane>
+      <a-plane rotation="90 0 0" width="30" height="120" color="#440613" material="roughness: 0.8;" position="0 4.5 -25"></a-plane>
 
-      <a-plane position="-4.5 2.25 -25" rotation="0 90 0" width="120" height="8.0" color="#1e293b" material="roughness: 0.7;"></a-plane>
-      <a-plane position="4.5 2.25 -25" rotation="0 -90 0" width="120" height="8.0" color="#1e293b" material="roughness: 0.7;"></a-plane>
+      <a-plane position="-4.5 2.25 -25" rotation="0 90 0" width="120" height="8.0" color="#540818" material="roughness: 0.7;"></a-plane>
+      <a-plane position="4.5 2.25 -25" rotation="0 -90 0" width="120" height="8.0" color="#540818" material="roughness: 0.7;"></a-plane>
 
-      <a-plane position="0 2.25 6" rotation="0 180 0" width="9" height="8.0" color="#1e293b" material="roughness: 0.7;"></a-plane>
+      <a-plane position="0 2.25 6" rotation="0 180 0" width="9" height="8.0" color="#540818" material="roughness: 0.7;"></a-plane>
       <a-image src="#img-logo" width="3.2" height="2.2" position="0 2.0 5.95" rotation="0 180 0"></a-image>
 
-      <a-plane position="0 2.25 -54" rotation="0 0 0" width="9" height="8.0" color="#1e293b" material="roughness: 0.7;"></a-plane>
+      <a-plane position="0 2.25 -54" rotation="0 0 0" width="9" height="8.0" color="#540818" material="roughness: 0.7;"></a-plane>
       <a-image src="#img-logo" width="3.2" height="2.2" position="0 2.0 -53.95" rotation="0 0 0"></a-image>
 
       <a-box color="#ffffff" material="shader: flat; emissive: #ffffff; emissiveIntensity: 1;" width="0.4" height="0.05" depth="8" position="0 4.45 -6"></a-box>
@@ -649,6 +667,68 @@ if (isMobile) {
           if (scene) scene.style.backgroundColor = "#0b0f19";
         }
       });
+
+
+
+      // Click navigation, hover glow, and canvas-rendered 3D tooltip engine
+      document.addEventListener('DOMContentLoaded', () => {
+        const exhibitionSign = document.getElementById('btn-to-exhibition');
+        const signGlow = document.getElementById('sign-glow');
+        const signTooltip = document.getElementById('sign-tooltip');
+
+        // Dynamically build a small canvas image texture for the muted tooltip text
+        if (signTooltip) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 256;
+          canvas.height = 64;
+          const ctx = canvas.getContext('2d');
+          
+          // Background Color: Muted Dark Slate Gray (#1e293b)
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // Clean Muted Text Color: Soft Gold tint (#f59e0b)
+          ctx.fillStyle = '#f59e0b';
+          ctx.font = 'bold 26px monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('CLICK ME', canvas.width / 2, canvas.height / 2);
+          
+          // Inject canvas draw into the material pipeline
+          signTooltip.setAttribute('material', 'src', canvas);
+        }
+
+        if (exhibitionSign) {
+          // When the viewer places the yellow circle cursor anywhere on the sign
+          exhibitionSign.addEventListener('mouseenter', () => {
+            if (signGlow) signGlow.setAttribute('material', 'opacity', '0.25');
+            if (signTooltip) signTooltip.setAttribute('visible', 'true');
+          });
+
+          // When the viewer looks away from the sign
+          exhibitionSign.addEventListener('mouseleave', () => {
+            if (signGlow) signGlow.setAttribute('material', 'opacity', '0');
+            if (signTooltip) signTooltip.setAttribute('visible', 'false');
+          });
+
+          // Direct click/tap navigation handler on parent container
+          exhibitionSign.addEventListener('click', () => {
+            window.location.href = 'exhibition.html';
+          });
+
+          // Fallback listeners attached to nested elements to ensure mobile touch taps execute
+          const innerClickables = exhibitionSign.querySelectorAll('.clickable');
+          innerClickables.forEach(element => {
+            element.addEventListener('click', (e) => {
+              e.stopPropagation();
+              window.location.href = 'exhibition.html';
+            });
+          });
+        }
+      });
+
+
+
     </script>
   </body>
 </html>
