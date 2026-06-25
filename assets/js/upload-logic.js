@@ -389,7 +389,7 @@ const runTimelineEngine = () => {
             // Insert it as the absolute first item inside the form container box
             formWrapper.insertBefore(infoBox, formWrapper.firstChild);
         }
-        infoBox.innerHTML = `<i class="fas fa-calendar-alt me-2"></i>Official Submission Portal Deadline: July 26th at 12:00 PM`;
+        infoBox.innerHTML = `<i class="fas fa-calendar-alt me-2"></i>Submission portal opens in July 26th at 12.00am`;
     }
 
     // RULE 1: Handle users who have already submitted previously
