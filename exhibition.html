@@ -43,7 +43,7 @@
       #overlay {
         position: fixed;
         top: 0; left: 0; width: 100%; height: 100%;
-        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        background: linear-gradient(135deg, #440613 0%, #540818 100%);
         z-index: 999;
         display: flex;
         flex-direction: column;
@@ -378,16 +378,22 @@
 
     <video id="webcam-video" autoplay playsinline muted loop></video>
 
-    <a-scene vr-mode-ui="enabled: false" embedded renderer="alpha: true; colorManagement: true;" gallery-loader>
+
+<a-scene vr-mode-ui="enabled: false" embedded renderer="alpha: true; colorManagement: true;" gallery-loader cursor="rayOrigin: mouse" raycaster="objects: .clickable">
       <a-assets>
         <img id="logo-img" src="assets/img/logo.png" crossorigin="anonymous">
       </a-assets>
 
-      <a-image src="#logo-img" position="0 0 -2" width="1.5" height="1.2" material="side: double; transparent: true;"></a-image>
+      <a-image id="winners-logo-btn" class="clickable" src="#logo-img" position="0 0.15 -2" width="1.5" height="1.2" material="side: double; transparent: true;"
+               animation="property: scale; to: 1.08 1.08 1.08; dir: alternate; dur: 1500; loop: true; easing: easeInOutQuad">
+      </a-image>
+
+      <a-plane id="logo-tooltip" width="1.4" height="0.45" position="0 -0.85 -2" visible="false"
+               material="shader: flat; transparent: true; side: double;"></a-plane>
 
       <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" position="0 0 0"></a-entity>
     </a-scene>
-
+    
     <script>
       const nativeVideo = document.getElementById('webcam-video');
       const overlay = document.getElementById('overlay');
@@ -461,6 +467,65 @@
           if (cam) cam.setAttribute('look-controls', 'touchEnabled: true');
         }
       });
+
+
+      // Click interaction, gold glow transition, and canvas tooltip system
+      document.addEventListener('DOMContentLoaded', () => {
+        const logoBtn = document.getElementById('winners-logo-btn');
+        const logoTooltip = document.getElementById('logo-tooltip');
+
+        if (logoTooltip) {
+          // Larger high-resolution texture canvas space
+          const canvas = document.createElement('canvas');
+          canvas.width = 1024;
+          canvas.height = 256;
+          const ctx = canvas.getContext('2d');
+          
+          // Clear any previous frames
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          
+          // 1. Draw Transparent White Tooltip Background Box
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // 2. Draw Bright Solid Gold Text Layer (100% full opacity)
+          ctx.fillStyle = '#f59e0b'; 
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          // Draw Much Larger Up Arrow
+          ctx.font = 'bold 80px monospace';
+          ctx.fillText('↑', canvas.width / 2, 70);
+          
+          // Draw Much Larger Main Text Label
+          ctx.font = 'bold 64px monospace';
+          ctx.fillText('VIEW WINNERS', canvas.width / 2, 180);
+          
+          // Bind the high-res texture canvas straight into the component system
+          logoTooltip.setAttribute('material', 'src', canvas);
+        }
+
+        if (logoBtn) {
+          // Trigger look/hover response rules
+          logoBtn.addEventListener('mouseenter', () => {
+            // Adds a light-gold color tint modification layer
+            logoBtn.setAttribute('material', 'color', '#ffeaa7'); 
+            if (logoTooltip) logoTooltip.setAttribute('visible', 'true');
+          });
+
+          // Reset element parameters when looking away
+          logoBtn.addEventListener('mouseleave', () => {
+            logoBtn.setAttribute('material', 'color', '#ffffff');
+            if (logoTooltip) logoTooltip.setAttribute('visible', 'false');
+          });
+
+          // Redirect to target file path on tap/click activation
+          logoBtn.addEventListener('click', () => {
+            window.location.href = 'winners-exhibition.html';
+          });
+        }
+      });
+
     </script>
   </body>
 </html>
