@@ -5,7 +5,7 @@ const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oG
 // ==========================================================
 const START_DATE = new Date("2026-06-24T18:00:00").getTime();
 // Admin: Extend this date forward whenever you want to grant extra submission time
-const DEADLINE_DATE = new Date("2026-06-25T10:09:00").getTime();
+const DEADLINE_DATE = new Date("2026-06-25T09:27:00").getTime();
 
 let userIsActivelyWorking = false; // Tracks if they are typing, changing inputs, or selecting photos
 let submissionFinishedTime = null; // Tracks when a successful submit occurs
@@ -374,24 +374,55 @@ const runTimelineEngine = () => {
     const isCurrentlyUploading = submitBtn && submitBtn.disabled === true;
     const initialSubmissionDetected = localStorage.getItem("submittedUploadEmail") !== null;
 
-    if (initialSubmissionDetected && !completedAfterDeadline) {
+    // RULE 1: Handle users who have already submitted previously
+    if (initialSubmissionDetected) {
+        // Clear flashing classes just in case
         if (uploadForm) uploadForm.classList.remove("late-flashing-container");
         if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
-        
-        if (hoursEl) hoursEl.innerText = "00";
-        if (minutesEl) minutesEl.innerText = "00";
-        if (secondsEl) secondsEl.innerText = "00";
-        if (timerTitle) {
-            timerTitle.innerText = "Portfolio Securely Uploaded!";
-            timerTitle.style.color = "#10b981"; 
+
+        // FIX: If they refresh AFTER the deadline has completely passed, force the Closed State!
+        if (now >= DEADLINE_DATE && !isCurrentlyUploading) {
+            clearInterval(window.timelineInterval);
+            if (hoursEl) hoursEl.innerText = "00";
+            if (minutesEl) minutesEl.innerText = "00";
+            if (secondsEl) secondsEl.innerText = "00";
+            
+            if (uploadForm) {
+                uploadForm.innerHTML = ""; 
+                uploadForm.classList.add('d-none');
+            }
+            if (uploadDashboard) uploadDashboard.classList.add('d-none');
+            
+            if (feedback) {
+                feedback.className = "text-center mt-4 p-4 text-danger fw-bold border border-danger rounded bg-dark";
+                feedback.innerHTML = `
+                    <i class="fas fa-lock fa-2x mb-3 text-danger"></i>
+                    <h3>Marathon Closed</h3>
+                    <p class="mb-0 mt-2 text-white-50">The official submission window has closed! The portal is now securely locked.</p>
+                `;
+                feedback.classList.remove('d-none');
+            }
+            return;
         }
-        if (uploadForm) uploadForm.classList.add('d-none');
-        if (uploadDashboard) uploadDashboard.classList.remove('d-none');
-        if (feedback) feedback.classList.add('d-none');
-        return;
+
+        // Otherwise, if the deadline hasn't passed, show their success state dashboard normally
+        if (!completedAfterDeadline) {
+            if (hoursEl) hoursEl.innerText = "00";
+            if (minutesEl) minutesEl.innerText = "00";
+            if (secondsEl) secondsEl.innerText = "00";
+            if (timerTitle) {
+                timerTitle.innerText = "Portfolio Securely Uploaded!";
+                timerTitle.style.color = "#10b981"; 
+            }
+            if (uploadForm) uploadForm.classList.add('d-none');
+            if (uploadDashboard) uploadDashboard.classList.remove('d-none');
+            if (feedback) feedback.classList.add('d-none');
+            return;
+        }
     }
 
     if (now >= DEADLINE_DATE) {
+        // CONDITION A: If they are actively filling data or uploading late, let them finish
         if (userIsActivelyWorking || isCurrentlyUploading) {
             if (hoursEl) hoursEl.innerText = "00";
             if (minutesEl) minutesEl.innerText = "00";
@@ -412,6 +443,7 @@ const runTimelineEngine = () => {
             return; 
         }
 
+        // CONDITION B: Late submission finished! Run 5-second window
         const isWithinFiveSecondGrace = completedAfterDeadline && submissionFinishedTime !== null && (now - submissionFinishedTime < 5000);
         if (isWithinFiveSecondGrace) {
             if (uploadForm) uploadForm.classList.remove("late-flashing-container");
@@ -426,6 +458,7 @@ const runTimelineEngine = () => {
             return; 
         }
 
+        // CONDITION C: Otherwise, clean up and close portal
         if (uploadForm) uploadForm.classList.remove("late-flashing-container");
         if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
         clearInterval(window.timelineInterval);
@@ -454,6 +487,7 @@ const runTimelineEngine = () => {
         return; 
     }
 
+    // Default running countdown configuration
     if (uploadForm) uploadForm.classList.remove("late-flashing-container");
     if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
     if (!hoursEl || !minutesEl || !secondsEl) return;
