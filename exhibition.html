@@ -71,7 +71,7 @@
       }
     </style>
 
-<script>
+    <script>
       const LIVE_GET_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oGEeijewaNR0t8a5vARJkiuBWpOuMJVcowQdkDdaWGofaar8BRuG88VGGtQ/exec";
 
       window.galleryState = {
@@ -82,11 +82,10 @@
         sensitivity: 0.02,
         autoScrollSpeed: 0.015,
         leftTrackMaxSpan: 0,
-        rightTrackMaxSpan: 0,
-        loadedUrls: new Set() // Tracks unique assets already built in 3D
+        rightTrackMaxSpan: 0
       };
 
-      // --- TOUCH/MOUSE CONTROLS REMAIN UNCHANGED ---
+      // --- TOUCH CONTROLS ---
       window.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) {
           window.galleryState.isUserTouching = true;
@@ -95,12 +94,19 @@
           window.galleryState.deltaZ = 0;
         }
       });
+
       window.addEventListener('touchmove', (e) => {
         if (e.touches.length === 1 && window.galleryState.isUserTouching) {
           handleInteractionMove(e.touches[0].clientX, e.touches[0].clientY);
         }
       });
-      window.addEventListener('touchend', () => { window.galleryState.isUserTouching = false; window.galleryState.deltaZ = 0; });
+
+      window.addEventListener('touchend', () => {
+        window.galleryState.isUserTouching = false;
+        window.galleryState.deltaZ = 0;
+      });
+
+      // --- MOUSE CONTROLS ---
       window.addEventListener('mousedown', (e) => {
         if (e.button === 2) {
           window.galleryState.isUserTouching = true;
@@ -109,21 +115,46 @@
           window.galleryState.deltaZ = 0;
         }
       });
-      window.addEventListener('mousemove', (e) => { if (window.galleryState.isUserTouching) handleInteractionMove(e.clientX, e.clientY); });
-      window.addEventListener('mouseup', (e) => { if (e.button === 2) { window.galleryState.isUserTouching = false; window.galleryState.deltaZ = 0; } });
-      window.addEventListener('contextmenu', (e) => e.preventDefault());
+
+      window.addEventListener('mousemove', (e) => {
+        if (window.galleryState.isUserTouching) {
+          handleInteractionMove(e.clientX, e.clientY);
+        }
+      });
+
+      window.addEventListener('mouseup', (e) => {
+        if (e.button === 2) {
+          window.galleryState.isUserTouching = false;
+          window.galleryState.deltaZ = 0;
+        }
+      });
+
+      window.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+      });
 
       function handleInteractionMove(currentX, currentY) {
         let diffX = currentX - window.galleryState.touchStartX;
         let diffY = currentY - window.galleryState.touchStartY;
-        if (Math.abs(diffX) > Math.abs(diffY)) { window.galleryState.deltaZ = diffX; } else { window.galleryState.deltaZ = -diffY; }
-        window.galleryState.touchStartX = currentX; window.galleryState.touchStartY = currentY;
+
+        if (Math.abs(diffX) > Math.abs(diffY)) {
+          window.galleryState.deltaZ = diffX;
+        } else {
+          window.galleryState.deltaZ = -diffY; 
+        }
+
+        window.galleryState.touchStartX = currentX;
+        window.galleryState.touchStartY = currentY;
       }
 
       // SMART FLUID CONVEYOR COMPONENT
       AFRAME.registerComponent('conveyor-item', {
-        schema: { trackSide: { type: 'string', default: 'left' } },
-        init: function () { this.isInitialized = false; },
+        schema: {
+          trackSide: { type: 'string', default: 'left' }
+        },
+        init: function () {
+          this.isInitialized = false;
+        },
         setupBounds: function(totalSpan) {
           this.minZ = -totalSpan / 2;
           this.maxZ = totalSpan / 2;
@@ -136,6 +167,7 @@
             if (globalSpan > 0) this.setupBounds(globalSpan);
             return;
           }
+
           let position = this.el.getAttribute('position');
           let currentZ = position.z;
 
@@ -145,8 +177,11 @@
             currentZ -= window.galleryState.autoScrollSpeed;
           }
 
-          if (currentZ < this.minZ) { currentZ += this.totalSpan; }
-          else if (currentZ > this.maxZ) { currentZ -= this.totalSpan; }
+          if (currentZ < this.minZ) {
+            currentZ += this.totalSpan;
+          } else if (currentZ > this.maxZ) {
+            currentZ -= this.totalSpan;
+          }
 
           this.el.setAttribute('position', { x: position.x, y: position.y, z: currentZ });
         }
@@ -155,173 +190,135 @@
       // LIVE SHEET EXTRACTION & GAPLESS FLUID PACKER
       AFRAME.registerComponent('gallery-loader', {
         init: function () {
-          this.sceneEl = this.el;
-          this.assetsEl = document.querySelector('a-assets');
-          this.startBtn = document.getElementById('startBtn');
-          this.leftTrackElements = [];
-          this.rightTrackElements = [];
-          this.totalIndexCount = 0;
+          const sceneEl = this.el;
+          const assetsEl = document.querySelector('a-assets');
+          const startBtn = document.getElementById('startBtn');
 
-          this.sceneEl.addEventListener('render-target-loaded', () => {
-            if (this.sceneEl.renderer) {
-              this.sceneEl.renderer.setClearColor(0x000000, 0);
-              this.sceneEl.renderer.alpha = true;
+          sceneEl.addEventListener('render-target-loaded', () => {
+            if (sceneEl.renderer) {
+              sceneEl.renderer.setClearColor(0x000000, 0);
+              sceneEl.renderer.alpha = true;
             }
           });
 
-          this.startBtn.disabled = true;
-          this.startBtn.innerText = "Connecting Live Feed...";
+          startBtn.disabled = true;
+          startBtn.innerText = "Connecting Live Feed...";
 
-          // Run initial sync fetch
-          this.fetchLiveSubmissions(true);
-
-          // Setup background polling interval engine every 7 seconds
-          setInterval(() => {
-            this.fetchLiveSubmissions(false);
-          }, 7000);
-        },
-
-        fetchLiveSubmissions: function (isInitialLoad) {
           fetch(LIVE_GET_API_URL)
             .then(res => res.json())
             .then(images => {
-              if (!images || images.length === 0) {
-                if (isInitialLoad) {
-                  document.getElementById('overlay-desc').innerText = "No submitted pictures found in database yet.";
-                  this.startBtn.innerText = "Gallery Empty";
-                }
+              if(!images || images.length === 0) {
+                document.getElementById('overlay-desc').innerText = "No submitted pictures found in database yet.";
+                startBtn.innerText = "Gallery Empty";
                 return;
               }
 
-              let newImagesFound = [];
+              let leftTrackElements = [];
+              let rightTrackElements = [];
 
-              images.forEach((imgData) => {
-                // Deduplicate to only catch images we haven't rendered yet
-                if (!window.galleryState.loadedUrls.has(imgData.src)) {
-                  window.galleryState.loadedUrls.add(imgData.src);
-                  newImagesFound.push(imgData);
-                }
-              });
-
-              if (newImagesFound.length === 0) return; // Keep cruising smoothly if no new uploads
-
-              let batchItemsToProcess = [];
-
-              newImagesFound.forEach((imgData) => {
-                let currentIndex = this.totalIndexCount++;
-                
+              images.forEach((imgData, index) => {
                 let imgAsset = document.createElement('img');
-                imgAsset.setAttribute('id', `live-img-${currentIndex}`);
+                imgAsset.setAttribute('id', `live-img-${index}`);
                 imgAsset.setAttribute('src', imgData.src);
                 imgAsset.setAttribute('crossorigin', 'anonymous');
-                this.assetsEl.appendChild(imgAsset);
+                assetsEl.appendChild(imgAsset);
 
                 let aImg = document.createElement('a-image');
-                let isLeft = currentIndex % 2 === 0;
+                let isLeft = index % 2 === 0;
                 
-                aImg.setAttribute('src', `#live-img-${currentIndex}`);
+                aImg.setAttribute('src', `#live-img-${index}`);
                 aImg.setAttribute('conveyor-item', `trackSide: ${isLeft ? 'left' : 'right'}`);
                 
                 if (isLeft) {
                   aImg.setAttribute('material', 'side: double');
-                  this.leftTrackElements.push({ item: aImg, asset: imgAsset });
+                  leftTrackElements.push({ item: aImg, asset: imgAsset });
                 } else {
-                  this.rightTrackElements.push({ item: aImg, asset: imgAsset });
+                  rightTrackElements.push({ item: aImg, asset: imgAsset });
                 }
 
-                batchItemsToProcess.push({ item: aImg, asset: imgAsset });
-                this.sceneEl.appendChild(aImg);
+                sceneEl.appendChild(aImg);
               });
 
               let processedCount = 0;
-              const totalToProcess = batchItemsToProcess.length;
+              const totalToProcess = images.length;
 
-              const checkBatchComplete = () => {
+              function checkProcessingComplete() {
                 processedCount++;
                 if (processedCount === totalToProcess) {
-                  this.rearrangeTrackFluidly(this.leftTrackElements, '-3', '0 90 0', 'left');
-                  this.rearrangeTrackFluidly(this.rightTrackElements, '3', '0 -90 0', 'right');
+                  arrangeTrackFluidly(leftTrackElements, '-3', '0 90 0', 'left');
+                  arrangeTrackFluidly(rightTrackElements, '3', '0 -90 0', 'right');
 
-                  if (isInitialLoad) {
-                    this.startBtn.disabled = false;
-                    const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-                    this.startBtn.innerText = isMobile ? "Enter Exhibition" : "Start Exhibition";
-                  }
+                  startBtn.disabled = false;
+                  const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+                  startBtn.innerText = isMobile ? "Enter Exhibition" : "Start Exhibition";
                 }
-              };
+              }
 
-              batchItemsToProcess.forEach(obj => {
+              [...leftTrackElements, ...rightTrackElements].forEach(obj => {
                 if (obj.asset.complete) {
-                  this.calculateTargetDimensions(obj);
-                  checkBatchComplete();
+                  calculateTargetDimensions(obj);
+                  checkProcessingComplete();
                 } else {
-                  obj.asset.addEventListener('load', () => {
-                    this.calculateTargetDimensions(obj);
-                    checkBatchComplete();
+                  obj.asset.addEventListener('load', function() {
+                    calculateTargetDimensions(obj);
+                    checkProcessingComplete();
                   });
-                  obj.asset.addEventListener('error', () => {
+                  obj.asset.addEventListener('error', function() {
                     obj.calculatedWidth = 3.2;
                     obj.calculatedHeight = 1.8;
-                    this.calculateTargetDimensions(obj);
-                    checkBatchComplete();
+                    checkProcessingComplete();
                   });
                 }
               });
+
+              function calculateTargetDimensions(obj) {
+                let width = obj.asset.naturalWidth || 16;
+                let height = obj.asset.naturalHeight || 9;
+                let aspectRatio = width / height;
+
+                let maxBoundaryWidth = 3.2;
+                let maxBoundaryHeight = 1.8;
+
+                if (aspectRatio > (maxBoundaryWidth / maxBoundaryHeight)) {
+                  obj.calculatedWidth = maxBoundaryWidth;
+                  obj.calculatedHeight = maxBoundaryWidth / aspectRatio;
+                } else {
+                  obj.calculatedHeight = maxBoundaryHeight;
+                  obj.calculatedWidth = maxBoundaryHeight * aspectRatio;
+                }
+                
+                obj.item.setAttribute('width', obj.calculatedWidth);
+                obj.item.setAttribute('height', obj.calculatedHeight);
+              }
+
+              function arrangeTrackFluidly(elementsArray, xPos, rotation, sideName) {
+                let currentZAccumulator = 0;
+                let marginBetweenFrames = 0.8;
+
+                elementsArray.forEach(obj => {
+                  currentZAccumulator += (obj.calculatedWidth / 2);
+                  obj.initialZ = currentZAccumulator;
+                  currentZAccumulator += (obj.calculatedWidth / 2) + marginBetweenFrames;
+                });
+
+                let totalSpan = currentZAccumulator;
+                if (sideName === 'left') {
+                  window.galleryState.leftTrackMaxSpan = totalSpan;
+                } else {
+                  window.galleryState.rightTrackMaxSpan = totalSpan;
+                }
+
+                elementsArray.forEach(obj => {
+                  let centeredZ = obj.initialZ - (totalSpan / 2);
+                  obj.item.setAttribute('position', `${xPos} 0 ${centeredZ}`);
+                  obj.item.setAttribute('rotation', rotation);
+                });
+              }
             })
             .catch(err => {
               console.error("Live fetch failed:", err);
-              if (isInitialLoad) {
-                document.getElementById('overlay-desc').innerText = "Error syncing submissions with Google Sheet.";
-              }
+              document.getElementById('overlay-desc').innerText = "Error syncing submissions with Google Sheet.";
             });
-        },
-
-        calculateTargetDimensions: function (obj) {
-          let width = obj.asset.naturalWidth || 16;
-          let height = obj.asset.naturalHeight || 9;
-          let aspectRatio = width / height;
-          let maxBoundaryWidth = 3.2;
-          let maxBoundaryHeight = 1.8;
-
-          if (aspectRatio > (maxBoundaryWidth / maxBoundaryHeight)) {
-            obj.calculatedWidth = maxBoundaryWidth;
-            obj.calculatedHeight = maxBoundaryWidth / aspectRatio;
-          } else {
-            obj.calculatedHeight = maxBoundaryHeight;
-            obj.calculatedWidth = maxBoundaryHeight * aspectRatio;
-          }
-          
-          obj.item.setAttribute('width', obj.calculatedWidth);
-          obj.item.setAttribute('height', obj.calculatedHeight);
-        },
-
-        rearrangeTrackFluidly: function (elementsArray, xPos, rotation, sideName) {
-          let currentZAccumulator = 0;
-          let marginBetweenFrames = 0.8;
-
-          elementsArray.forEach(obj => {
-            currentZAccumulator += (obj.calculatedWidth / 2);
-            obj.initialZ = currentZAccumulator;
-            currentZAccumulator += (obj.calculatedWidth / 2) + marginBetweenFrames;
-          });
-
-          let totalSpan = currentZAccumulator;
-          if (sideName === 'left') {
-            window.galleryState.leftTrackMaxSpan = totalSpan;
-          } else {
-            window.galleryState.rightTrackMaxSpan = totalSpan;
-          }
-
-          elementsArray.forEach(obj => {
-            let centeredZ = obj.initialZ - (totalSpan / 2);
-            obj.item.setAttribute('position', `${xPos} 0 ${centeredZ}`);
-            obj.item.setAttribute('rotation', rotation);
-            
-            // Re-initialize running boundary targets if tracking is already rolling live
-            if (obj.item.components['conveyor-item']) {
-              obj.item.components['conveyor-item'].setupBounds(totalSpan);
-            }
-          });
         }
       });
     </script>
