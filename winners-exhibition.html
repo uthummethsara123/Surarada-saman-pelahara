@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Virtual Winners Exhibition - 3D Pillars Hall</title>
     
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
@@ -15,6 +15,24 @@
         height: 100%;
         overflow: hidden;
         background-color: #0b0f19;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      /* Native background webcam stream styling */
+      #webcam-video {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+        z-index: -1;
+        display: none;
+      }
+
+      a-scene, .a-canvas {
+        background-color: transparent !important;
+        background: transparent !important;
       }
 
       #overlay {
@@ -140,7 +158,9 @@
     <div id="move-hint"></div>
     <div id="nav-hud-status"></div>
 
-    <a-scene renderer="antialias: true; colorManagement: true;">
+    <video id="webcam-video" autoplay playsinline webkit-playsinline muted loop></video>
+
+    <a-scene renderer="antialias: true; colorManagement: true; alpha: true;">
       
       <a-assets>
         <img id="img-logo" src="/assets/img/logo.png" crossorigin="anonymous">
@@ -203,8 +223,8 @@
       <a-light type="point" color="#ffffff" intensity="0.6" distance="15" position="0 4.2 -44"></a-light>
 
       <a-entity position="0 4.0 1.5">
-        <a-box color="# cbd5e1" width="0.03" height="0.5" depth="0.03" position="-1.2 0.25 0"></a-box>
-        <a-box color="# cbd5e1" width="0.03" height="0.5" depth="0.03" position="1.2 0.25 0"></a-box>
+        <a-box color="#cbd5e1" width="0.03" height="0.5" depth="0.03" position="-1.2 0.25 0"></a-box>
+        <a-box color="#cbd5e1" width="0.03" height="0.5" depth="0.03" position="1.2 0.25 0"></a-box>
         <a-box color="#d97706" width="3.04" height="0.64" depth="0.08" position="0 0 0"></a-box>
         <a-box color="#0f172a" width="3.0" height="0.6" depth="0.1" position="0 0 0"></a-box>
         <a-text value="COLOUR CATEGORY" align="center" color="#f59e0b" width="5.0" position="0 0 0.06" font="mozillavr"></a-text>
@@ -212,8 +232,8 @@
       </a-entity>
 
       <a-entity position="0 4.0 -16.5">
-        <a-box color="# cbd5e1" width="0.03" height="0.5" depth="0.03" position="-1.2 0.25 0"></a-box>
-        <a-box color="# cbd5e1" width="0.03" height="0.5" depth="0.03" position="1.2 0.25 0"></a-box>
+        <a-box color="#cbd5e1" width="0.03" height="0.5" depth="0.03" position="-1.2 0.25 0"></a-box>
+        <a-box color="#cbd5e1" width="0.03" height="0.5" depth="0.03" position="1.2 0.25 0"></a-box>
         <a-box color="#d97706" width="3.04" height="0.64" depth="0.08" position="0 0 0"></a-box>
         <a-box color="#0f172a" width="3.0" height="0.6" depth="0.1" position="0 0 0"></a-box>
         <a-text value="MONOCHROME CATEGORY" align="center" color="#f59e0b" width="5.0" position="0 0 0.06" font="mozillavr"></a-text>
@@ -221,8 +241,8 @@
       </a-entity>
 
       <a-entity position="0 4.0 -34.5">
-        <a-box color="# cbd5e1" width="0.03" height="0.5" depth="0.03" position="-1.2 0.25 0"></a-box>
-        <a-box color="# cbd5e1" width="0.03" height="0.5" depth="0.03" position="1.2 0.25 0"></a-box>
+        <a-box color="#cbd5e1" width="0.03" height="0.5" depth="0.03" position="-1.2 0.25 0"></a-box>
+        <a-box color="#cbd5e1" width="0.03" height="0.5" depth="0.03" position="1.2 0.25 0"></a-box>
         <a-box color="#d97706" width="3.04" height="0.64" depth="0.08" position="0 0 0"></a-box>
         <a-box color="#0f172a" width="3.0" height="0.6" depth="0.1" position="0 0 0"></a-box>
         <a-text value="STORY TELLING CATEGORY" align="center" color="#f59e0b" width="5.0" position="0 0 0.06" font="mozillavr"></a-text>
@@ -453,6 +473,7 @@
       const moveHint = document.getElementById('move-hint');
       const hudStatus = document.getElementById('nav-hud-status');
       const scene = document.querySelector('a-scene');
+      const nativeVideo = document.getElementById('webcam-video');
 
       const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
       
@@ -461,6 +482,20 @@
 
       const activeKeys = {};
       const moveSpeed = 0.12; 
+
+      const forceSceneClearTransparency = () => {
+        if (scene) {
+          scene.style.backgroundColor = "transparent";
+          scene.style.background = "transparent";
+        }
+        document.querySelectorAll('.a-canvas').forEach(canvas => {
+          canvas.style.backgroundColor = "transparent";
+          canvas.style.background = "transparent";
+        });
+        if (scene && scene.renderer) {
+          scene.renderer.setClearColor(0x000000, 0);
+        }
+      };
 
       function moveRigWithStrictCarpetBounds(forwardAmount, strafeAmount) {
         const rig = document.getElementById('camera-rig');
@@ -518,6 +553,7 @@
           activeKeys[e.key.toLowerCase()] = true;
         });
 
+        document.addEventListener('mouseup', (e) => {});
         document.addEventListener('keyup', (e) => {
           activeKeys[e.key.toLowerCase()] = false;
         });
@@ -550,30 +586,50 @@
         });
       }
 
-      function requestDeviceOrientationAccess() {
+      function activateMobilePermissions() {
+        // iOS strict compliance check for Motion sensors
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
           DeviceOrientationEvent.requestPermission()
             .then(permissionState => {
               if (permissionState !== 'granted') {
-                console.warn("DeviceOrientation disabled by user.");
+                console.warn("DeviceOrientation access rejected.");
               }
             })
             .catch(console.error);
         }
+
+        // Initialize background hardware camera pipeline
+        navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
+        })
+        .then((stream) => {
+          nativeVideo.srcObject = stream;
+          nativeVideo.addEventListener('playing', () => {
+            forceSceneClearTransparency();
+            nativeVideo.style.display = "block";
+          }, { once: true });
+          nativeVideo.play().catch(e => console.log(e));
+        })
+        .catch((err) => {
+          console.error("Camera access blocked:", err);
+          if (scene) scene.style.backgroundColor = "#0b0f19"; 
+        });
       }
 
       startBtn.addEventListener('click', () => {
         overlay.style.display = 'none';
         
         if (isMobile) {
-          requestDeviceOrientationAccess();
           moveHint.innerHTML = "Rotate phone to Look around · Drag on screen to Walk";
           moveHint.style.display = 'block';
+          forceSceneClearTransparency();
+          activateMobilePermissions();
         } else {
           moveHint.innerHTML = "Click on screen to lock cursor and start exploring!";
           hudStatus.innerHTML = "• Controls: <b>WASD / Arrows</b> to Move<br>• Press <b>ESC</b> to free mouse cursor";
           hudStatus.style.display = 'block';
           moveHint.style.display = 'block';
+          if (scene) scene.style.backgroundColor = "#0b0f19";
         }
       });
     </script>
