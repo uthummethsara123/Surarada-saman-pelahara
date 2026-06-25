@@ -5,56 +5,60 @@ const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oG
 // ==========================================================
 const START_DATE = new Date("2026-06-24T18:00:00").getTime();
 // Admin: Extend this date forward whenever you want to grant extra submission time
-const DEADLINE_DATE = new Date("2026-06-25T09:59:00").getTime();
+const DEADLINE_DATE = new Date("2026-06-25T10:02:00").getTime();
 
 let userIsActivelyWorking = false; // Tracks if they are typing, changing inputs, or selecting photos
 let submissionFinishedTime = null; // Tracks when a successful submit occurs
 let completedAfterDeadline = false; // Flags whether the user finished late to apply the 5-sec rule
 
-// Injecting flashing background and circular progress animation styles dynamically
+// Injecting flashing container background and inline layout alignment styles dynamically
 const styleSheet = document.createElement("style");
 styleSheet.innerText = `
     @keyframes lateWarningFlash {
-        0% { background-color: #0f172a; }
-        50% { background-color: #1e293b; }
-        100% { background-color: #0f172a; }
+        0% { background-color: rgba(255, 255, 255, 0.03); border-color: rgba(239, 68, 68, 0.4); }
+        50% { background-color: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.85); box-shadow: 0 0 15px rgba(255, 255, 255, 0.4); }
+        100% { background-color: rgba(255, 255, 255, 0.03); border-color: rgba(239, 68, 68, 0.4); }
     }
-    .late-flashing-bg {
-        animation: lateWarningFlash 1.5s infinite ease-in-out;
+    .late-flashing-container {
+        animation: lateWarningFlash 1.2s infinite ease-in-out !important;
+    }
+    .status-indicator-wrapper {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        vertical-align: middle !important;
+        margin-left: 10px !important;
     }
     .progress-circle-container {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 32px;
-        height: 32px;
+        width: 28px;
+        height: 28px;
         position: relative;
-        margin-left: 12px;
-        vertical-align: middle;
     }
     .progress-circle-svg {
         transform: rotate(-90deg);
-        width: 32px;
-        height: 32px;
+        width: 28px;
+        height: 28px;
     }
     .progress-circle-bg {
         fill: none;
         stroke: #334155;
-        stroke-width: 3;
+        stroke-width: 3.5;
     }
     .progress-circle-bar {
         fill: none;
         stroke: #f59e0b;
-        stroke-width: 3;
+        stroke-width: 3.5;
         stroke-dasharray: 88;
         stroke-dashoffset: 88;
-        transition: stroke-dashoffset 0.3s ease;
+        transition: stroke-dashoffset 0.2s ease;
     }
     .upload-success-tick {
-        color: #10b981;
-        font-size: 1.25rem;
+        color: #10b981 !important;
+        font-size: 1.35rem !important;
         display: none;
-        margin-left: 12px;
         vertical-align: middle;
     }
 `;
@@ -88,17 +92,17 @@ document.addEventListener("DOMContentLoaded", () => {
         uploadForm.addEventListener('click', markAsActive);
     }
 
-    // Dynamically place the progress tracks into the HTML on load next to remove buttons
+    // Dynamically insert status indicators cleanly into a horizontal Flex container right next to the remove buttons
     document.querySelectorAll('.remove-btn').forEach(btn => {
-        const container = document.createElement('div');
-        container.className = 'd-inline-flex align-items-center position-relative';
-        btn.parentNode.insertBefore(container, btn.nextSibling);
+        const wrapper = document.createElement('span');
+        wrapper.className = 'status-indicator-wrapper';
+        btn.after(wrapper);
         
-        container.innerHTML = `
+        wrapper.innerHTML = `
             <div class="progress-circle-container d-none" id="circle_container_${btn.getAttribute('data-target')}">
                 <svg class="progress-circle-svg">
-                    <circle class="progress-circle-bg" cx="16" cy="16" r="14"></circle>
-                    <circle class="progress-circle-bar" id="circle_bar_${btn.getAttribute('data-target')}" cx="16" cy="16" r="14"></circle>
+                    <circle class="progress-circle-bg" cx="14" cy="14" r="12"></circle>
+                    <circle class="progress-circle-bar" id="circle_bar_${btn.getAttribute('data-target')}" cx="14" cy="14" r="12"></circle>
                 </svg>
             </div>
             <i class="fas fa-check-circle upload-success-tick" id="tick_${btn.getAttribute('data-target')}"></i>
@@ -131,9 +135,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     titleField.value = cleanNameWithoutExtension; 
                     input.classList.add('d-none');
 
-                    // Reset tracking visuals
-                    document.getElementById(`circle_container_${inputName}`).classList.add('d-none');
-                    document.getElementById(`tick_${inputName}`).style.display = 'none';
+                    // Reset indicators
+                    const container = document.getElementById(`circle_container_${inputName}`);
+                    if(container) container.classList.add('d-none');
+                    const tick = document.getElementById(`tick_${inputName}`);
+                    if(tick) tick.style.display = 'none';
                 }
                 reader.readAsDataURL(file);
             }
@@ -154,8 +160,10 @@ document.addEventListener("DOMContentLoaded", () => {
             titleField.value = "";
             wrapper.classList.add('d-none');
 
-            document.getElementById(`circle_container_${targetInputName}`).classList.add('d-none');
-            document.getElementById(`tick_${targetInputName}`).style.display = 'none';
+            const container = document.getElementById(`circle_container_${targetInputName}`);
+            if(container) container.classList.add('d-none');
+            const tick = document.getElementById(`tick_${targetInputName}`);
+            if(tick) tick.style.display = 'none';
         });
     });
 
@@ -174,8 +182,10 @@ document.addEventListener("DOMContentLoaded", () => {
             feedback.innerText = "Starting transmission...";
             feedback.classList.remove('d-none');
 
-            // Explicitly remove flash background style class when upload process initiates
-            document.body.classList.remove("late-flashing-bg");
+            // Strip out flash classes immediately once upload begins
+            uploadForm.classList.remove("late-flashing-container");
+            const timerBox = document.querySelector('.countdown-container');
+            if (timerBox) timerBox.classList.remove("late-flashing-container");
 
             const toBase64 = file => new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -189,24 +199,24 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 const safeName = participantName.replace(/[^a-zA-Z0-9]/g, "_");
 
-                // Process and upload photos sequentially 1 by 1
+                // Sequentially process files 1 by 1
                 for (let input of fileInputs) {
                     if (input.files.length > 0) {
                         const file = input.files[0];
                         const targetId = input.name;
 
-                        feedback.innerText = `Uploading ${targetId.split('_')[0]} image item...`;
+                        feedback.innerText = `Uploading ${targetId.split('_')[0]} item asset...`;
                         
-                        // Show progress circle
                         const circleContainer = document.getElementById(`circle_container_${targetId}`);
                         const circleBar = document.getElementById(`circle_bar_${targetId}`);
-                        circleContainer.classList.remove('d-none');
+                        
+                        if(circleContainer) circleContainer.classList.remove('d-none');
 
-                        // Animate uploading progress loop sequence
-                        circleBar.style.strokeDashoffset = "60"; // 30% filled
+                        // Animate uploading state changes
+                        if(circleBar) circleBar.style.strokeDashoffset = "55"; // Loading state
                         
                         const base64Str = await toBase64(file);
-                        circleBar.style.strokeDashoffset = "30"; // 70% filled
+                        if(circleBar) circleBar.style.strokeDashoffset = "25"; // Sending state
                         
                         const customTitleInput = document.getElementById("title_" + targetId);
                         let finalizedTitle = customTitleInput && customTitleInput.value.trim() ? customTitleInput.value.trim() : "untitled";
@@ -232,7 +242,6 @@ document.addEventListener("DOMContentLoaded", () => {
                             }]
                         };
 
-                        // Send singular payload instance over network link
                         await fetch(SUBMISSION_API_URL, {
                             method: 'POST',
                             mode: 'no-cors',
@@ -240,16 +249,15 @@ document.addEventListener("DOMContentLoaded", () => {
                             body: JSON.stringify(itemPayload)
                         });
 
-                        // Switch circle out and toggle the green tick checkmark container on
-                        circleBar.style.strokeDashoffset = "0"; // 100% full
-                        circleContainer.classList.add('d-none');
+                        // Clear circle spinner and activate tick
+                        if(circleBar) circleBar.style.strokeDashoffset = "0";
+                        if(circleContainer) circleContainer.classList.add('d-none');
                         
                         const successTick = document.getElementById(`tick_${targetId}`);
-                        successTick.style.display = 'inline-block';
+                        if(successTick) successTick.style.display = 'inline-block';
                     }
                 }
 
-                // Complete operations process profile triggers
                 localStorage.setItem("submittedUploadEmail", participantEmail);
                 localStorage.setItem("submittedUploadName", participantName);
 
@@ -356,7 +364,9 @@ const runTimelineEngine = () => {
 
     // RULE 1: If already submitted beforehand, stay locked on success dashboard
     if (initialSubmissionDetected && !completedAfterDeadline) {
-        document.body.classList.remove("late-flashing-bg");
+        if (uploadForm) uploadForm.classList.remove("late-flashing-container");
+        if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
+        
         if (hoursEl) hoursEl.innerText = "00";
         if (minutesEl) minutesEl.innerText = "00";
         if (secondsEl) secondsEl.innerText = "00";
@@ -381,11 +391,13 @@ const runTimelineEngine = () => {
                 timerTitle.style.color = "#ef4444";
             }
 
-            // Flash ONLY if they are filling the form, NOT while uploading
+            // Flash form blocks ONLY if filling, stop immediately on upload trigger
             if (userIsActivelyWorking && !isCurrentlyUploading) {
-                document.body.classList.add("late-flashing-bg");
+                if (uploadForm) uploadForm.classList.add("late-flashing-container");
+                if (countdownContainer) countdownContainer.classList.add("late-flashing-container");
             } else {
-                document.body.classList.remove("late-flashing-bg");
+                if (uploadForm) uploadForm.classList.remove("late-flashing-container");
+                if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
             }
             return; 
         }
@@ -393,7 +405,8 @@ const runTimelineEngine = () => {
         // CONDITION B: Late submission finished! Run 5-second window
         const isWithinFiveSecondGrace = completedAfterDeadline && submissionFinishedTime !== null && (now - submissionFinishedTime < 5000);
         if (isWithinFiveSecondGrace) {
-            document.body.classList.remove("late-flashing-bg");
+            if (uploadForm) uploadForm.classList.remove("late-flashing-container");
+            if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
             if (hoursEl) hoursEl.innerText = "00";
             if (minutesEl) minutesEl.innerText = "00";
             if (secondsEl) secondsEl.innerText = "00";
@@ -405,7 +418,8 @@ const runTimelineEngine = () => {
         }
 
         // CONDITION C: Otherwise, clean up and close portal
-        document.body.classList.remove("late-flashing-bg");
+        if (uploadForm) uploadForm.classList.remove("late-flashing-container");
+        if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
         clearInterval(window.timelineInterval);
         
         if (hoursEl) hoursEl.innerText = "00";
@@ -433,7 +447,8 @@ const runTimelineEngine = () => {
     }
 
     // Default running countdown configuration
-    document.body.classList.remove("late-flashing-bg");
+    if (uploadForm) uploadForm.classList.remove("late-flashing-container");
+    if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
     if (!hoursEl || !minutesEl || !secondsEl) return;
 
     if (now < START_DATE) {
