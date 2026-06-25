@@ -370,23 +370,26 @@ const runTimelineEngine = () => {
     const countdownContainer = document.querySelector(".countdown-container");
     const timerTitle = document.querySelector(".timer-title");
     const submitBtn = document.getElementById('uploadSubmitBtn');
+    const formWrapper = document.querySelector(".form-wrapper"); // Target the main form container box
 
     const isCurrentlyUploading = submitBtn && submitBtn.disabled === true;
     const initialSubmissionDetected = localStorage.getItem("submittedUploadEmail") !== null;
 
-    // Inject/Update the official announcement message box dynamically so it is always present
-    if (countdownContainer) {
-        let infoBox = countdownContainer.querySelector('.official-portal-announcement');
+    // Inject/Update the official announcement message box directly at the top of the main form wrapper card
+    if (formWrapper) {
+        let infoBox = formWrapper.querySelector('.official-portal-announcement');
         if (!infoBox) {
             infoBox = document.createElement('div');
-            infoBox.className = 'official-portal-announcement text-center mt-3 p-2 rounded small fw-bold mx-auto';
-            infoBox.style.backgroundColor = 'rgba(56, 189, 248, 0.12)'; 
-            infoBox.style.border = '1px solid rgba(56, 189, 248, 0.25)';
+            infoBox.className = 'official-portal-announcement text-center mb-4 p-3 rounded fw-bold w-100';
+            // Custom blue opacity themed style to look native to your glass theme
+            infoBox.style.backgroundColor = 'rgba(56, 189, 248, 0.1)'; 
+            infoBox.style.border = '1px solid rgba(56, 189, 248, 0.2)';
             infoBox.style.color = '#38bdf8';
-            infoBox.style.maxWidth = '320px';
-            countdownContainer.appendChild(infoBox);
+            infoBox.style.fontSize = '0.95rem';
+            // Insert it as the absolute first item inside the form container box
+            formWrapper.insertBefore(infoBox, formWrapper.firstChild);
         }
-        infoBox.innerHTML = `<i class="fas fa-calendar-alt me-2"></i>Official Submission Portal Deadline:<br>July 26th at 12:00 PM`;
+        infoBox.innerHTML = `<i class="fas fa-calendar-alt me-2"></i>Official Submission Portal Deadline: July 26th at 12:00 PM`;
     }
 
     // RULE 1: Handle users who have already submitted previously
