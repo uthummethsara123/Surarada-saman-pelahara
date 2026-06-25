@@ -202,6 +202,33 @@
       <a-box color="#ffffff" material="shader: flat; emissive: #ffffff; emissiveIntensity: 1;" width="0.4" height="0.05" depth="8" position="0 4.45 -44"></a-box>
       <a-light type="point" color="#ffffff" intensity="0.6" distance="15" position="0 4.2 -44"></a-light>
 
+      <a-entity position="0 4.0 1.5">
+        <a-box color="# cbd5e1" width="0.03" height="0.5" depth="0.03" position="-1.2 0.25 0"></a-box>
+        <a-box color="# cbd5e1" width="0.03" height="0.5" depth="0.03" position="1.2 0.25 0"></a-box>
+        <a-box color="#d97706" width="3.04" height="0.64" depth="0.08" position="0 0 0"></a-box>
+        <a-box color="#0f172a" width="3.0" height="0.6" depth="0.1" position="0 0 0"></a-box>
+        <a-text value="COLOUR CATEGORY" align="center" color="#f59e0b" width="5.0" position="0 0 0.06" font="mozillavr"></a-text>
+        <a-text value="COLOUR CATEGORY" align="center" color="#f59e0b" width="5.0" position="0 0 -0.06" rotation="0 180 0" font="mozillavr"></a-text>
+      </a-entity>
+
+      <a-entity position="0 4.0 -16.5">
+        <a-box color="# cbd5e1" width="0.03" height="0.5" depth="0.03" position="-1.2 0.25 0"></a-box>
+        <a-box color="# cbd5e1" width="0.03" height="0.5" depth="0.03" position="1.2 0.25 0"></a-box>
+        <a-box color="#d97706" width="3.04" height="0.64" depth="0.08" position="0 0 0"></a-box>
+        <a-box color="#0f172a" width="3.0" height="0.6" depth="0.1" position="0 0 0"></a-box>
+        <a-text value="MONOCHROME CATEGORY" align="center" color="#f59e0b" width="5.0" position="0 0 0.06" font="mozillavr"></a-text>
+        <a-text value="MONOCHROME CATEGORY" align="center" color="#f59e0b" width="5.0" position="0 0 -0.06" rotation="0 180 0" font="mozillavr"></a-text>
+      </a-entity>
+
+      <a-entity position="0 4.0 -34.5">
+        <a-box color="# cbd5e1" width="0.03" height="0.5" depth="0.03" position="-1.2 0.25 0"></a-box>
+        <a-box color="# cbd5e1" width="0.03" height="0.5" depth="0.03" position="1.2 0.25 0"></a-box>
+        <a-box color="#d97706" width="3.04" height="0.64" depth="0.08" position="0 0 0"></a-box>
+        <a-box color="#0f172a" width="3.0" height="0.6" depth="0.1" position="0 0 0"></a-box>
+        <a-text value="STORY TELLING CATEGORY" align="center" color="#f59e0b" width="5.0" position="0 0 0.06" font="mozillavr"></a-text>
+        <a-text value="STORY TELLING CATEGORY" align="center" color="#f59e0b" width="5.0" position="0 0 -0.06" rotation="0 180 0" font="mozillavr"></a-text>
+      </a-entity>
+
       <a-entity position="-2.4 0 -2" rotation="0 90 0">
         <a-cylinder color="#f8fafc" radius="0.35" height="6.5" material="roughness: 0.15; metalness: 0.1;"></a-cylinder>
         <a-box color="#cbd5e1" width="0.9" height="0.25" depth="0.9" position="0 -3.12 0"></a-box>
@@ -429,14 +456,12 @@
 
       const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
       
-      // Touch coordinates for multi-directional vector movement
       let touchStartX = 0;
       let touchStartY = 0;
 
       const activeKeys = {};
       const moveSpeed = 0.12; 
 
-      // UNIVERSAL CARPET-BOUNDED COLLISION ENGINE
       function moveRigWithStrictCarpetBounds(forwardAmount, strafeAmount) {
         const rig = document.getElementById('camera-rig');
         const cam = document.getElementById('main-camera');
@@ -452,7 +477,6 @@
         nextX += Math.cos(angleRad) * strafeAmount;
         nextZ -= Math.sin(angleRad) * strafeAmount;
 
-        // Strict boundary parameters
         const CARPET_MAX_X = 1.3; 
         const CARPET_MIN_X = -1.3;
         const CORRIDOR_MAX_Z = 6.0;
@@ -465,7 +489,6 @@
         rig.setAttribute('position', { x: nextX, y: currentPos.y, z: nextZ });
       }
 
-      // --- MOBILE SETUP: DEVICE ORIENTATION VIEW + WASD SWIPE MOTION TRACKING ---
       if (isMobile) {
         window.addEventListener('touchstart', (e) => {
           if (e.touches.length === 1) {
@@ -480,9 +503,8 @@
             let currentY = e.touches[0].clientY;
             
             let diffX = currentX - touchStartX;
-            let diffY = touchStartY - currentY; // Invert logic: push up to step forward
+            let diffY = touchStartY - currentY; 
 
-            // Convert raw swipe deltas into precise vector inputs
             let forwardWalk = diffY * 0.0004;
             let strafeWalk = diffX * 0.0004;
 
@@ -490,7 +512,6 @@
           }
         });
       } else {
-        // --- DESKTOP KEYBOARD ENGINE ---
         document.getElementById('main-camera').setAttribute('look-controls', 'pointerLockEnabled: true; touchEnabled: false;');
 
         document.addEventListener('keydown', (e) => {
@@ -529,7 +550,6 @@
         });
       }
 
-      // Safe Device Orientation Permissions Check for Mobile Devices
       function requestDeviceOrientationAccess() {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
           DeviceOrientationEvent.requestPermission()
