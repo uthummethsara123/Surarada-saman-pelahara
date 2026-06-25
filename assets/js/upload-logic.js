@@ -217,7 +217,7 @@ const payload = {
 // MARATHON TIMELINE ENGINE (WITH DELAYED LOCKOUT FOR ACTIVE SUBMISSIONS)
 // ==========================================================================
 const START_DATE = new Date("2026-06-24T18:00:00").getTime();
-const DEADLINE_DATE = new Date("2026-06-24T24:00:00").getTime();
+const DEADLINE_DATE = new Date("2026-06-25T09:23:00").getTime();
 
 // Keep a timestamp flag for when a late submission finishes successfully
 let submissionFinishedTime = null;
