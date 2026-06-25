@@ -549,7 +549,7 @@
         rig.setAttribute('position', { x: nextX, y: currentPos.y, z: nextZ });
       }
 
-      // 1. MOBILE TOUCH LIFECYCLE ENGINE
+      // 1. MOBILE TOUCH EVENT REGISTRATION
       if (isMobile) {
         window.addEventListener('touchstart', (e) => {
           if (e.touches.length === 1) {
@@ -565,26 +565,25 @@
             let currentY = e.touches[0].clientY;
             
             let diffX = currentX - touchStartX;
-            let diffY = touchStartY - currentY; // Upward pull yields positive
+            let diffY = touchStartY - currentY; 
 
-            // Check if screen is flipped horizontally (Landscape) vs vertically (Portrait)
+            // Dynamic layout orientation calculations mapping context
             if (window.innerWidth > window.innerHeight) {
-              // LANDSCAPE MODE:
-              // Short side is screen Y -> Up/Down slides go Forward/Backward
-              // Long side is screen X -> Left/Right slides go Left/Right (Strafe)
+              // LANDSCAPE VIEW:
+              // Short dimension (diffY) -> Tracks your forward / backward velocity
+              // Long dimension (diffX) -> Tracks your sideways strafe velocity
               mobileForwardVelocity = diffY * 0.0020;
               mobileStrafeVelocity = diffX * 0.0020;
             } else {
-              // PORTRAIT MODE:
-              // Long side is screen Y -> Up/Down slides go Forward/Backward
-              // Short side is screen X -> Left/Right slides go Left/Right (Strafe)
+              // PORTRAIT VIEW:
+              // Long dimension (diffY) -> Tracks your forward / backward velocity
+              // Short dimension (diffX) -> Tracks your sideways strafe velocity
               mobileForwardVelocity = diffY * 0.0020;
               mobileStrafeVelocity = diffX * 0.0020;
             }
           }
         }, { passive: true });
 
-        // Safely wipe movement velocity tracking maps instantly upon releasing input contact
         window.addEventListener('touchend', () => {
           isMobileTouching = false;
           mobileForwardVelocity = 0;
@@ -598,7 +597,7 @@
         });
       }
 
-      // 2. DESKTOP INPUT LISTENERS
+      // 2. DESKTOP KEYBOARD LISTENERS
       else {
         document.getElementById('main-camera').setAttribute('look-controls', 'pointerLockEnabled: true; touchEnabled: false;');
 
@@ -620,19 +619,19 @@
         });
       }
 
-      // 3. UNIFIED GLOBAL ANIMATION RUNTIME LOOP (60FPS Frame Propulsion)
-      function coreGlobalAppLoop() {
+      // 3. CORE GLOBAL UNIFIED RUNTIME FRAME LOOP ENGINE (Runs on Mobile and Desktop)
+      function masterApplicationLoop() {
         let forward = 0;
         let strafe = 0;
 
         if (isMobile) {
-          // Slide & Hold automatic movement values applied frame-by-frame
+          // Slide & Hold checks loop coordinates frame-by-frame continuously here
           if (isMobileTouching) {
             forward = mobileForwardVelocity;
             strafe = mobileStrafeVelocity;
           }
         } else {
-          // Desktop Keyboard processing rules
+          // Desktop Keyboard processing routes
           if (activeKeys['w'] || activeKeys['arrowup']) forward += moveSpeed;
           if (activeKeys['s'] || activeKeys['arrowdown']) forward -= moveSpeed;
           if (activeKeys['d'] || activeKeys['arrowright']) strafe += moveSpeed;
@@ -643,11 +642,12 @@
           moveRigWithStrictCarpetBounds(forward, strafe);
         }
         
-        requestAnimationFrame(coreGlobalAppLoop);
+        requestAnimationFrame(masterApplicationLoop);
       }
 
+      // Starts your global rendering loops correctly across all platform setups on document load
       document.addEventListener('DOMContentLoaded', () => {
-        requestAnimationFrame(coreGlobalAppLoop);
+        requestAnimationFrame(masterApplicationLoop);
       });
 
       function activateMobilePermissions() {
@@ -695,7 +695,7 @@
         }
       });
 
-      // Interactive components setup
+      // Sign components canvas interactions initialization block
       document.addEventListener('DOMContentLoaded', () => {
         const exhibitionSign = document.getElementById('btn-to-exhibition');
         const signGlow = document.getElementById('sign-glow');
@@ -744,7 +744,5 @@
         }
       });
     </script>
-
-    
   </body>
 </html>
