@@ -567,17 +567,13 @@
 
             // Adjust axes mapping to match screen layout dimensions perfectly
             if (window.innerWidth > window.innerHeight) {
-              // Horizontal / Landscape Mode
-              // Up/Down on small side (diffY) moves Forward/Backward
-              // Left/Right on long side (diffX) moves Left/Right (Strafe)
-              forwardWalk = diffY * 0.0004;
-              strafeWalk = diffX * 0.0004;
+              // Horizontal / Landscape Mode (Speed boosted to 0.0018)
+              forwardWalk = diffY * 0.0018;
+              strafeWalk = diffX * 0.0018;
             } else {
-              // Vertical / Portrait Mode
-              // Up/Down on long side (diffY) moves Forward/Backward
-              // Left/Right on small side (diffX) moves Left/Right (Strafe)
-              forwardWalk = diffY * 0.0004;
-              strafeWalk = diffX * 0.0004;
+              // Vertical / Portrait Mode (Speed boosted to 0.0018)
+              forwardWalk = diffY * 0.0018;
+              strafeWalk = diffX * 0.0018;
             }
 
             moveRigWithStrictCarpetBounds(forwardWalk, strafeWalk);
