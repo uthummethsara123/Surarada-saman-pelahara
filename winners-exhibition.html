@@ -489,6 +489,23 @@
 
     </a-scene>
 
+    <div id="mobile-nav-pad" style="display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 9999; direction: ltr;">
+      <div style="text-align: center; margin-bottom: 10px;">
+        <button id="toggle-layout-btn" class="btn btn-sm btn-warning" style="font-weight: bold; font-family: monospace; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+          🔄 MODE: PORTRAIT (SHORT SIDE LEFT/RIGHT)
+        </button>
+      </div>
+      
+      <div style="display: grid; grid-template-columns: repeat(3, 65px); grid-template-rows: repeat(2, 65px); gap: 10px; justify-content: center;">
+        <div></div>
+        <button id="btn-move-up" class="btn btn-dark" style="height: 65px; font-size: 24px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">▲</button>
+        <div></div>
+        <button id="btn-move-left" class="btn btn-dark" style="height: 65px; font-size: 24px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">◀</button>
+        <button id="btn-move-down" class="btn btn-dark" style="height: 65px; font-size: 24px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">▼</button>
+        <button id="btn-move-right" class="btn btn-dark" style="height: 65px; font-size: 24px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">▶</button>
+      </div>
+    </div>
+
 <script>
       const overlay = document.getElementById('overlay');
       const startBtn = document.getElementById('startBtn');
@@ -496,17 +513,23 @@
       const hudStatus = document.getElementById('nav-hud-status');
       const scene = document.querySelector('a-scene');
       const nativeVideo = document.getElementById('webcam-video');
+      const mobileNavPad = document.getElementById('mobile-nav-pad');
+      const toggleLayoutBtn = document.getElementById('toggle-layout-btn');
 
       const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
       
-      let touchStartX = 0;
-      let touchStartY = 0;
-      let mobileForwardVelocity = 0;
-      let mobileStrafeVelocity = 0;
-      let isMobileTouching = false;
-
+      // Navigation states engine tracking
       const activeKeys = {};
       const moveSpeed = 0.12; 
+
+      // Mobile button state monitors
+      let isMovingUp = false;
+      let isMovingDown = false;
+      let isMovingLeft = false;
+      let isMovingRight = false;
+      
+      // Default behavior configuration (false = Portrait Mode mapping rules, true = Landscape Mode)
+      let isLandscapeMappingMode = false;
 
       const forceSceneClearTransparency = () => {
         if (scene) {
@@ -549,71 +572,35 @@
         rig.setAttribute('position', { x: nextX, y: currentPos.y, z: nextZ });
       }
 
-      // 1. ADVANCED MOBILITY ORIENTATION TRACKING LISTENERS
+      // 1. ATTACH EVENTS FOR MOBILE CONTROL BUTTON HOLD MECHANICS
       if (isMobile) {
-        window.addEventListener('touchstart', (e) => {
-          if (e.touches.length === 1) {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-            isMobileTouching = true;
+        // Toggle configuration orientation mapping
+        toggleLayoutBtn.addEventListener('click', () => {
+          isLandscapeMappingMode = !isLandscapeMappingMode;
+          if (isLandscapeMappingMode) {
+            toggleLayoutBtn.innerHTML = "🔄 MODE: LANDSCAPE (SHORT SIDE FORWARD/BACK)";
+            toggleLayoutBtn.className = "btn btn-sm btn-info";
+          } else {
+            toggleLayoutBtn.innerHTML = "🔄 MODE: PORTRAIT (LONG SIDE FORWARD/BACK)";
+            toggleLayoutBtn.className = "btn btn-sm btn-warning";
           }
-        }, { passive: true });
-
-        window.addEventListener('touchmove', (e) => {
-          if (e.touches.length === 1 && isMobileTouching) {
-            let currentX = e.touches[0].clientX;
-            let currentY = e.touches[0].clientY;
-            
-            // X is horizontal, Y is vertical screen axis
-            let diffX = currentX - touchStartX;
-            let diffY = currentY - touchStartY; 
-
-            // Calculate total touch drag length distance
-            let totalDistance = Math.sqrt(diffX * diffX + diffY * diffY);
-            
-            if (totalDistance > 5) { // Threshold to prevent shaking artifacts
-              // Find screen drag angle
-              let dragAngle = Math.atan2(diffY, diffX);
-              
-              // Scale target movement propulsion speed metrics factor safely
-              let speedFactor = Math.min(totalDistance * 0.0003, 0.04);
-
-              // Detect actual hardware orientation layout window angle profiles
-              // window.orientation is 90/-90 in landscape mode, 0 in portrait mode
-              let screenOrientationAngle = window.orientation || 0;
-
-              if (Math.abs(screenOrientationAngle) === 90) {
-                // LANDSCAPE MODE ORIENTATION MAP:
-                // Flipping screen layout offsets vector tracking arrays exactly by 90 degrees
-                let adjustedAngle = dragAngle + (screenOrientationAngle === 90 ? -Math.PI / 2 : Math.PI / 2);
-                
-                // Forces Up/Down swipes down the short dimension to move forward/back
-                // Forces Left/Right swipes along the long dimension to slide sideways
-                mobileForwardVelocity = -Math.cos(adjustedAngle) * speedFactor;
-                mobileStrafeVelocity = -Math.sin(adjustedAngle) * speedFactor;
-              } else {
-                // PORTRAIT MODE STANDARD MAP:
-                mobileForwardVelocity = -diffY * 0.0020;
-                mobileStrafeVelocity = diffX * 0.0020;
-              }
-            }
-          }
-        }, { passive: true });
-
-        window.addEventListener('touchend', () => {
-          isMobileTouching = false;
-          mobileForwardVelocity = 0;
-          mobileStrafeVelocity = 0;
         });
 
-        window.addEventListener('touchcancel', () => {
-          isMobileTouching = false;
-          mobileForwardVelocity = 0;
-          mobileStrafeVelocity = 0;
-        });
+        // Helper tracker builder to handle touch down/up states accurately
+        const setupButton = (id, setter) => {
+          const btn = document.getElementById(id);
+          btn.addEventListener('touchstart', (e) => { e.preventDefault(); setter(true); }, {passive: false});
+          btn.addEventListener('touchend', (e) => { e.preventDefault(); setter(false); }, {passive: false});
+          btn.addEventListener('touchcancel', (e) => { e.preventDefault(); setter(false); }, {passive: false});
+        };
+
+        setupButton('btn-move-up', (val) => isMovingUp = val);
+        setupButton('btn-move-down', (val) => isMovingDown = val);
+        setupButton('btn-move-left', (val) => isMovingLeft = val);
+        setupButton('btn-move-right', (val) => isMovingRight = val);
       }
 
-      // 2. DESKTOP KEYBOARD ENGINE CONFIGURATION
+      // 2. DESKTOP TRADITIONAL INPUT CAPTURE RUNTIMES
       else {
         document.getElementById('main-camera').setAttribute('look-controls', 'pointerLockEnabled: true; touchEnabled: false;');
 
@@ -621,7 +608,6 @@
           activeKeys[e.key.toLowerCase()] = true;
         });
 
-        document.addEventListener('mouseup', (e) => {});
         document.addEventListener('keyup', (e) => {
           activeKeys[e.key.toLowerCase()] = false;
         });
@@ -635,17 +621,30 @@
         });
       }
 
-      // 3. 60 FPS MASTER CONTINUOUS RENDERING LOOP
-      function masterApplicationLoop() {
+      // 3. CENTRAL RUNTIME APPLICATION ANIMATION LOOP ENGINE (60FPS)
+      function primaryCoreAppLoop() {
         let forward = 0;
         let strafe = 0;
 
         if (isMobile) {
-          if (isMobileTouching) {
-            forward = mobileForwardVelocity;
-            strafe = mobileStrafeVelocity;
+          // Read button holds and interpret directions based on current Mode Toggle setting
+          let upValue = isMovingUp ? moveSpeed : 0;
+          let downValue = isMovingDown ? moveSpeed : 0;
+          let leftValue = isMovingLeft ? moveSpeed : 0;
+          let rightValue = isMovingRight ? moveSpeed : 0;
+
+          if (isLandscapeMappingMode) {
+            // LANDSCAPE REMAP MODE:
+            // Flipping axes rules cleanly: UP/DOWN moves along short dimensions, LEFT/RIGHT on long dimensions
+            forward = leftValue - rightValue; 
+            strafe = upValue - downValue;
+          } else {
+            // PORTRAIT STANDARDS MODE:
+            forward = upValue - downValue;
+            strafe = rightValue - leftValue;
           }
         } else {
+          // Desktop computing keyboard mapping logic array
           if (activeKeys['w'] || activeKeys['arrowup']) forward += moveSpeed;
           if (activeKeys['s'] || activeKeys['arrowdown']) forward -= moveSpeed;
           if (activeKeys['d'] || activeKeys['arrowright']) strafe += moveSpeed;
@@ -656,11 +655,11 @@
           moveRigWithStrictCarpetBounds(forward, strafe);
         }
         
-        requestAnimationFrame(masterApplicationLoop);
+        requestAnimationFrame(primaryCoreAppLoop);
       }
 
       document.addEventListener('DOMContentLoaded', () => {
-        requestAnimationFrame(masterApplicationLoop);
+        requestAnimationFrame(primaryCoreAppLoop);
       });
 
       function activateMobilePermissions() {
@@ -695,8 +694,9 @@
         overlay.style.display = 'none';
         
         if (isMobile) {
-          moveHint.innerHTML = "Rotate phone to Look around · Drag on screen to Walk";
+          moveHint.innerHTML = "Rotate phone to Look around · Hold On-Screen D-Pad to Walk";
           moveHint.style.display = 'block';
+          mobileNavPad.style.display = 'block'; // Make button layout operational
           forceSceneClearTransparency();
           activateMobilePermissions();
         } else {
@@ -708,7 +708,7 @@
         }
       });
 
-      // Interactive components setup
+      // Interactive tooltips render layers initialization
       document.addEventListener('DOMContentLoaded', () => {
         const exhibitionSign = document.getElementById('btn-to-exhibition');
         const signGlow = document.getElementById('sign-glow');
