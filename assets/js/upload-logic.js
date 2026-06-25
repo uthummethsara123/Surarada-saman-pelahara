@@ -5,7 +5,7 @@ const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oG
 // ==========================================================
 const START_DATE = new Date("2026-06-24T18:00:00").getTime();
 // Admin: Extend this date forward whenever you want to grant extra submission time
-const DEADLINE_DATE = new Date("2026-06-25T10:47:00").getTime();
+const DEADLINE_DATE = new Date("2026-06-25T09:27:00").getTime();
 
 let userIsActivelyWorking = false; // Tracks if they are typing, changing inputs, or selecting photos
 let submissionFinishedTime = null; // Tracks when a successful submit occurs
@@ -380,7 +380,7 @@ const runTimelineEngine = () => {
         if (uploadForm) uploadForm.classList.remove("late-flashing-container");
         if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
 
-        // FIX: If they refresh AFTER the deadline has completely passed, force the Closed State!
+        // If they refresh AFTER the deadline has completely passed, force the Closed State!
         if (now >= DEADLINE_DATE && !isCurrentlyUploading) {
             clearInterval(window.timelineInterval);
             if (hoursEl) hoursEl.innerText = "00";
@@ -405,19 +405,12 @@ const runTimelineEngine = () => {
             return;
         }
 
-        // Otherwise, if the deadline hasn't passed, show their success state dashboard normally
+        // FIX: If deadline hasn't passed, keep dashboard visibility but DO NOT skip the timer logic below!
         if (!completedAfterDeadline) {
-            if (hoursEl) hoursEl.innerText = "00";
-            if (minutesEl) minutesEl.innerText = "00";
-            if (secondsEl) secondsEl.innerText = "00";
-            if (timerTitle) {
-                timerTitle.innerText = "Portfolio Securely Uploaded!";
-                timerTitle.style.color = "#10b981"; 
-            }
             if (uploadForm) uploadForm.classList.add('d-none');
             if (uploadDashboard) uploadDashboard.classList.remove('d-none');
             if (feedback) feedback.classList.add('d-none');
-            return;
+            // We don't return here anymore so the code below can keep calculating the real timer values
         }
     }
 
@@ -432,7 +425,6 @@ const runTimelineEngine = () => {
                 timerTitle.style.color = "#ef4444";
             }
 
-            // Flash container background only if typing, stop when upload runs
             if (userIsActivelyWorking && !isCurrentlyUploading) {
                 if (uploadForm) uploadForm.classList.add("late-flashing-container");
                 if (countdownContainer) countdownContainer.classList.add("late-flashing-container");
@@ -516,9 +508,15 @@ const runTimelineEngine = () => {
         if (countdownContainer) countdownContainer.classList.remove('d-none');
         if (feedback) feedback.classList.add('d-none'); 
 
+        // Update title contextual color based on status
         if (timerTitle) {
-            timerTitle.innerText = "Portal Closes in...";
-            timerTitle.style.color = "#f59e0b"; 
+            if (initialSubmissionDetected) {
+                timerTitle.innerText = "Portfolio Secured! (Time Left)";
+                timerTitle.style.color = "#10b981"; // Keep it success green
+            } else {
+                timerTitle.innerText = "Portal Closes in...";
+                timerTitle.style.color = "#f59e0b"; // Warning amber
+            }
         }
 
         const distance = DEADLINE_DATE - now;
