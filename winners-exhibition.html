@@ -865,12 +865,11 @@ if (typeof ScrollReveal !== 'undefined') {
           if (isMobile) {
             if (moveHint) moveHint.style.display = 'none';
             if (mobileNavPad) mobileNavPad.style.display = 'block';
-            // magicWindowTrackingEnabled must remain false for pure drag control, touchEnabled must be explicitly reset
+            
+            // Force a hard reset on look-controls so vertical touch handlers are fully registered
             if (mainCamera) {
-              mainCamera.setAttribute('look-controls', {
-                magicWindowTrackingEnabled: false,
-                touchEnabled: true
-              });
+              mainCamera.removeAttribute('look-controls');
+              mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: false; touchEnabled: true;');
             }
             if (nativeVideo) nativeVideo.style.display = 'none';
             if (scene) scene.style.backgroundColor = "#540818"; 
