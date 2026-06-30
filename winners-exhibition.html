@@ -558,7 +558,7 @@
   </div>
 </div>
 
-<script>
+    <script>
       const overlay = document.getElementById('overlay');
       const moveHint = document.getElementById('move-hint');
       const hudStatus = document.getElementById('nav-hud-status');
@@ -583,42 +583,59 @@
       let isMovingRight = false;
       let isLandscapeMappingMode = false;
 
+      // Track if basic option tracking is active
+      let isBasicOptionActive = false;
+
       // Checks physical hardware sensor parameters for mobile configurations
-// Checks physical hardware sensor parameters for mobile configurations
-function checkHardwareGyroscope() {
-  if (!isMobile) return;
+      function checkHardwareGyroscope() {
+        if (!isMobile) return;
 
-  let gyroDetected = false;
+        let gyroDetected = false;
+        function sensorTest(event) {
+          if (event.alpha !== null || event.beta !== null || event.gamma !== null) {
+            gyroDetected = true;
+          }
+          window.removeEventListener('deviceorientation', sensorTest);
+        }
+        window.addEventListener('deviceorientation', sensorTest);
 
-  // Track actual physical angular velocity via devicemotion
-  function sensorTest(event) {
-    if (event.rotationRate && 
-        (event.rotationRate.alpha !== null || 
-         event.rotationRate.beta !== null || 
-         event.rotationRate.gamma !== null)) {
-      gyroDetected = true;
-    }
-    window.removeEventListener('devicemotion', sensorTest);
-  }
-  
-  window.addEventListener('devicemotion', sensorTest);
+        setTimeout(() => {
+          if (!gyroDetected) {
+            const currentArBtn = document.getElementById('select-ar-btn');
+            const currentWarningBox = document.getElementById('specs-warning-box');
 
-  setTimeout(() => {
-    if (!gyroDetected) {
-      const currentArBtn = document.getElementById('select-ar-btn');
-      const currentWarningBox = document.getElementById('specs-warning-box');
-
-      if (currentArBtn) {
-        currentArBtn.disabled = true;
-        currentArBtn.style.opacity = "0.5";
-        currentArBtn.style.pointerEvents = "none"; // Disables touch interactions entirely
+            if (currentArBtn) {
+              currentArBtn.disabled = true;
+            }
+            if (currentWarningBox) {
+              currentWarningBox.style.display = "block";
+            }
+          }
+        }, 600);
       }
-      if (currentWarningBox) {
-        currentWarningBox.style.display = "block";
+
+      // Hardware level sensor monitoring logic for system rotation lock check
+      function initBasicModeRotationWatcher() {
+        if (!isMobile) return;
+
+        window.addEventListener('deviceorientation', (event) => {
+          if (!isBasicOptionActive) return;
+          const warningBox = document.getElementById('rotate-warning-overlay');
+          if (!warningBox) return;
+
+          const absGamma = Math.abs(event.gamma);
+          const absBeta = Math.abs(event.beta);
+
+          const isBrowserPortraitLayout = window.innerHeight > window.innerWidth;
+          const isPhysicallyLandscapeTilt = (absGamma > 65 && absBeta < 45) || (absBeta > 65 && absGamma < 45);
+
+          if (isPhysicallyLandscapeTilt && isBrowserPortraitLayout) {
+            warningBox.style.display = 'flex';
+          } else {
+            warningBox.style.display = 'none';
+          }
+        });
       }
-    }
-  }, 750); // Increased slightly to guarantee the sensor pipeline fires
-}
 
       const forceSceneClearTransparency = () => {
         if (scene) {
@@ -662,7 +679,6 @@ function checkHardwareGyroscope() {
       }
 
       if (isMobile) {
-        // Safe structural check fallback added to avoid uncaught null references
         if (toggleLayoutBtn) {
           toggleLayoutBtn.addEventListener('click', () => {
             isLandscapeMappingMode = !isLandscapeMappingMode;
@@ -678,7 +694,7 @@ function checkHardwareGyroscope() {
 
         const setupButton = (id, setter) => {
           const btn = document.getElementById(id);
-          if (!btn) return; // Added fallback safety rule for navigation elements
+          if (!btn) return; 
           btn.addEventListener('touchstart', (e) => { e.preventDefault(); setter(true); }, {passive: false});
           btn.addEventListener('touchend', (e) => { e.preventDefault(); setter(false); }, {passive: false});
           btn.addEventListener('touchcancel', (e) => { e.preventDefault(); setter(false); }, {passive: false});
@@ -688,6 +704,13 @@ function checkHardwareGyroscope() {
         setupButton('btn-move-down', (val) => isMovingDown = val);
         setupButton('btn-move-left', (val) => isMovingLeft = val);
         setupButton('btn-move-right', (val) => isMovingRight = val);
+
+        // Prevent native window dragging/bouncing gestures from overriding vertical lookup drags
+        document.body.addEventListener('touchmove', (e) => {
+          if (isBasicOptionActive) {
+            e.preventDefault();
+          }
+        }, { passive: false });
       } else {
         if (mainCamera) {
           mainCamera.setAttribute('look-controls', 'pointerLockEnabled: true; touchEnabled: false;');
@@ -762,6 +785,7 @@ function checkHardwareGyroscope() {
       if (selectArBtn) {
         selectArBtn.addEventListener('click', () => {
           if (selectArBtn.disabled) return;
+          isBasicOptionActive = false; 
           if (overlay) overlay.style.display = 'none';
           
           if (isMobile) {
@@ -785,12 +809,19 @@ function checkHardwareGyroscope() {
       // Option 2: BASIC MODE Logic Chain
       if (selectBasicBtn) {
         selectBasicBtn.addEventListener('click', () => {
+          isBasicOptionActive = true; 
           if (overlay) overlay.style.display = 'none';
           
           if (isMobile) {
             if (moveHint) moveHint.style.display = 'none';
             if (mobileNavPad) mobileNavPad.style.display = 'block';
-            if (mainCamera) mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: false; touchEnabled: true;');
+            // magicWindowTrackingEnabled must remain false for pure drag control, touchEnabled must be explicitly reset
+            if (mainCamera) {
+              mainCamera.setAttribute('look-controls', {
+                magicWindowTrackingEnabled: false,
+                touchEnabled: true
+              });
+            }
             if (nativeVideo) nativeVideo.style.display = 'none';
             if (scene) scene.style.backgroundColor = "#540818"; 
           } else {
@@ -807,8 +838,8 @@ function checkHardwareGyroscope() {
 
       document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(primaryCoreAppLoop);
+        initBasicModeRotationWatcher(); 
         
-        // Laptop/Desktop safe layout structural alteration
         if (!isMobile) {
           if (selectArBtn && selectBasicBtn) {
             selectArBtn.style.display = 'none';
@@ -837,12 +868,10 @@ function checkHardwareGyroscope() {
             }
           }
         } else {
-          // Fire sensor assessment chain with layout rules
           checkHardwareGyroscope();
         }
       });
 
-      // Secondary safety check fallback if browser delays window elements
       window.addEventListener('load', () => {
         if (isMobile) {
           checkHardwareGyroscope();
