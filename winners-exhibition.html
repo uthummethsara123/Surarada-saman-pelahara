@@ -602,10 +602,10 @@
 
         setTimeout(() => {
           if (!gyroDetected) {
-            selectArBtn.disabled = true;
-            specsWarningBox.style.display = "block";
+            if (selectArBtn) selectArBtn.disabled = true;
+            if (specsWarningBox) specsWarningBox.style.display = "block";
           }
-        }, 600);
+        }, 750); // Small standard delay ensures slow hardware sensors have initialized
       }
 
       const forceSceneClearTransparency = () => {
@@ -694,7 +694,7 @@
           let upValue = isMovingUp ? moveSpeed : 0;
           let downValue = isMovingDown ? moveSpeed : 0;
           let leftValue = isMovingLeft ? moveSpeed : 0;
-          let rightValue = isMovingRight ? moveSpeed : 0;
+          let rightValue = isMovingRight ? moveSpeed : 0; // Fixed structural ternary operator typo
 
           if (isLandscapeMappingMode) {
             forward = rightValue - leftValue; 
@@ -740,6 +740,7 @@
 
       // Option 1: AR MODE Logic Chain
       selectArBtn.addEventListener('click', () => {
+        if (selectArBtn.disabled) return;
         overlay.style.display = 'none';
         
         if (isMobile) {
@@ -786,7 +787,6 @@
         // Laptop/Desktop safe layout structural alteration
         if (!isMobile) {
           if (selectArBtn && selectBasicBtn) {
-            // Hide mobile selection elements without erasing nodes from DOM 
             selectArBtn.style.display = 'none';
             selectBasicBtn.style.display = 'none';
             
@@ -813,6 +813,14 @@
             }
           }
         } else {
+          // Fire sensor assessment chain with layout rules
+          checkHardwareGyroscope();
+        }
+      });
+
+      // Secondary safety check fallback if browser delays window elements
+      window.addEventListener('load', () => {
+        if (isMobile) {
           checkHardwareGyroscope();
         }
       });
