@@ -557,8 +557,7 @@
     <button id="btn-move-up" class="btn btn-warning" style="border-radius: 50%;">▲</button>
     <div></div>
     <button id="btn-move-left" class="btn btn-warning" style="border-radius: 50%;">◀</button>
-    <button id="toggle-layout-btn" class="btn btn-sm btn-warning" style="font-size: 9px; padding: 0;">🔄 PORTRAIT</button>
-    <button id="btn-move-right" class="btn btn-warning" style="border-radius: 50%;">▶</button>
+    <div></div> <button id="btn-move-right" class="btn btn-warning" style="border-radius: 50%;">▶</button>
     <div></div>
     <button id="btn-move-down" class="btn btn-warning" style="border-radius: 50%;">▼</button>
   </div>
@@ -728,20 +727,7 @@ if (typeof ScrollReveal !== 'undefined') {
         rig.setAttribute('position', { x: nextX, y: currentPos.y, z: nextZ });
       }
 
-      if (isMobile) {
-        if (toggleLayoutBtn) {
-          toggleLayoutBtn.addEventListener('click', () => {
-            isLandscapeMappingMode = !isLandscapeMappingMode;
-            if (isLandscapeMappingMode) {
-              toggleLayoutBtn.innerHTML = "🔄 MODE: LANDSCAPE";
-              toggleLayoutBtn.className = "btn btn-sm btn-info";
-            } else {
-              toggleLayoutBtn.innerHTML = "🔄 MODE: PORTRAIT";
-              toggleLayoutBtn.className = "btn btn-sm btn-warning";
-            }
-          });
-        }
-
+if (isMobile) {
         const setupButton = (id, setter) => {
           const btn = document.getElementById(id);
           if (!btn) return; 
@@ -755,7 +741,7 @@ if (typeof ScrollReveal !== 'undefined') {
         setupButton('btn-move-left', (val) => isMovingLeft = val);
         setupButton('btn-move-right', (val) => isMovingRight = val);
 
-        // Prevent native window dragging/bouncing gestures from overriding vertical lookup drags
+        // Dynamic viewport safety override ensuring dragging doesn't snap browser scroll bounds
         document.body.addEventListener('touchmove', (e) => {
           if (isBasicOptionActive) {
             e.preventDefault();
