@@ -78,32 +78,70 @@
       }
 
       p {
-        margin: 0 0 30px 0;
+        margin: 0 0 20px 0;
         font-size: 1rem;
         color: #94a3b8;
         max-width: 400px;
         line-height: 1.5;
       }
 
-      .start-btn {
-        background: #f59e0b;
-        color: #0f172a;
-        border: none;
-        padding: 14px 36px;
-        font-size: 1.1rem;
+      .mode-btn {
+        width: 100%;
+        max-width: 380px;
+        padding: 14px 20px;
+        font-size: 1rem;
         font-weight: bold;
-        border-radius: 50px;
+        border-radius: 12px;
         cursor: pointer;
-        box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
         transition: all 0.3s ease;
         text-transform: uppercase;
         letter-spacing: 1px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 12px;
       }
 
-      .start-btn:hover {
+      .btn-ar {
+        background: #f59e0b;
+        color: #0f172a;
+        border: none;
+        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.25);
+      }
+
+      .btn-ar:hover:not(:disabled) {
         transform: translateY(-2px);
-        box-shadow: 0 15px 30px rgba(245, 158, 11, 0.5);
         background: #fbbf24;
+        box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
+      }
+
+      .btn-ar:disabled {
+        background-color: #475569 !important;
+        color: #94a3b8 !important;
+        cursor: not-allowed;
+        box-shadow: none !important;
+        opacity: 0.5;
+      }
+
+      .btn-basic {
+        background: transparent;
+        color: #ffffff;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+      }
+
+      .btn-basic:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: #ffffff;
+        transform: translateY(-2px);
+      }
+
+      .sub-text {
+        font-size: 11px;
+        font-weight: normal;
+        text-transform: none;
+        opacity: 0.85;
+        letter-spacing: 0;
       }
 
       #move-hint {
@@ -156,7 +194,25 @@
       <img src="/assets/img/logo.png" alt="Logo" class="overlay-logo" />
       <h1 id="overlay-title">Winners Hall</h1>
       <p id="overlay-desc">Step inside the grand 3D gallery corridor to view the official award-winning photographic masterpieces.</p>
-      <button id="startBtn" class="start-btn">Enter Exhibition</button>
+      
+      <div id="specs-warning-box" style="display: none; background-color: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; border-radius: 10px; padding: 12px; margin: 0 auto 20px auto; text-align: left; max-width: 380px;">
+        <span style="color: #f87171; font-weight: bold; font-size: 13px;">⚠️ Notice:</span>
+        <p style="margin: 3px 0 0 0; font-size: 12px; color: #cbd5e1; line-height: 1.4;">
+          Your phone lacks a physical gyroscope sensor or minimum requirements. <b>AR Mode is disabled</b>, but you can explore perfectly using <b>Basic Mode</b> via the arrow pad.
+        </p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+        <button id="select-ar-btn" class="mode-btn btn-ar">
+          <span>✨ Option 1: AR Mode</span>
+          <span class="sub-text">Turn your physical phone around to view the room setup.</span>
+        </button>
+
+        <button id="select-basic-btn" class="mode-btn btn-basic">
+          <span>📱 Option 2: Basic Mode</span>
+          <span class="sub-text">Use your fingers to swipe the screen to look around.</span>
+        </button>
+      </div>
     </div>
 
     <div id="move-hint"></div>
@@ -508,28 +564,49 @@
 
 <script>
       const overlay = document.getElementById('overlay');
-      const startBtn = document.getElementById('startBtn');
       const moveHint = document.getElementById('move-hint');
       const hudStatus = document.getElementById('nav-hud-status');
       const scene = document.querySelector('a-scene');
       const nativeVideo = document.getElementById('webcam-video');
       const mobileNavPad = document.getElementById('mobile-nav-pad');
       const toggleLayoutBtn = document.getElementById('toggle-layout-btn');
+      
+      const selectArBtn = document.getElementById('select-ar-btn');
+      const selectBasicBtn = document.getElementById('select-basic-btn');
+      const specsWarningBox = document.getElementById('specs-warning-box');
+      const mainCamera = document.getElementById('main-camera');
 
       const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
       
-      // Navigation states engine tracking
       const activeKeys = {};
-      const moveSpeed = 0.16; // Increased speed for faster walking locomotion
+      const moveSpeed = 0.16; 
 
-      // Mobile button state monitors
       let isMovingUp = false;
       let isMovingDown = false;
       let isMovingLeft = false;
       let isMovingRight = false;
-      
-      // Default behavior configuration (false = Portrait Mode mapping rules, true = Landscape Mode)
       let isLandscapeMappingMode = false;
+
+      // Checks physical hardware sensor parameters for mobile configurations
+      function checkHardwareGyroscope() {
+        if (!isMobile) return;
+
+        let gyroDetected = false;
+        function sensorTest(event) {
+          if (event.alpha !== null || event.beta !== null || event.gamma !== null) {
+            gyroDetected = true;
+          }
+          window.removeEventListener('deviceorientation', sensorTest);
+        }
+        window.addEventListener('deviceorientation', sensorTest);
+
+        setTimeout(() => {
+          if (!gyroDetected) {
+            selectArBtn.disabled = true;
+            specsWarningBox.style.display = "block";
+          }
+        }, 600);
+      }
 
       const forceSceneClearTransparency = () => {
         if (scene) {
@@ -572,9 +649,7 @@
         rig.setAttribute('position', { x: nextX, y: currentPos.y, z: nextZ });
       }
 
-      // 1. ATTACH EVENTS FOR MOBILE CONTROL BUTTON HOLD MECHANICS
       if (isMobile) {
-        // Toggle configuration orientation mapping with simplified layout text strings
         toggleLayoutBtn.addEventListener('click', () => {
           isLandscapeMappingMode = !isLandscapeMappingMode;
           if (isLandscapeMappingMode) {
@@ -586,7 +661,6 @@
           }
         });
 
-        // Helper tracker builder to handle touch down/up states accurately
         const setupButton = (id, setter) => {
           const btn = document.getElementById(id);
           btn.addEventListener('touchstart', (e) => { e.preventDefault(); setter(true); }, {passive: false});
@@ -598,20 +672,11 @@
         setupButton('btn-move-down', (val) => isMovingDown = val);
         setupButton('btn-move-left', (val) => isMovingLeft = val);
         setupButton('btn-move-right', (val) => isMovingRight = val);
-      }
-
-      // 2. DESKTOP TRADITIONAL INPUT CAPTURE RUNTIMES
-      else {
-        document.getElementById('main-camera').setAttribute('look-controls', 'pointerLockEnabled: true; touchEnabled: false;');
-
-        document.addEventListener('keydown', (e) => {
-          activeKeys[e.key.toLowerCase()] = true;
-        });
-
-        document.addEventListener('keyup', (e) => {
-          activeKeys[e.key.toLowerCase()] = false;
-        });
-
+      } else {
+        mainCamera.setAttribute('look-controls', 'pointerLockEnabled: true; touchEnabled: false;');
+        document.addEventListener('keydown', (e) => { activeKeys[e.key.toLowerCase()] = true; });
+        document.addEventListener('keyup', (e) => { activeKeys[e.key.toLowerCase()] = false; });
+        
         document.addEventListener('pointerlockchange', () => {
           if (document.pointerLockElement) {
             hudStatus.innerHTML = "• Controls: <b>WASD / Arrows</b> to Move<br>• Press <b>ESC</b> to free mouse cursor";
@@ -621,30 +686,24 @@
         });
       }
 
-      // 3. CENTRAL RUNTIME APPLICATION ANIMATION LOOP ENGINE (60FPS)
       function primaryCoreAppLoop() {
         let forward = 0;
         let strafe = 0;
 
         if (isMobile) {
-          // Read button holds
           let upValue = isMovingUp ? moveSpeed : 0;
           let downValue = isMovingDown ? moveSpeed : 0;
           let leftValue = isMovingLeft ? moveSpeed : 0;
           let rightValue = isMovingRight ? moveSpeed : 0;
 
           if (isLandscapeMappingMode) {
-            // LANDSCAPE REMAP MODE: 
-            // Inverted order here too (downValue - upValue) to correctly mirror left and right
             forward = rightValue - leftValue; 
             strafe = downValue - upValue;
           } else {
-            // PORTRAIT STANDARDS MODE:
             forward = upValue - downValue;
             strafe = rightValue - leftValue;
           }
         } else {
-          // Desktop computing keyboard mapping logic array
           if (activeKeys['w'] || activeKeys['arrowup']) forward += moveSpeed;
           if (activeKeys['s'] || activeKeys['arrowdown']) forward -= moveSpeed;
           if (activeKeys['d'] || activeKeys['arrowright']) strafe += moveSpeed;
@@ -654,23 +713,12 @@
         if (forward !== 0 || strafe !== 0) {
           moveRigWithStrictCarpetBounds(forward, strafe);
         }
-        
         requestAnimationFrame(primaryCoreAppLoop);
       }
 
-      document.addEventListener('DOMContentLoaded', () => {
-        requestAnimationFrame(primaryCoreAppLoop);
-      });
-
       function activateMobilePermissions() {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-          DeviceOrientationEvent.requestPermission()
-            .then(permissionState => {
-              if (permissionState !== 'granted') {
-                console.warn("DeviceOrientation access rejected.");
-              }
-            })
-            .catch(console.error);
+          DeviceOrientationEvent.requestPermission().catch(console.error);
         }
 
         navigator.mediaDevices.getUserMedia({ 
@@ -685,30 +733,84 @@
           nativeVideo.play().catch(e => console.log(e));
         })
         .catch((err) => {
-          console.error("Camera access blocked:", err);
-          if (scene) scene.style.backgroundColor = "#0b0f19"; 
+          console.error("Camera access denied:", err);
+          if (scene) scene.style.backgroundColor = "#540818"; 
         });
       }
 
-      startBtn.addEventListener('click', () => {
+      // Option 1: AR MODE Logic Chain
+      selectArBtn.addEventListener('click', () => {
         overlay.style.display = 'none';
         
         if (isMobile) {
-          // Small descriptive text hint remains hidden for mobile layouts
           moveHint.style.display = 'none';
-          mobileNavPad.style.display = 'block'; 
+          if (mobileNavPad) mobileNavPad.style.display = 'block';
+          mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: true; touchEnabled: false;');
           forceSceneClearTransparency();
           activateMobilePermissions();
         } else {
-          moveHint.innerHTML = "Click on screen to lock cursor and start exploring!";
-          hudStatus.innerHTML = "• Controls: <b>WASD / Arrows</b> to Move<br>• Press <b>ESC</b> to free mouse cursor";
-          hudStatus.style.display = 'block';
-          moveHint.style.display = 'block';
-          if (scene) scene.style.backgroundColor = "#0b0f19";
+          if (scene) scene.style.backgroundColor = "#540818";
+          if (hudStatus) hudStatus.style.display = 'block';
+          if (moveHint) {
+            moveHint.innerHTML = "Click screen to lock cursor and start exploring!";
+            moveHint.style.display = 'block';
+          }
+          mainCamera.setAttribute('look-controls', 'touchEnabled: true;');
         }
       });
 
-      // Interactive tooltips render layers initialization
+      // Option 2: BASIC MODE Logic Chain
+      selectBasicBtn.addEventListener('click', () => {
+        overlay.style.display = 'none';
+        
+        if (isMobile) {
+          moveHint.style.display = 'none';
+          if (mobileNavPad) mobileNavPad.style.display = 'block';
+          mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: false; touchEnabled: true;');
+          if (nativeVideo) nativeVideo.style.display = 'none';
+          if (scene) scene.style.backgroundColor = "#540818"; 
+        } else {
+          if (scene) scene.style.backgroundColor = "#540818";
+          if (hudStatus) hudStatus.style.display = 'block';
+          if (moveHint) {
+            moveHint.innerHTML = "Click screen to lock cursor and start exploring!";
+            moveHint.style.display = 'block';
+          }
+          mainCamera.setAttribute('look-controls', 'touchEnabled: true;');
+        }
+      });
+
+      document.addEventListener('DOMContentLoaded', () => {
+        requestAnimationFrame(primaryCoreAppLoop);
+        
+        // Laptop/Desktop specific layout adjustment: replaces those 2 buttons with 1 direct entry button
+        if (!isMobile) {
+          if (selectArBtn && selectBasicBtn) {
+            const buttonContainer = selectArBtn.parentElement;
+            if (buttonContainer) {
+              buttonContainer.innerHTML = `
+                <button id="laptop-enter-btn" class="mode-btn btn-ar" style="width: 100%; max-width: 280px; margin: 0 auto;">
+                  <span>Enter Hall</span>
+                </button>
+              `;
+              
+              document.getElementById('laptop-enter-btn').addEventListener('click', () => {
+                overlay.style.display = 'none';
+                if (scene) scene.style.backgroundColor = "#540818";
+                if (hudStatus) hudStatus.style.display = 'block';
+                if (moveHint) {
+                  moveHint.innerHTML = "Click screen to lock cursor and start exploring!";
+                  moveHint.style.display = 'block';
+                }
+                mainCamera.setAttribute('look-controls', 'touchEnabled: true;');
+              });
+            }
+          }
+        } else {
+          checkHardwareGyroscope();
+        }
+      });
+
       document.addEventListener('DOMContentLoaded', () => {
         const exhibitionSign = document.getElementById('btn-to-exhibition');
         const signGlow = document.getElementById('sign-glow');
