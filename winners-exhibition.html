@@ -607,6 +607,33 @@ if (typeof ScrollReveal !== 'undefined') {
 }
 
 
+      // PATCH: Force A-Frame look-controls to allow both vertical (pitch) and horizontal (yaw) dragging on touch screens
+      if (typeof AFRAME !== 'undefined' && AFRAME.components['look-controls']) {
+        AFRAME.components['look-controls'].Component.prototype.onTouchMove = function (evt) {
+          if (!this.touchStarted || !this.data.touchEnabled) { return; }
+          
+          const canvas = this.el.sceneEl.canvas;
+          const touch = evt.touches[0];
+          
+          // Calculate movement delta
+          const movementX = touch.pageX - this.touchStart.x;
+          const movementY = touch.pageY - this.touchStart.y;
+          
+          // Update horizontal (yaw) and vertical (pitch) rotation objects directly
+          // Adjust pitchObject.rotation.x for looking up and down
+          const direction = this.data.reverseTouchDrag ? -1 : 1;
+          
+          this.pitchObject.rotation.x += (direction * movementY * Math.PI) / canvas.clientHeight;
+          this.yawObject.rotation.y += (direction * movementX * Math.PI) / canvas.clientWidth;
+          
+          // Constrain vertical look to avoid flipping upside down (-85 to +85 degrees)
+          this.pitchObject.rotation.x = Math.max(-Math.PI / 2.1, Math.min(Math.PI / 2.1, this.pitchObject.rotation.x));
+          
+          // Update reference coordinates for next frame
+          this.touchStart.x = touch.pageX;
+          this.touchStart.y = touch.pageY;
+        };
+      }
 
       const overlay = document.getElementById('overlay');
       const moveHint = document.getElementById('move-hint');
