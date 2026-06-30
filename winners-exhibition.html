@@ -842,7 +842,7 @@ if (isMobile) {
         });
       }
 
-      // Option 2: BASIC MODE Logic Chain
+// Option 2: BASIC MODE Logic Chain
       if (selectBasicBtn) {
         selectBasicBtn.addEventListener('click', () => {
           isBasicOptionActive = true; 
@@ -852,7 +852,7 @@ if (isMobile) {
             if (moveHint) moveHint.style.display = 'none';
             if (mobileNavPad) mobileNavPad.style.display = 'block';
             
-            // Force a hard reset on look-controls so vertical touch handlers are fully registered
+            // Re-apply clean look-controls context to open both horizontal + vertical panning
             if (mainCamera) {
               mainCamera.removeAttribute('look-controls');
               mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: false; touchEnabled: true;');
