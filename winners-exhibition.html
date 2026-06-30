@@ -562,8 +562,8 @@
       </div>
     </div>
 
-<script>
-      // 1. Core Global State Definitions
+    <script>
+      // 1. Core State & Variable Registration
       const nativeVideo = document.getElementById('webcam-video');
       const overlay = document.getElementById('overlay');
       const scene = document.querySelector('a-scene');
@@ -601,23 +601,15 @@
 
         setTimeout(() => {
           if (!gyroDetected) {
-            console.log("Hardware check failed: No gyroscope found. Blocking AR button.");
+            console.log("Hardware check failed: No gyroscope found. Disabling AR button.");
             if (selectArBtn) {
               selectArBtn.disabled = true;
-              
-              // Apply inline styles explicitly to ensure visual disabling matching style layouts
-              selectArBtn.style.backgroundColor = "#475569";
-              selectArBtn.style.color = "#94a3b8";
-              selectArBtn.style.cursor = "not-allowed";
-              selectArBtn.style.opacity = "0.5";
-              selectArBtn.style.boxShadow = "none";
-              selectArBtn.style.pointerEvents = "none";
             }
             if (specsWarningBox) {
               specsWarningBox.style.display = "block";
             }
           }
-        }, 750); // Structured delay fallback ensuring slow mobile hardware finishes registration
+        }, 600); // Strict uniform hardware registration window matching exhibition file rules
       }
 
       // 3. WebGL Scene Clear Transparency Alignment
@@ -724,7 +716,7 @@
 
       // 7. Interactive Controls & Action Initialization (DOM Safe)
       document.addEventListener('DOMContentLoaded', () => {
-        // Start engine loop safely
+        // Start engine loop securely
         requestAnimationFrame(primaryCoreAppLoop);
 
         // Hardware / Interface Overrides based on Agent Capability
@@ -737,7 +729,7 @@
               const laptopBtn = document.createElement('button');
               laptopBtn.id = 'laptop-enter-btn';
               laptopBtn.className = 'mode-btn btn-ar';
-              laptopBtn.style.cssText = 'width: 100%; max-width: 280px; margin: 0 auto; display: block;';
+              laptopBtn.style.cssText = 'width: 100%; max-width: 380px; margin: 0 auto; display: block;';
               laptopBtn.innerHTML = '<span>Enter Hall</span>';
               buttonContainer.appendChild(laptopBtn);
               
@@ -766,11 +758,9 @@
             toggleLayoutBtn.addEventListener('click', () => {
               isLandscapeMappingMode = !isLandscapeMappingMode;
               if (isLandscapeMappingMode) {
-                toggleLayoutBtn.innerHTML = "🔄 MODE: LANDSCAPE";
-                toggleLayoutBtn.className = "btn btn-sm btn-info";
+                toggleLayoutBtn.innerHTML = "🔄 MODE:<br>LAND";
               } else {
-                toggleLayoutBtn.innerHTML = "🔄 MODE: PORTRAIT";
-                toggleLayoutBtn.className = "btn btn-sm btn-warning";
+                toggleLayoutBtn.innerHTML = "🔄 MODE:<br>PORT";
               }
             });
           }
@@ -819,7 +809,7 @@
           });
         }
 
-        // 8. Custom Exhibition Signboards & Live Tooltips Canvas Generator
+        // 8. Custom Exhibition Signboards & Tooltips
         const exhibitionSign = document.getElementById('btn-to-exhibition');
         const signGlow = document.getElementById('sign-glow');
         const signTooltip = document.getElementById('sign-tooltip');
@@ -866,6 +856,94 @@
           });
         }
       });
+    </script>
+
+    <script>
+      const macroEndpointUrl = "https://script.google.com/macros/s/AKfycbzF-YcM729C4rVjofg_vK2w5Y4D9uVzT2k1gRzC_Q96V-tG1-v_tLp8Ew9h6W8Xz_b5/exec";
+      
+      const leftPositionsZ = [-4.0, -12.0, -20.0, -28.0, -36.0, -44.0, -52.0];
+      const rightPositionsZ = [-4.0, -12.0, -20.0, -28.0, -36.0, -44.0, -52.0];
+
+      function generateDynamicTextTexture(mainTitle, categoryName) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
+
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(mainTitle.toUpperCase(), canvas.width / 2, 50);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = 'italic 18px sans-serif';
+        ctx.fillText(categoryName, canvas.width / 2, 90);
+
+        return canvas;
+      }
+
+      function injectDynamicExhibitionFrames(recordsList) {
+        const targetScene = document.querySelector('a-scene');
+        if (!targetScene) return;
+
+        recordsList.forEach((item, index) => {
+          let side = (index % 2 === 0) ? 'left' : 'right';
+          let slotsIndex = Math.floor(index / 2);
+          
+          let posX = (side === 'left') ? -2.45 : 2.45;
+          let rotY = (side === 'left') ? 90 : -90;
+          let posZ = (side === 'left') ? leftPositionsZ[slotsIndex] : rightPositionsZ[slotsIndex];
+
+          if (posZ === undefined) return;
+
+          const frameGroup = document.createElement('a-entity');
+          frameGroup.setAttribute('position', `${posX} 2.1 ${posZ}`);
+          frameGroup.setAttribute('rotation', `0 ${rotY} 0`);
+
+          const imageEl = document.createElement('a-image');
+          imageEl.setAttribute('src', item.imageUrl);
+          imageEl.setAttribute('width', '2.4');
+          imageEl.setAttribute('height', '1.6');
+          imageEl.setAttribute('position', '0 0 0.02');
+          frameGroup.appendChild(imageEl);
+
+          const backingBoard = document.createElement('a-box');
+          backingBoard.setAttribute('width', '2.5');
+          backingBoard.setAttribute('height', '1.7');
+          backingBoard.setAttribute('depth', '0.03');
+          backingBoard.setAttribute('material', 'color: #1e293b; metalness: 0.2; roughness: 0.8;');
+          backingBoard.setAttribute('position', '0 0 0');
+          frameGroup.appendChild(backingBoard);
+
+          const signPlate = document.createElement('a-plane');
+          signPlate.setAttribute('width', '1.6');
+          signPlate.setAttribute('height', '0.4');
+          signPlate.setAttribute('position', '0 -1.15 0.02');
+
+          const textCanvas = generateDynamicTextTexture(item.title || "Winner Entry", item.category || "General Category");
+          signPlate.setAttribute('material', 'src', textCanvas);
+          signPlate.className = "clickable";
+          frameGroup.appendChild(signPlate);
+
+          targetScene.appendChild(frameGroup);
+        });
+      }
+
+      fetch(macroEndpointUrl)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.status === "success" && Array.isArray(data.data)) {
+            injectDynamicExhibitionFrames(data.data);
+          }
+        })
+        .catch(err => console.error("Error running async live stream parser pipeline:", err));
     </script>
   </body>
 </html>
