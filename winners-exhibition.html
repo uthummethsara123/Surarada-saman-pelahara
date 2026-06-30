@@ -750,7 +750,7 @@
           window.addEventListener('keydown', (e) => { activeKeys[e.key.toLowerCase()] = true; });
           window.addEventListener('keyup', (e) => { activeKeys[e.key.toLowerCase()] = false; });
         } else {
-          // Trigger Gyroscope Assessment on mobile devices
+          // Trigger Initial Gyroscope Assessment on mobile devices
           checkHardwareGyroscope();
 
           // Setup Mobile Touch Navigation Event Routing
@@ -934,6 +934,11 @@
 
           targetScene.appendChild(frameGroup);
         });
+
+        // SECONDARY GYROSCOPE CHECK: Re-run safety lock verification immediately after frame pipeline completion (Aligns with exhibition.html logic)
+        if (typeof checkHardwareGyroscope === 'function') {
+          checkHardwareGyroscope();
+        }
       }
 
       fetch(macroEndpointUrl)
