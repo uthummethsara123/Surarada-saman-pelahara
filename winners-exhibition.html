@@ -587,7 +587,7 @@
       let isMovingRight = false;
       let isLandscapeMappingMode = false;
 
-      // Replicated exactly from exhibition.html to block the AR button and reveal the red notification
+      // Checks physical hardware sensor parameters for mobile configurations
       function checkHardwareGyroscope() {
         if (!isMobile) return;
 
@@ -602,17 +602,24 @@
 
         setTimeout(() => {
           if (!gyroDetected) {
-            console.log("Gyroscope fallback triggered: Device does not meet AR criteria.");
+            console.log("Hardware check failed: No gyroscope found. Blocking AR button.");
             if (selectArBtn) {
+              // Functionally disable the button
               selectArBtn.disabled = true;
-              selectArBtn.style.opacity = "0.4";
+              
+              // Explicitly apply exhibition.html's disabled styling inline to guarantee it visually blocks
+              selectArBtn.style.backgroundColor = "#475569";
+              selectArBtn.style.color = "#94a3b8";
               selectArBtn.style.cursor = "not-allowed";
+              selectArBtn.style.opacity = "0.5";
+              selectArBtn.style.boxShadow = "none";
+              selectArBtn.style.pointerEvents = "none";
             }
             if (specsWarningBox) {
               specsWarningBox.style.display = "block";
             }
           }
-        }, 500); // Strict standard delay for active polling
+        }, 750); // Small standard delay ensures slow hardware sensors have initialized
       }
 
       const forceSceneClearTransparency = () => {
@@ -657,6 +664,7 @@
       }
 
       if (isMobile) {
+        // Safe structural check fallback added to avoid uncaught null references
         if (toggleLayoutBtn) {
           toggleLayoutBtn.addEventListener('click', () => {
             isLandscapeMappingMode = !isLandscapeMappingMode;
@@ -672,7 +680,7 @@
 
         const setupButton = (id, setter) => {
           const btn = document.getElementById(id);
-          if (!btn) return; 
+          if (!btn) return; // Added fallback safety rule for navigation elements
           btn.addEventListener('touchstart', (e) => { e.preventDefault(); setter(true); }, {passive: false});
           btn.addEventListener('touchend', (e) => { e.preventDefault(); setter(false); }, {passive: false});
           btn.addEventListener('touchcancel', (e) => { e.preventDefault(); setter(false); }, {passive: false});
@@ -802,6 +810,7 @@
       document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(primaryCoreAppLoop);
         
+        // Laptop/Desktop safe layout structural alteration
         if (!isMobile) {
           if (selectArBtn && selectBasicBtn) {
             selectArBtn.style.display = 'none';
@@ -830,10 +839,12 @@
             }
           }
         } else {
+          // Fire sensor assessment chain with layout rules
           checkHardwareGyroscope();
         }
       });
 
+      // Secondary safety check fallback if browser delays window elements
       window.addEventListener('load', () => {
         if (isMobile) {
           checkHardwareGyroscope();
