@@ -783,18 +783,24 @@
       document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(primaryCoreAppLoop);
         
-        // Laptop/Desktop specific layout adjustment: replaces those 2 buttons with 1 direct entry button
+        // Laptop/Desktop safe layout structural alteration
         if (!isMobile) {
           if (selectArBtn && selectBasicBtn) {
+            // Hide mobile selection elements without erasing nodes from DOM 
+            selectArBtn.style.display = 'none';
+            selectBasicBtn.style.display = 'none';
+            
             const buttonContainer = selectArBtn.parentElement;
             if (buttonContainer) {
-              buttonContainer.innerHTML = `
-                <button id="laptop-enter-btn" class="mode-btn btn-ar" style="width: 100%; max-width: 280px; margin: 0 auto;">
-                  <span>Enter Hall</span>
-                </button>
-              `;
+              const laptopBtn = document.createElement('button');
+              laptopBtn.id = 'laptop-enter-btn';
+              laptopBtn.className = 'mode-btn btn-ar';
+              laptopBtn.style.cssText = 'width: 100%; max-width: 280px; margin: 0 auto; display: block;';
+              laptopBtn.innerHTML = '<span>Enter Hall</span>';
               
-              document.getElementById('laptop-enter-btn').addEventListener('click', () => {
+              buttonContainer.appendChild(laptopBtn);
+              
+              laptopBtn.addEventListener('click', () => {
                 overlay.style.display = 'none';
                 if (scene) scene.style.backgroundColor = "#540818";
                 if (hudStatus) hudStatus.style.display = 'block';
