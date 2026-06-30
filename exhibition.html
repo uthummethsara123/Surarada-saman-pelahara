@@ -79,39 +79,70 @@
       }
 
       p {
-        margin: 0 0 30px 0;
+        margin: 0 0 20px 0;
         font-size: 1rem;
         color: #94a3b8;
         max-width: 400px;
         line-height: 1.5;
       }
 
-      .start-btn {
-        background: #f59e0b;
-        color: #0f172a;
-        border: none;
-        padding: 14px 36px;
-        font-size: 1.1rem;
+      .mode-btn {
+        width: 100%;
+        max-width: 380px;
+        padding: 14px 20px;
+        font-size: 1rem;
         font-weight: bold;
-        border-radius: 50px;
+        border-radius: 12px;
         cursor: pointer;
-        box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
         transition: all 0.3s ease;
         text-transform: uppercase;
         letter-spacing: 1px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 12px;
       }
 
-      .start-btn:hover:not(:disabled) {
+      .btn-ar {
+        background: #f59e0b;
+        color: #0f172a;
+        border: none;
+        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.25);
+      }
+
+      .btn-ar:hover:not(:disabled) {
         transform: translateY(-2px);
-        box-shadow: 0 15px 30px rgba(245, 158, 11, 0.5);
         background: #fbbf24;
+        box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
       }
 
-      .start-btn:disabled {
-        background-color: #475569;
-        color: #94a3b8;
+      .btn-ar:disabled {
+        background-color: #475569 !important;
+        color: #94a3b8 !important;
         cursor: not-allowed;
-        box-shadow: none;
+        box-shadow: none !important;
+        opacity: 0.5;
+      }
+
+      .btn-basic {
+        background: transparent;
+        color: #ffffff;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+      }
+
+      .btn-basic:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: #ffffff;
+        transform: translateY(-2px);
+      }
+
+      .sub-text {
+        font-size: 11px;
+        font-weight: normal;
+        text-transform: none;
+        opacity: 0.85;
+        letter-spacing: 0;
       }
     </style>
 
@@ -236,7 +267,8 @@
         init: function () {
           const sceneEl = this.el;
           const assetsEl = document.querySelector('a-assets');
-          const startBtn = document.getElementById('startBtn');
+          const connectionStatus = document.getElementById('connection-status');
+          const modeSelectionArea = document.getElementById('mode-selection-area');
 
           sceneEl.addEventListener('render-target-loaded', () => {
             if (sceneEl.renderer) {
@@ -245,15 +277,14 @@
             }
           });
 
-          startBtn.disabled = true;
-          startBtn.innerText = "Connecting Live Feed...";
+          connectionStatus.innerText = "Connecting Live Feed...";
 
           fetch(LIVE_GET_API_URL)
             .then(res => res.json())
             .then(images => {
               if(!images || images.length === 0) {
                 document.getElementById('overlay-desc').innerText = "No submitted pictures found in database yet.";
-                startBtn.innerText = "Gallery Empty";
+                connectionStatus.innerText = "Gallery Empty";
                 return;
               }
 
@@ -292,9 +323,12 @@
                   arrangeTrackFluidly(leftTrackElements, '-3', '0 90 0', 'left');
                   arrangeTrackFluidly(rightTrackElements, '3', '0 -90 0', 'right');
 
-                  startBtn.disabled = false;
-                  const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-                  startBtn.innerText = isMobile ? "Enter Exhibition" : "Start Exhibition";
+                  // Hide loading spinner text, instantly open interactive mode buttons layout
+                  connectionStatus.style.display = "none";
+                  modeSelectionArea.style.display = "block";
+                  
+                  // Run hardware detection window rule
+                  checkHardwareGyroscope();
                 }
               }
 
@@ -361,7 +395,7 @@
             })
             .catch(err => {
               console.error("Live fetch failed:", err);
-              document.getElementById('overlay-desc').innerText = "Error syncing submissions with Google Sheet.";
+              document.getElementById('connection-status').innerText = "Error syncing submissions with Google Sheet.";
             });
         }
       });
@@ -373,13 +407,35 @@
       <img src="/assets/img/logo.png" alt="Logo" class="overlay-logo" />
       <h2 id="overlay-title">Virtual Exhibition</h2>
       <p id="overlay-desc">Synchronizing with live data panels...</p>
-      <button id="startBtn" class="start-btn">Enter Exhibition</button>
+      
+      <div id="connection-status" style="font-weight: bold; color: #f59e0b;">Initializing modules...</div>
+
+      <div id="mode-selection-area" style="display: none; width: 100%;">
+        
+        <div id="specs-warning-box" style="display: none; background-color: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; border-radius: 10px; padding: 12px; margin: 0 auto 20px auto; text-align: left; max-width: 380px;">
+          <span style="color: #f87171; font-weight: bold; font-size: 13px;">⚠️ Notice:</span>
+          <p style="margin: 3px 0 0 0; font-size: 12px; color: #cbd5e1; line-height: 1.4;">
+            Your phone lacks a physical gyroscope sensor or minimum requirements. <b>AR Mode is disabled</b>, but you can explore perfectly using <b>Basic Mode</b>.
+          </p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+          <button id="select-ar-btn" class="mode-btn btn-ar">
+            <span>✨ Option 1: AR Mode</span>
+            <span class="sub-text">Turn your physical phone around to see the photos.</span>
+          </button>
+
+          <button id="select-basic-btn" class="mode-btn btn-basic">
+            <span>📱 Option 2: Basic Mode</span>
+            <span class="sub-text">Use your fingers to swipe the screen to look around.</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <video id="webcam-video" autoplay playsinline muted loop></video>
 
-
-<a-scene vr-mode-ui="enabled: false" embedded renderer="alpha: true; colorManagement: true;" gallery-loader cursor="rayOrigin: mouse" raycaster="objects: .clickable">
+    <a-scene vr-mode-ui="enabled: false" embedded renderer="alpha: true; colorManagement: true;" gallery-loader cursor="rayOrigin: mouse" raycaster="objects: .clickable">
       <a-assets>
         <img id="logo-img" src="assets/img/logo.png" crossorigin="anonymous">
       </a-assets>
@@ -391,19 +447,41 @@
       <a-plane id="logo-tooltip" width="1.4" height="0.45" position="0 -0.85 -2" visible="false"
                material="shader: flat; transparent: true; side: double;"></a-plane>
 
-      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" position="0 0 0"></a-entity>
+      <a-entity id="main-camera" camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" position="0 0 0"></a-entity>
     </a-scene>
     
     <script>
       const nativeVideo = document.getElementById('webcam-video');
       const overlay = document.getElementById('overlay');
-      const startBtn = document.getElementById('startBtn');
       const scene = document.querySelector('a-scene');
+      const mainCamera = document.getElementById('main-camera');
       
-      const overlayTitle = document.getElementById('overlay-title');
-      const overlayDesc = document.getElementById('overlay-desc');
+      const selectArBtn = document.getElementById('select-ar-btn');
+      const selectBasicBtn = document.getElementById('select-basic-btn');
+      const specsWarningBox = document.getElementById('specs-warning-box');
 
       const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+
+      // System hardware capabilities checker logic
+      function checkHardwareGyroscope() {
+        if (!isMobile) return;
+
+        let gyroDetected = false;
+        function sensorTest(event) {
+          if (event.alpha !== null || event.beta !== null || event.gamma !== null) {
+            gyroDetected = true;
+          }
+          window.removeEventListener('deviceorientation', sensorTest);
+        }
+        window.addEventListener('deviceorientation', sensorTest);
+
+        setTimeout(() => {
+          if (!gyroDetected) {
+            selectArBtn.disabled = true;
+            specsWarningBox.style.display = "block";
+          }
+        }, 600);
+      }
 
       const forceSceneClearTransparency = () => {
         if (scene) {
@@ -419,113 +497,116 @@
         }
       };
 
-      if (isMobile) {
-        overlayTitle.innerText = "Mobile Exhibition Guide";
-        overlayDesc.innerHTML = "• Move your phone to look around the space.<br>• Swipe your finger left/right to scroll the conveyor belt photos manually.<br><br>Camera and motion permissions are required to blend the art with your surroundings.";
-      } else {
-        overlayTitle.innerText = "Laptop Exhibition Guide";
-        overlayDesc.innerHTML = "• <b>Look Around:</b> Click and drag with your <u>Left Mouse Button</u>.<br>• <b>Scroll Photos:</b> Click and hold your <u>Right Mouse Button</u> while dragging your trackpad/mouse left or right.";
-      }
-
       function activateMobilePermissions() {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
           DeviceOrientationEvent.requestPermission().catch(console.error);
         }
 
         navigator.mediaDevices.getUserMedia({ 
-          video: { 
-            facingMode: 'environment',
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          } 
+          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
         })
         .then((stream) => {
           nativeVideo.srcObject = stream;
-          
           nativeVideo.addEventListener('playing', () => {
             forceSceneClearTransparency();
             nativeVideo.style.display = "block";
           }, { once: true });
-
           nativeVideo.play().catch(e => console.log(e));
         })
         .catch((err) => {
           console.error("Camera access denied:", err);
-          alert("Camera initialization failed. Please verify browser options.");
+          if (scene) scene.style.backgroundColor = "#1a1a1a";
         });
       }
 
-      startBtn.addEventListener('click', () => {
+      // Action routing for option 1: AR MODE
+      selectArBtn.addEventListener('click', () => {
         overlay.style.display = 'none';
-
         if (isMobile) {
+          mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: true; touchEnabled: false;');
           forceSceneClearTransparency();
           activateMobilePermissions();
         } else {
           if (scene) scene.style.backgroundColor = "#1a1a1a";
-          const cam = document.querySelector('[camera]');
-          if (cam) cam.setAttribute('look-controls', 'touchEnabled: true');
+          mainCamera.setAttribute('look-controls', 'touchEnabled: true;');
         }
       });
 
+      // Action routing for option 2: BASIC MODE
+      selectBasicBtn.addEventListener('click', () => {
+        overlay.style.display = 'none';
+        if (isMobile) {
+          mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: false; touchEnabled: true;');
+          if (nativeVideo) nativeVideo.style.display = "none";
+          if (scene) scene.style.backgroundColor = "#1a1a1a";
+        } else {
+          if (scene) scene.style.backgroundColor = "#1a1a1a";
+          mainCamera.setAttribute('look-controls', 'touchEnabled: true;');
+        }
+      });
 
       // Click interaction, gold glow transition, and canvas tooltip system
       document.addEventListener('DOMContentLoaded', () => {
         const logoBtn = document.getElementById('winners-logo-btn');
         const logoTooltip = document.getElementById('logo-tooltip');
 
+        // Laptop/Desktop specific layout adjustment: replaces those 2 buttons with 1 direct entry button
+        if (!isMobile) {
+          if (selectArBtn && selectBasicBtn) {
+            // Target the flexbox grouping container holding both buttons
+            const buttonContainer = selectArBtn.parentElement;
+            if (buttonContainer) {
+              buttonContainer.innerHTML = `
+                <button id="laptop-enter-btn" class="mode-btn btn-ar" style="width: 100%; max-width: 280px; margin: 0 auto;">
+                  <span>Enter Exhibition</span>
+                </button>
+              `;
+              
+              // Handle action straightforwardly when laptop user clicks "Enter Exhibition"
+              document.getElementById('laptop-enter-btn').addEventListener('click', () => {
+                overlay.style.display = 'none';
+                if (scene) scene.style.backgroundColor = "#1a1a1a";
+                mainCamera.setAttribute('look-controls', 'touchEnabled: true;');
+              });
+            }
+          }
+        } else {
+          // Initialize gyroscope test only if they are on mobile devices
+          checkHardwareGyroscope();
+        }
+
         if (logoTooltip) {
-          // Larger high-resolution texture canvas space
           const canvas = document.createElement('canvas');
           canvas.width = 1024;
           canvas.height = 256;
           const ctx = canvas.getContext('2d');
-          
-          // Clear any previous frames
           ctx.clearRect(0, 0, canvas.width, canvas.height);
-          
-          // 1. Draw Transparent White Tooltip Background Box
           ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
-          
-          // 2. Draw Bright Solid Gold Text Layer (100% full opacity)
           ctx.fillStyle = '#f59e0b'; 
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          
-          // Draw Much Larger Up Arrow
           ctx.font = 'bold 80px monospace';
           ctx.fillText('↑', canvas.width / 2, 70);
-          
-          // Draw Much Larger Main Text Label
           ctx.font = 'bold 64px monospace';
           ctx.fillText('VIEW WINNERS', canvas.width / 2, 180);
-          
-          // Bind the high-res texture canvas straight into the component system
           logoTooltip.setAttribute('material', 'src', canvas);
         }
 
         if (logoBtn) {
-          // Trigger look/hover response rules
           logoBtn.addEventListener('mouseenter', () => {
-            // Adds a light-gold color tint modification layer
             logoBtn.setAttribute('material', 'color', '#ffeaa7'); 
             if (logoTooltip) logoTooltip.setAttribute('visible', 'true');
           });
-
-          // Reset element parameters when looking away
           logoBtn.addEventListener('mouseleave', () => {
             logoBtn.setAttribute('material', 'color', '#ffffff');
             if (logoTooltip) logoTooltip.setAttribute('visible', 'false');
           });
-
-          // Redirect to target file path on tap/click activation
           logoBtn.addEventListener('click', () => {
             window.location.href = 'winners-exhibition.html';
           });
         }
       });
-
     </script>
   </body>
 </html>
