@@ -650,19 +650,23 @@
       }
 
       if (isMobile) {
-        toggleLayoutBtn.addEventListener('click', () => {
-          isLandscapeMappingMode = !isLandscapeMappingMode;
-          if (isLandscapeMappingMode) {
-            toggleLayoutBtn.innerHTML = "🔄 MODE: LANDSCAPE";
-            toggleLayoutBtn.className = "btn btn-sm btn-info";
-          } else {
-            toggleLayoutBtn.innerHTML = "🔄 MODE: PORTRAIT";
-            toggleLayoutBtn.className = "btn btn-sm btn-warning";
-          }
-        });
+        // Safe structural check fallback added to avoid uncaught null references
+        if (toggleLayoutBtn) {
+          toggleLayoutBtn.addEventListener('click', () => {
+            isLandscapeMappingMode = !isLandscapeMappingMode;
+            if (isLandscapeMappingMode) {
+              toggleLayoutBtn.innerHTML = "🔄 MODE: LANDSCAPE";
+              toggleLayoutBtn.className = "btn btn-sm btn-info";
+            } else {
+              toggleLayoutBtn.innerHTML = "🔄 MODE: PORTRAIT";
+              toggleLayoutBtn.className = "btn btn-sm btn-warning";
+            }
+          });
+        }
 
         const setupButton = (id, setter) => {
           const btn = document.getElementById(id);
+          if (!btn) return; // Added fallback safety rule for navigation elements
           btn.addEventListener('touchstart', (e) => { e.preventDefault(); setter(true); }, {passive: false});
           btn.addEventListener('touchend', (e) => { e.preventDefault(); setter(false); }, {passive: false});
           btn.addEventListener('touchcancel', (e) => { e.preventDefault(); setter(false); }, {passive: false});
@@ -673,11 +677,14 @@
         setupButton('btn-move-left', (val) => isMovingLeft = val);
         setupButton('btn-move-right', (val) => isMovingRight = val);
       } else {
-        mainCamera.setAttribute('look-controls', 'pointerLockEnabled: true; touchEnabled: false;');
+        if (mainCamera) {
+          mainCamera.setAttribute('look-controls', 'pointerLockEnabled: true; touchEnabled: false;');
+        }
         document.addEventListener('keydown', (e) => { activeKeys[e.key.toLowerCase()] = true; });
         document.addEventListener('keyup', (e) => { activeKeys[e.key.toLowerCase()] = false; });
         
         document.addEventListener('pointerlockchange', () => {
+          if (!hudStatus) return;
           if (document.pointerLockElement) {
             hudStatus.innerHTML = "• Controls: <b>WASD / Arrows</b> to Move<br>• Press <b>ESC</b> to free mouse cursor";
           } else {
@@ -694,7 +701,7 @@
           let upValue = isMovingUp ? moveSpeed : 0;
           let downValue = isMovingDown ? moveSpeed : 0;
           let leftValue = isMovingLeft ? moveSpeed : 0;
-          let rightValue = isMovingRight ? moveSpeed : 0; // Fixed structural ternary operator typo
+          let rightValue = isMovingRight ? moveSpeed : 0;
 
           if (isLandscapeMappingMode) {
             forward = rightValue - leftValue; 
@@ -725,6 +732,7 @@
           video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
         })
         .then((stream) => {
+          if (!nativeVideo) return;
           nativeVideo.srcObject = stream;
           nativeVideo.addEventListener('playing', () => {
             forceSceneClearTransparency();
@@ -739,47 +747,51 @@
       }
 
       // Option 1: AR MODE Logic Chain
-      selectArBtn.addEventListener('click', () => {
-        if (selectArBtn.disabled) return;
-        overlay.style.display = 'none';
-        
-        if (isMobile) {
-          moveHint.style.display = 'none';
-          if (mobileNavPad) mobileNavPad.style.display = 'block';
-          mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: true; touchEnabled: false;');
-          forceSceneClearTransparency();
-          activateMobilePermissions();
-        } else {
-          if (scene) scene.style.backgroundColor = "#540818";
-          if (hudStatus) hudStatus.style.display = 'block';
-          if (moveHint) {
-            moveHint.innerHTML = "Click screen to lock cursor and start exploring!";
-            moveHint.style.display = 'block';
+      if (selectArBtn) {
+        selectArBtn.addEventListener('click', () => {
+          if (selectArBtn.disabled) return;
+          if (overlay) overlay.style.display = 'none';
+          
+          if (isMobile) {
+            if (moveHint) moveHint.style.display = 'none';
+            if (mobileNavPad) mobileNavPad.style.display = 'block';
+            if (mainCamera) mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: true; touchEnabled: false;');
+            forceSceneClearTransparency();
+            activateMobilePermissions();
+          } else {
+            if (scene) scene.style.backgroundColor = "#540818";
+            if (hudStatus) hudStatus.style.display = 'block';
+            if (moveHint) {
+              moveHint.innerHTML = "Click screen to lock cursor and start exploring!";
+              moveHint.style.display = 'block';
+            }
+            if (mainCamera) mainCamera.setAttribute('look-controls', 'touchEnabled: true;');
           }
-          mainCamera.setAttribute('look-controls', 'touchEnabled: true;');
-        }
-      });
+        });
+      }
 
       // Option 2: BASIC MODE Logic Chain
-      selectBasicBtn.addEventListener('click', () => {
-        overlay.style.display = 'none';
-        
-        if (isMobile) {
-          moveHint.style.display = 'none';
-          if (mobileNavPad) mobileNavPad.style.display = 'block';
-          mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: false; touchEnabled: true;');
-          if (nativeVideo) nativeVideo.style.display = 'none';
-          if (scene) scene.style.backgroundColor = "#540818"; 
-        } else {
-          if (scene) scene.style.backgroundColor = "#540818";
-          if (hudStatus) hudStatus.style.display = 'block';
-          if (moveHint) {
-            moveHint.innerHTML = "Click screen to lock cursor and start exploring!";
-            moveHint.style.display = 'block';
+      if (selectBasicBtn) {
+        selectBasicBtn.addEventListener('click', () => {
+          if (overlay) overlay.style.display = 'none';
+          
+          if (isMobile) {
+            if (moveHint) moveHint.style.display = 'none';
+            if (mobileNavPad) mobileNavPad.style.display = 'block';
+            if (mainCamera) mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: false; touchEnabled: true;');
+            if (nativeVideo) nativeVideo.style.display = 'none';
+            if (scene) scene.style.backgroundColor = "#540818"; 
+          } else {
+            if (scene) scene.style.backgroundColor = "#540818";
+            if (hudStatus) hudStatus.style.display = 'block';
+            if (moveHint) {
+              moveHint.innerHTML = "Click screen to lock cursor and start exploring!";
+              moveHint.style.display = 'block';
+            }
+            if (mainCamera) mainCamera.setAttribute('look-controls', 'touchEnabled: true;');
           }
-          mainCamera.setAttribute('look-controls', 'touchEnabled: true;');
-        }
-      });
+        });
+      }
 
       document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(primaryCoreAppLoop);
@@ -801,14 +813,14 @@
               buttonContainer.appendChild(laptopBtn);
               
               laptopBtn.addEventListener('click', () => {
-                overlay.style.display = 'none';
+                if (overlay) overlay.style.display = 'none';
                 if (scene) scene.style.backgroundColor = "#540818";
                 if (hudStatus) hudStatus.style.display = 'block';
                 if (moveHint) {
                   moveHint.innerHTML = "Click screen to lock cursor and start exploring!";
                   moveHint.style.display = 'block';
                 }
-                mainCamera.setAttribute('look-controls', 'touchEnabled: true;');
+                if (mainCamera) mainCamera.setAttribute('look-controls', 'touchEnabled: true;');
               });
             }
           }
