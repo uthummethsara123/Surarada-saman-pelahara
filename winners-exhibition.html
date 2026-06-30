@@ -587,7 +587,7 @@
       let isMovingRight = false;
       let isLandscapeMappingMode = false;
 
-      // Checks physical hardware sensor parameters for mobile configurations
+      // Replicated exactly from exhibition.html to block the AR button and reveal the red notification
       function checkHardwareGyroscope() {
         if (!isMobile) return;
 
@@ -602,10 +602,17 @@
 
         setTimeout(() => {
           if (!gyroDetected) {
-            if (selectArBtn) selectArBtn.disabled = true;
-            if (specsWarningBox) specsWarningBox.style.display = "block";
+            console.log("Gyroscope fallback triggered: Device does not meet AR criteria.");
+            if (selectArBtn) {
+              selectArBtn.disabled = true;
+              selectArBtn.style.opacity = "0.4";
+              selectArBtn.style.cursor = "not-allowed";
+            }
+            if (specsWarningBox) {
+              specsWarningBox.style.display = "block";
+            }
           }
-        }, 750); // Small standard delay ensures slow hardware sensors have initialized
+        }, 500); // Strict standard delay for active polling
       }
 
       const forceSceneClearTransparency = () => {
@@ -650,7 +657,6 @@
       }
 
       if (isMobile) {
-        // Safe structural check fallback added to avoid uncaught null references
         if (toggleLayoutBtn) {
           toggleLayoutBtn.addEventListener('click', () => {
             isLandscapeMappingMode = !isLandscapeMappingMode;
@@ -666,7 +672,7 @@
 
         const setupButton = (id, setter) => {
           const btn = document.getElementById(id);
-          if (!btn) return; // Added fallback safety rule for navigation elements
+          if (!btn) return; 
           btn.addEventListener('touchstart', (e) => { e.preventDefault(); setter(true); }, {passive: false});
           btn.addEventListener('touchend', (e) => { e.preventDefault(); setter(false); }, {passive: false});
           btn.addEventListener('touchcancel', (e) => { e.preventDefault(); setter(false); }, {passive: false});
@@ -796,7 +802,6 @@
       document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(primaryCoreAppLoop);
         
-        // Laptop/Desktop safe layout structural alteration
         if (!isMobile) {
           if (selectArBtn && selectBasicBtn) {
             selectArBtn.style.display = 'none';
@@ -825,12 +830,10 @@
             }
           }
         } else {
-          // Fire sensor assessment chain with layout rules
           checkHardwareGyroscope();
         }
       });
 
-      // Secondary safety check fallback if browser delays window elements
       window.addEventListener('load', () => {
         if (isMobile) {
           checkHardwareGyroscope();
@@ -884,6 +887,6 @@
           });
         }
       });
-    </script>
+</script>
   </body>
 </html>
