@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Virtual Winners Exhibition - 3D Pillars Hall</title>
+    <title>Winners Exhibition - Surarada saman pelahara</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="/assets/css/style.css">
@@ -186,6 +186,36 @@
       #nav-hud-status b {
         color: #ffffff;
       }
+
+      /* Warning prompt when screen auto-rotate is off */
+#rotate-warning-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 99999; /* Ensure it stays above everything, including A-Frame */
+  color: white;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+  font-family: sans-serif;
+}
+#rotate-warning-overlay i {
+  font-size: 3rem;
+  color: #f59e0b;
+  margin-bottom: 15px;
+  animation: rotate-hint 2s infinite ease-in-out;
+}
+@keyframes rotate-hint {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(-90deg); }
+  100% { transform: rotate(0deg); }
+}
     </style>
   </head>
   <body>
@@ -214,6 +244,14 @@
         </button>
       </div>
     </div>
+
+    <div id="rotate-warning-overlay">
+  <i class="fas fa-mobile-alt"></i>
+  <h4>Please Enable Auto-Rotate</h4>
+  <p style="max-width: 300px; font-size: 0.9rem; color: #ccc;">
+    We noticed you turned your phone sideways, but your screen lock is on. Please enable <b>Auto-Rotate</b> in your phone's quick settings panel for the best exhibition experience!
+  </p>
+</div>
 
     <div id="move-hint"></div>
     <div id="nav-hud-status"></div>
@@ -922,6 +960,40 @@
           });
         }
       });
+
+      // Smart detection for Landscape holding with System Rotation Lock ON
+function detectRotationLock() {
+  if (!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) return;
+
+  window.addEventListener('deviceorientation', (event) => {
+    const warningBox = document.getElementById('rotate-warning-overlay');
+    if (!warningBox) return;
+
+    // gamma is the left-to-right tilt in degrees (-90 to 90)
+    // beta is the front-to-back tilt in degrees (-180 to 180)
+    const absGamma = Math.abs(event.gamma);
+    const absBeta = Math.abs(event.beta);
+
+    // Detect if the web page layout is still in portrait mode
+    const isBrowserPortrait = window.innerHeight > window.innerWidth;
+
+    // Detect if the physical phone is being held horizontally (sideways)
+    // When held sideways landscape, gamma is near 0 and beta leans heavily sideways (approx > 45)
+    // Or normally, side tilt gamma dominates past 60 degrees.
+    const isPhysicallyLandscape = (absGamma > 65 && absBeta < 45) || (absBeta > 65 && absGamma < 45);
+
+    if (isPhysicallyLandscape && isBrowserPortrait) {
+      // The phone is horizontal, but the page didn't flip -> Auto-Rotate is OFF!
+      warningBox.style.display = 'flex';
+    } else {
+      // Either they turned it back to portrait, or Auto-Rotate kicked in and flipped the layout
+      warningBox.style.display = 'none';
+    }
+  });
+}
+
+// Initialize the listener after hardware sensor checks are authorized
+window.addEventListener('DOMContentLoaded', detectRotationLock);
     </script>
   </body>
 </html>
