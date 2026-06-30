@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Winners Exhibition - Surarada Saman Pelahara</title>
+    <title>Virtual Winners Exhibition - 3D Pillars Hall</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="/assets/css/style.css">
@@ -403,13 +403,7 @@
         <a-cylinder color="#f8fafc" radius="0.35" height="6.5" material="roughness: 0.15; metalness: 0.1;"></a-cylinder>
         <a-box color="#cbd5e1" width="0.9" height="0.25" depth="0.9" position="0 -3.12 0"></a-box>
         <a-box color="#cbd5e1" width="0.9" height="0.25" depth="0.9" position="0 3.12 0"></a-box>
-        <a-box color="#1e293b" width="2.55" height="1.50" depth="0.04" position="0 1.6 0.35"></a-box>
-        <a-image src="#img-mono-1" width="2.4" height="1.35" position="0 1.6 0.38"></a-image>
-        <a-box color="#d97706" width="1.62" height="0.52" depth="0.02" position="0 0.4 0.36"></a-box>
-        <a-plane color="#0f172a" width="1.6" height="0.5" position="0 0.4 0.38">
-          <a-text value="MONOCHROME - 1ST PLACE\nBy Participant" align="center" color="#f59e0b" width="2.2" position="0 0 0.02"></a-text>
-        </a-plane>
-      </a-entity>
+        <a-box color="#1e293b" width="2.55" height="1.50" depth="0.04" position="0 1.6 0.35"></a-entity>
 
       <a-entity position="2.4 0 -20" rotation="0 -90 0">
         <a-cylinder color="#f8fafc" radius="0.35" height="6.5" material="roughness: 0.15; metalness: 0.1;"></a-cylinder>
@@ -545,27 +539,26 @@
 
     </a-scene>
 
-<div id="mobile-nav-pad" style="display: none; position: fixed; bottom: 30px; right: 30px; z-index: 999;">
-  <div style="display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); gap: 10px;">
-    <div></div>
-    <button id="btn-move-up" class="btn btn-warning" style="border-radius: 50%;">▲</button>
-    <div></div>
-    <button id="btn-move-left" class="btn btn-warning" style="border-radius: 50%;">◀</button>
-    <button id="toggle-layout-btn" class="btn btn-sm btn-warning" style="font-size: 9px; padding: 0;">🔄 PORTRAIT</button>
-    <button id="btn-move-right" class="btn btn-warning" style="border-radius: 50%;">▶</button>
-    <div></div>
-    <button id="btn-move-down" class="btn btn-warning" style="border-radius: 50%;">▼</button>
-  </div>
-</div>
+    <div id="mobile-nav-pad" style="display: none; position: fixed; bottom: 30px; right: 30px; z-index: 999;">
+      <div style="display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); gap: 10px;">
+        <div></div>
+        <button id="btn-move-up" class="btn btn-warning" style="border-radius: 50%;">▲</button>
+        <div></div>
+        <button id="btn-move-left" class="btn btn-warning" style="border-radius: 50%;">◀</button>
+        <div></div>
+        <button id="btn-move-right" class="btn btn-warning" style="border-radius: 50%;">▶</button>
+        <div></div>
+        <button id="btn-move-down" class="btn btn-warning" style="border-radius: 50%;">▼</button>
+      </div>
+    </div>
 
-<script>
+    <script>
       const overlay = document.getElementById('overlay');
       const moveHint = document.getElementById('move-hint');
       const hudStatus = document.getElementById('nav-hud-status');
       const scene = document.querySelector('a-scene');
       const nativeVideo = document.getElementById('webcam-video');
       const mobileNavPad = document.getElementById('mobile-nav-pad');
-      const toggleLayoutBtn = document.getElementById('toggle-layout-btn');
       
       const selectArBtn = document.getElementById('select-ar-btn');
       const selectBasicBtn = document.getElementById('select-basic-btn');
@@ -581,44 +574,96 @@
       let isMovingDown = false;
       let isMovingLeft = false;
       let isMovingRight = false;
-      let isLandscapeMappingMode = false;
 
-      // Checks physical hardware sensor parameters for mobile configurations
-// Checks physical hardware sensor parameters for mobile configurations
-function checkHardwareGyroscope() {
-  if (!isMobile) return;
+      // Custom touch look engine state configurations
+      let canvasTouchStartX = 0;
+      let canvasTouchStartY = 0;
+      let cameraYaw = 0;
+      let cameraPitch = 0;
+      let isCustomTouchLookActive = false;
 
-  let gyroDetected = false;
+      // Tracks hardware rotation velocity to differentiate synthetic emulation maps
+      function checkHardwareGyroscope() {
+        if (!isMobile) return;
 
-  // Track actual physical angular velocity via devicemotion
-  function sensorTest(event) {
-    if (event.rotationRate && 
-        (event.rotationRate.alpha !== null || 
-         event.rotationRate.beta !== null || 
-         event.rotationRate.gamma !== null)) {
-      gyroDetected = true;
-    }
-    window.removeEventListener('devicemotion', sensorTest);
-  }
-  
-  window.addEventListener('devicemotion', sensorTest);
+        let gyroDetected = false;
+        function sensorTest(event) {
+          if (event.rotationRate && 
+              (event.rotationRate.alpha !== null || 
+               event.rotationRate.beta !== null || 
+               event.rotationRate.gamma !== null)) {
+            gyroDetected = true;
+          }
+          window.removeEventListener('devicemotion', sensorTest);
+        }
+        
+        window.addEventListener('devicemotion', sensorTest);
 
-  setTimeout(() => {
-    if (!gyroDetected) {
-      const currentArBtn = document.getElementById('select-ar-btn');
-      const currentWarningBox = document.getElementById('specs-warning-box');
+        setTimeout(() => {
+          if (!gyroDetected) {
+            const currentArBtn = document.getElementById('select-ar-btn');
+            const currentWarningBox = document.getElementById('specs-warning-box');
 
-      if (currentArBtn) {
-        currentArBtn.disabled = true;
-        currentArBtn.style.opacity = "0.5";
-        currentArBtn.style.pointerEvents = "none"; // Disables touch interactions entirely
+            if (currentArBtn) {
+              currentArBtn.disabled = true;
+              currentArBtn.style.opacity = "0.5";
+              currentArBtn.style.pointerEvents = "none";
+            }
+            if (currentWarningBox) {
+              currentWarningBox.style.display = "block";
+            }
+          }
+        }, 750);
       }
-      if (currentWarningBox) {
-        currentWarningBox.style.display = "block";
+
+      // Detaches look controls to resolve phone vertical sensor lock dependencies
+      function enableCustomTouchLook() {
+        if (mainCamera) {
+          mainCamera.removeAttribute('look-controls');
+          const currentRot = mainCamera.getAttribute('rotation') || {x: 0, y: 0, z: 0};
+          cameraYaw = currentRot.y;
+          cameraPitch = currentRot.x;
+        }
+        
+        isCustomTouchLookActive = true;
+        
+        window.addEventListener('touchstart', onCanvasTouchStart, { passive: false });
+        window.addEventListener('touchmove', onCanvasTouchMove, { passive: false });
       }
-    }
-  }, 750); // Increased slightly to guarantee the sensor pipeline fires
-}
+
+      function onCanvasTouchStart(e) {
+        if (e.target.closest('#mobile-nav-pad') || e.target.closest('#overlay')) return;
+        if (e.touches.length === 1) {
+          canvasTouchStartX = e.touches[0].clientX;
+          canvasTouchStartY = e.touches[0].clientY;
+        }
+      }
+
+      function onCanvasTouchMove(e) {
+        if (e.target.closest('#mobile-nav-pad') || e.target.closest('#overlay')) return;
+        if (e.touches.length === 1) {
+          const touchX = e.touches[0].clientX;
+          const touchY = e.touches[0].clientY;
+          
+          const deltaX = touchX - canvasTouchStartX;
+          const deltaY = touchY - canvasTouchStartY;
+          
+          canvasTouchStartX = touchX;
+          canvasTouchStartY = touchY;
+          
+          const swipeSensitivity = 0.22;
+          
+          cameraYaw -= deltaX * swipeSensitivity;
+          cameraPitch -= deltaY * swipeSensitivity;
+          
+          // Absolute structural boundaries on pitch rotation to look around cleanly
+          cameraPitch = Math.max(-82, Math.min(82, cameraPitch));
+          
+          if (mainCamera) {
+            mainCamera.setAttribute('rotation', { x: cameraPitch, y: cameraYaw, z: 0 });
+          }
+        }
+      }
 
       const forceSceneClearTransparency = () => {
         if (scene) {
@@ -662,23 +707,9 @@ function checkHardwareGyroscope() {
       }
 
       if (isMobile) {
-        // Safe structural check fallback added to avoid uncaught null references
-        if (toggleLayoutBtn) {
-          toggleLayoutBtn.addEventListener('click', () => {
-            isLandscapeMappingMode = !isLandscapeMappingMode;
-            if (isLandscapeMappingMode) {
-              toggleLayoutBtn.innerHTML = "🔄 MODE: LANDSCAPE";
-              toggleLayoutBtn.className = "btn btn-sm btn-info";
-            } else {
-              toggleLayoutBtn.innerHTML = "🔄 MODE: PORTRAIT";
-              toggleLayoutBtn.className = "btn btn-sm btn-warning";
-            }
-          });
-        }
-
         const setupButton = (id, setter) => {
           const btn = document.getElementById(id);
-          if (!btn) return; // Added fallback safety rule for navigation elements
+          if (!btn) return;
           btn.addEventListener('touchstart', (e) => { e.preventDefault(); setter(true); }, {passive: false});
           btn.addEventListener('touchend', (e) => { e.preventDefault(); setter(false); }, {passive: false});
           btn.addEventListener('touchcancel', (e) => { e.preventDefault(); setter(false); }, {passive: false});
@@ -715,13 +746,9 @@ function checkHardwareGyroscope() {
           let leftValue = isMovingLeft ? moveSpeed : 0;
           let rightValue = isMovingRight ? moveSpeed : 0;
 
-          if (isLandscapeMappingMode) {
-            forward = rightValue - leftValue; 
-            strafe = downValue - upValue;
-          } else {
-            forward = upValue - downValue;
-            strafe = rightValue - leftValue;
-          }
+          // Direct movement alignment mapping; screen flips naturally automatically 
+          forward = upValue - downValue;
+          strafe = rightValue - leftValue;
         } else {
           if (activeKeys['w'] || activeKeys['arrowup']) forward += moveSpeed;
           if (activeKeys['s'] || activeKeys['arrowdown']) forward -= moveSpeed;
@@ -790,7 +817,9 @@ function checkHardwareGyroscope() {
           if (isMobile) {
             if (moveHint) moveHint.style.display = 'none';
             if (mobileNavPad) mobileNavPad.style.display = 'block';
-            if (mainCamera) mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: false; touchEnabled: true;');
+            
+            enableCustomTouchLook();
+            
             if (nativeVideo) nativeVideo.style.display = 'none';
             if (scene) scene.style.backgroundColor = "#540818"; 
           } else {
@@ -808,7 +837,6 @@ function checkHardwareGyroscope() {
       document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(primaryCoreAppLoop);
         
-        // Laptop/Desktop safe layout structural alteration
         if (!isMobile) {
           if (selectArBtn && selectBasicBtn) {
             selectArBtn.style.display = 'none';
@@ -837,12 +865,10 @@ function checkHardwareGyroscope() {
             }
           }
         } else {
-          // Fire sensor assessment chain with layout rules
           checkHardwareGyroscope();
         }
       });
 
-      // Secondary safety check fallback if browser delays window elements
       window.addEventListener('load', () => {
         if (isMobile) {
           checkHardwareGyroscope();
