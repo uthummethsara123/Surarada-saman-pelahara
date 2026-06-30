@@ -517,6 +517,12 @@ if (typeof ScrollReveal !== 'undefined') {
       function checkHardwareGyroscope() {
         if (!isMobile) return;
 
+        // iOS Fix: iPhones block sensor access until a user gesture grants permission.
+        // If the permission method exists, skip this passive test so the AR button isn't falsely disabled.
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+          return;
+        }
+
         let gyroDetected = false;
         function sensorTest(event) {
           if (event.alpha !== null || event.beta !== null || event.gamma !== null) {
