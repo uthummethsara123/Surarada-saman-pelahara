@@ -584,32 +584,40 @@
       let isLandscapeMappingMode = false;
 
       // Checks physical hardware sensor parameters for mobile configurations
+// Checks physical hardware sensor parameters for mobile configurations
 function checkHardwareGyroscope() {
   if (!isMobile) return;
 
-  // If permission needs to be requested explicitly, we verify it during user initialization instead.
   let gyroDetected = false;
-  
+
+  // Track actual physical angular velocity via devicemotion
   function sensorTest(event) {
-    // If we receive valid numeric data fields, gyroscope hardware is present
-    if (event.alpha !== null || event.beta !== null || event.gamma !== null) {
+    if (event.rotationRate && 
+        (event.rotationRate.alpha !== null || 
+         event.rotationRate.beta !== null || 
+         event.rotationRate.gamma !== null)) {
       gyroDetected = true;
     }
-    window.removeEventListener('deviceorientation', sensorTest);
+    window.removeEventListener('devicemotion', sensorTest);
   }
   
-  window.addEventListener('deviceorientation', sensorTest);
+  window.addEventListener('devicemotion', sensorTest);
 
   setTimeout(() => {
     if (!gyroDetected) {
-      if (selectArBtn) {
-        selectArBtn.disabled = true; // Properly sets the disabled property
-        selectArBtn.style.opacity = "0.5";
-        selectArBtn.style.pointerEvents = "none"; // Hard lock to prevent touch bypass
+      const currentArBtn = document.getElementById('select-ar-btn');
+      const currentWarningBox = document.getElementById('specs-warning-box');
+
+      if (currentArBtn) {
+        currentArBtn.disabled = true;
+        currentArBtn.style.opacity = "0.5";
+        currentArBtn.style.pointerEvents = "none"; // Disables touch interactions entirely
       }
-      if (specsWarningBox) specsWarningBox.style.display = "block";
+      if (currentWarningBox) {
+        currentWarningBox.style.display = "block";
+      }
     }
-  }, 750); 
+  }, 750); // Increased slightly to guarantee the sensor pipeline fires
 }
 
       const forceSceneClearTransparency = () => {
