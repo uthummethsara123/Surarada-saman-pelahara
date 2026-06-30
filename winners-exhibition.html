@@ -220,6 +220,22 @@
   </head>
   <body>
 
+        <div id="rotate-warning-overlay">
+  <i class="fas fa-mobile-alt"></i>
+  <h4>Please Enable Auto-Rotate</h4>
+  <p style="max-width: 300px; font-size: 0.9rem; color: #ccc;">
+    We noticed you turned your phone sideways, but your screen lock is on. Please enable <b>Auto-Rotate</b> in your phone's quick settings panel for the best exhibition experience!
+  </p>
+</div>
+
+    <div id="rotate-warning-overlay">
+      <i class="fas fa-mobile-alt"></i>
+      <h3 style="color: #f59e0b; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Please Enable Auto-Rotate</h3>
+      <p style="max-width: 320px; font-size: 0.95rem; color: #cbd5e1; margin-top: 5px;">
+        We detected you are holding your phone sideways, but your screen layout is locked. Please turn on <b>Auto-Rotate</b> in your phone's quick settings dashboard for the best Basic Mode display scaling!
+      </p>
+    </div>
+
     <div id="overlay">
       <img src="/assets/img/logo.png" alt="Logo" class="overlay-logo" />
       <h1 id="overlay-title">Winners Hall</h1>
@@ -245,13 +261,7 @@
       </div>
     </div>
 
-    <div id="rotate-warning-overlay">
-  <i class="fas fa-mobile-alt"></i>
-  <h4>Please Enable Auto-Rotate</h4>
-  <p style="max-width: 300px; font-size: 0.9rem; color: #ccc;">
-    We noticed you turned your phone sideways, but your screen lock is on. Please enable <b>Auto-Rotate</b> in your phone's quick settings panel for the best exhibition experience!
-  </p>
-</div>
+
 
     <div id="move-hint"></div>
     <div id="nav-hud-status"></div>
@@ -597,6 +607,7 @@
       const scene = document.querySelector('a-scene');
       const nativeVideo = document.getElementById('webcam-video');
       const mobileNavPad = document.getElementById('mobile-nav-pad');
+      const toggleLayoutBtn = document.getElementById('toggle-layout-btn');
       
       const selectArBtn = document.getElementById('select-ar-btn');
       const selectBasicBtn = document.getElementById('select-basic-btn');
@@ -612,30 +623,23 @@
       let isMovingDown = false;
       let isMovingLeft = false;
       let isMovingRight = false;
+      let isLandscapeMappingMode = false;
 
-      // Custom touch look engine state configurations
-      let canvasTouchStartX = 0;
-      let canvasTouchStartY = 0;
-      let cameraYaw = 0;
-      let cameraPitch = 0;
-      let isCustomTouchLookActive = false;
+      // Track if basic option tracking is active
+      let isBasicOptionActive = false;
 
-      // Tracks hardware rotation velocity to differentiate synthetic emulation maps
+      // Checks physical hardware sensor parameters for mobile configurations
       function checkHardwareGyroscope() {
         if (!isMobile) return;
 
         let gyroDetected = false;
         function sensorTest(event) {
-          if (event.rotationRate && 
-              (event.rotationRate.alpha !== null || 
-               event.rotationRate.beta !== null || 
-               event.rotationRate.gamma !== null)) {
+          if (event.alpha !== null || event.beta !== null || event.gamma !== null) {
             gyroDetected = true;
           }
-          window.removeEventListener('devicemotion', sensorTest);
+          window.removeEventListener('deviceorientation', sensorTest);
         }
-        
-        window.addEventListener('devicemotion', sensorTest);
+        window.addEventListener('deviceorientation', sensorTest);
 
         setTimeout(() => {
           if (!gyroDetected) {
@@ -644,63 +648,41 @@
 
             if (currentArBtn) {
               currentArBtn.disabled = true;
-              currentArBtn.style.opacity = "0.5";
-              currentArBtn.style.pointerEvents = "none";
             }
             if (currentWarningBox) {
               currentWarningBox.style.display = "block";
             }
           }
-        }, 750);
+        }, 600);
       }
 
-      // Detaches look controls to resolve phone vertical sensor lock dependencies
-      function enableCustomTouchLook() {
-        if (mainCamera) {
-          mainCamera.removeAttribute('look-controls');
-          const currentRot = mainCamera.getAttribute('rotation') || {x: 0, y: 0, z: 0};
-          cameraYaw = currentRot.y;
-          cameraPitch = currentRot.x;
-        }
-        
-        isCustomTouchLookActive = true;
-        
-        window.addEventListener('touchstart', onCanvasTouchStart, { passive: false });
-        window.addEventListener('touchmove', onCanvasTouchMove, { passive: false });
-      }
+      // Hardware level sensor monitoring logic for system rotation lock check
+      function initBasicModeRotationWatcher() {
+        if (!isMobile) return;
 
-      function onCanvasTouchStart(e) {
-        if (e.target.closest('#mobile-nav-pad') || e.target.closest('#overlay')) return;
-        if (e.touches.length === 1) {
-          canvasTouchStartX = e.touches[0].clientX;
-          canvasTouchStartY = e.touches[0].clientY;
-        }
-      }
+        window.addEventListener('deviceorientation', (event) => {
+          // Break immediate if user did not choose Basic mode or layout warning box is missing
+          if (!isBasicOptionActive) return;
+          const warningBox = document.getElementById('rotate-warning-overlay');
+          if (!warningBox) return;
 
-      function onCanvasTouchMove(e) {
-        if (e.target.closest('#mobile-nav-pad') || e.target.closest('#overlay')) return;
-        if (e.touches.length === 1) {
-          const touchX = e.touches[0].clientX;
-          const touchY = e.touches[0].clientY;
-          
-          const deltaX = touchX - canvasTouchStartX;
-          const deltaY = touchY - canvasTouchStartY;
-          
-          canvasTouchStartX = touchX;
-          canvasTouchStartY = touchY;
-          
-          const swipeSensitivity = 0.22;
-          
-          cameraYaw -= deltaX * swipeSensitivity;
-          cameraPitch -= deltaY * swipeSensitivity;
-          
-          // Absolute structural boundaries on pitch rotation to look around cleanly
-          cameraPitch = Math.max(-82, Math.min(82, cameraPitch));
-          
-          if (mainCamera) {
-            mainCamera.setAttribute('rotation', { x: cameraPitch, y: cameraYaw, z: 0 });
+          const absGamma = Math.abs(event.gamma);
+          const absBeta = Math.abs(event.beta);
+
+          // Is webpage layout still stuck in portrait mode dimensions?
+          const isBrowserPortraitLayout = window.innerHeight > window.innerWidth;
+
+          // Is the phone physically tilted horizontally?
+          const isPhysicallyLandscapeTilt = (absGamma > 65 && absBeta < 45) || (absBeta > 65 && absGamma < 45);
+
+          if (isPhysicallyLandscapeTilt && isBrowserPortraitLayout) {
+            // Screen is horizontal but layout didn't spin -> Auto-Rotate is OFF!
+            warningBox.style.display = 'flex';
+          } else {
+            // Portrait holding or Auto-Rotate kicked in perfectly -> Hide warning
+            warningBox.style.display = 'none';
           }
-        }
+        });
       }
 
       const forceSceneClearTransparency = () => {
@@ -745,9 +727,22 @@
       }
 
       if (isMobile) {
+        if (toggleLayoutBtn) {
+          toggleLayoutBtn.addEventListener('click', () => {
+            isLandscapeMappingMode = !isLandscapeMappingMode;
+            if (isLandscapeMappingMode) {
+              toggleLayoutBtn.innerHTML = "🔄 MODE: LANDSCAPE";
+              toggleLayoutBtn.className = "btn btn-sm btn-info";
+            } else {
+              toggleLayoutBtn.innerHTML = "🔄 MODE: PORTRAIT";
+              toggleLayoutBtn.className = "btn btn-sm btn-warning";
+            }
+          });
+        }
+
         const setupButton = (id, setter) => {
           const btn = document.getElementById(id);
-          if (!btn) return;
+          if (!btn) return; 
           btn.addEventListener('touchstart', (e) => { e.preventDefault(); setter(true); }, {passive: false});
           btn.addEventListener('touchend', (e) => { e.preventDefault(); setter(false); }, {passive: false});
           btn.addEventListener('touchcancel', (e) => { e.preventDefault(); setter(false); }, {passive: false});
@@ -784,9 +779,13 @@
           let leftValue = isMovingLeft ? moveSpeed : 0;
           let rightValue = isMovingRight ? moveSpeed : 0;
 
-          // Direct movement alignment mapping; screen flips naturally automatically 
-          forward = upValue - downValue;
-          strafe = rightValue - leftValue;
+          if (isLandscapeMappingMode) {
+            forward = rightValue - leftValue; 
+            strafe = downValue - upValue;
+          } else {
+            forward = upValue - downValue;
+            strafe = rightValue - leftValue;
+          }
         } else {
           if (activeKeys['w'] || activeKeys['arrowup']) forward += moveSpeed;
           if (activeKeys['s'] || activeKeys['arrowdown']) forward -= moveSpeed;
@@ -827,6 +826,7 @@
       if (selectArBtn) {
         selectArBtn.addEventListener('click', () => {
           if (selectArBtn.disabled) return;
+          isBasicOptionActive = false; // Disable watcher check
           if (overlay) overlay.style.display = 'none';
           
           if (isMobile) {
@@ -850,14 +850,13 @@
       // Option 2: BASIC MODE Logic Chain
       if (selectBasicBtn) {
         selectBasicBtn.addEventListener('click', () => {
+          isBasicOptionActive = true; // Activate rotation tracking
           if (overlay) overlay.style.display = 'none';
           
           if (isMobile) {
             if (moveHint) moveHint.style.display = 'none';
             if (mobileNavPad) mobileNavPad.style.display = 'block';
-            
-            enableCustomTouchLook();
-            
+            if (mainCamera) mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: false; touchEnabled: true;');
             if (nativeVideo) nativeVideo.style.display = 'none';
             if (scene) scene.style.backgroundColor = "#540818"; 
           } else {
@@ -874,6 +873,7 @@
 
       document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(primaryCoreAppLoop);
+        initBasicModeRotationWatcher(); // Mount event hooks
         
         if (!isMobile) {
           if (selectArBtn && selectBasicBtn) {
@@ -960,40 +960,6 @@
           });
         }
       });
-
-      // Smart detection for Landscape holding with System Rotation Lock ON
-function detectRotationLock() {
-  if (!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) return;
-
-  window.addEventListener('deviceorientation', (event) => {
-    const warningBox = document.getElementById('rotate-warning-overlay');
-    if (!warningBox) return;
-
-    // gamma is the left-to-right tilt in degrees (-90 to 90)
-    // beta is the front-to-back tilt in degrees (-180 to 180)
-    const absGamma = Math.abs(event.gamma);
-    const absBeta = Math.abs(event.beta);
-
-    // Detect if the web page layout is still in portrait mode
-    const isBrowserPortrait = window.innerHeight > window.innerWidth;
-
-    // Detect if the physical phone is being held horizontally (sideways)
-    // When held sideways landscape, gamma is near 0 and beta leans heavily sideways (approx > 45)
-    // Or normally, side tilt gamma dominates past 60 degrees.
-    const isPhysicallyLandscape = (absGamma > 65 && absBeta < 45) || (absBeta > 65 && absGamma < 45);
-
-    if (isPhysicallyLandscape && isBrowserPortrait) {
-      // The phone is horizontal, but the page didn't flip -> Auto-Rotate is OFF!
-      warningBox.style.display = 'flex';
-    } else {
-      // Either they turned it back to portrait, or Auto-Rotate kicked in and flipped the layout
-      warningBox.style.display = 'none';
-    }
-  });
-}
-
-// Initialize the listener after hardware sensor checks are authorized
-window.addEventListener('DOMContentLoaded', detectRotationLock);
     </script>
   </body>
 </html>
