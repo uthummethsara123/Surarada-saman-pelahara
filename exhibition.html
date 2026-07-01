@@ -683,57 +683,58 @@
         registerPodButton('btn-right-normal-right', -1, 1.0); 
         registerPodButton('btn-right-rw', -1, 3.5);          
 
-        // Restored Original Transparent White Background Textures map
-        if (logoTooltip) {
-          const canvas = document.createElement('canvas');
-          canvas.width = 1024;
-          canvas.height = 512; 
-          const ctx = canvas.getContext('2d');
-          
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          
-          // Re-applied clean transparent white background plate layout
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          
-          // Line 1: Upward Arrow Caret (Top Line)
-          ctx.fillStyle = '#f59e0b'; 
-          ctx.font = 'bold 80px monospace';
-          ctx.fillText('^', canvas.width / 2, 90);
-          
-          // Line 2: View Winners Header (Middle Line)
-          ctx.fillStyle = '#f59e0b';
-          ctx.font = 'bold 64px monospace';
-          ctx.fillText('VIEW WINNERS', canvas.width / 2, 240);
-          
-          // Line 3: Double Tap Action Guideline (Bottom Line)
-          ctx.fillStyle = '#ffffff'; 
-          ctx.font = 'bold 50px monospace';
-          ctx.fillText('DOUBLE TAP TO GO', canvas.width / 2, 390);
-          
-          // Direct native WebGL texture mapping to prevent browser cache context cutoffs
-          const texture = new THREE.CanvasTexture(canvas);
-          
-          logoTooltip.addEventListener('object3dset', function () {
-            const mesh = logoTooltip.getObject3D('mesh');
+        // Register a clean, non-cached A-Frame component for the text canvas
+        AFRAME.registerComponent('tooltip-canvas', {
+          init: function () {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 512; 
+            const ctx = canvas.getContext('2d');
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Clean semi-transparent white background plate
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Line 1: Upward Arrow Caret (Top Line)
+            ctx.fillStyle = '#f59e0b'; 
+            ctx.font = 'bold 80px monospace';
+            ctx.fillText('^', canvas.width / 2, 90);
+            
+            // Line 2: View Winners Header (Middle Line)
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = 'bold 64px monospace';
+            ctx.fillText('VIEW WINNERS', canvas.width / 2, 240);
+            
+            // Line 3: Double Tap Guideline (Bottom Line)
+            ctx.fillStyle = '#ffffff'; 
+            ctx.font = 'bold 50px monospace';
+            ctx.fillText('DOUBLE TAP TO GO', canvas.width / 2, 390);
+            
+            // Bind texture safely via THREE.js to the mesh map directly on creation
+            const texture = new THREE.CanvasTexture(canvas);
+            const mesh = this.el.getObject3D('mesh');
+            
             if (mesh && mesh.material) {
               mesh.material.map = texture;
               mesh.material.transparent = true;
               mesh.material.needsUpdate = true;
+            } else {
+              this.el.addEventListener('object3dset', () => {
+                const innerMesh = this.el.getObject3D('mesh');
+                if (innerMesh && innerMesh.material) {
+                  innerMesh.material.map = texture;
+                  innerMesh.material.transparent = true;
+                  innerMesh.material.needsUpdate = true;
+                }
+              });
             }
-          });
-
-          // Safety trigger if mesh is already compiled
-          const mesh = logoTooltip.getObject3D('mesh');
-          if (mesh && mesh.material) {
-            mesh.material.map = texture;
-            mesh.material.transparent = true;
-            mesh.material.needsUpdate = true;
           }
-        }
+        });
 
         if (logoBtn) {
           let lastClickTime = 0;
