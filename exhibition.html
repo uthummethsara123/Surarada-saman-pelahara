@@ -449,6 +449,8 @@
       <a-plane id="logo-tooltip" width="1.2" height="0.6" position="0 -0.8 -2" visible="false"
                material="shader: flat; transparent: true; side: double;"></a-plane>
 
+      <canvas id="tooltip-canvas" width="1024" height="512" style="display: none;"></canvas>
+
 
       <a-entity id="left-controls-group" position="-3.2 -1.15 -0.1" rotation="0 90 0" visible="false">
         <a-plane id="btn-left-ff" class="clickable" position="-0.75 0 0" width="0.4" height="0.32" material="shader: flat; transparent: true; opacity: 0.15; color: #ffffff; side: double;">
@@ -684,57 +686,50 @@
         registerPodButton('btn-right-rw', -1, 3.5);          
 
         // Register a clean, non-cached A-Frame component for the text canvas
-        AFRAME.registerComponent('tooltip-canvas', {
-          init: function () {
-            const canvas = document.createElement('canvas');
-            canvas.width = 1024;
-            canvas.height = 512; 
-            const ctx = canvas.getContext('2d');
-            
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Clean semi-transparent white background plate
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            // Line 1: Upward Arrow Caret (Top Line)
-            ctx.fillStyle = '#f59e0b'; 
-            ctx.font = 'bold 80px monospace';
-            ctx.fillText('^', canvas.width / 2, 90);
-            
-            // Line 2: View Winners Header (Middle Line)
-            ctx.fillStyle = '#f59e0b';
-            ctx.font = 'bold 64px monospace';
-            ctx.fillText('VIEW WINNERS', canvas.width / 2, 240);
-            
-            // Line 3: Double Tap Guideline (Bottom Line)
-            ctx.fillStyle = '#ffffff'; 
-            ctx.font = 'bold 50px monospace';
-            ctx.fillText('DOUBLE TAP TO GO', canvas.width / 2, 390);
-            
-            // Bind texture safely via THREE.js to the mesh map directly on creation
-            const texture = new THREE.CanvasTexture(canvas);
-            const mesh = this.el.getObject3D('mesh');
-            
+        if (logoTooltip) {
+          const canvas = document.getElementById('tooltip-canvas');
+          const ctx = canvas.getContext('2d');
+          
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          
+          // Clean semi-transparent white plate background layout
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          // Line 1: Upward Caret Icon (Top Line)
+          ctx.fillStyle = '#f59e0b'; 
+          ctx.font = 'bold 80px monospace';
+          ctx.fillText('^', canvas.width / 2, 90);
+          
+          // Line 2: View Winners Text Header (Middle Line)
+          ctx.fillStyle = '#f59e0b';
+          ctx.font = 'bold 64px monospace';
+          ctx.fillText('VIEW WINNERS', canvas.width / 2, 240);
+          
+          // Line 3: Double Tap Action Guideline (Bottom Line)
+          ctx.fillStyle = '#ffffff'; 
+          ctx.font = 'bold 50px monospace';
+          ctx.fillText('DOUBLE TAP TO GO', canvas.width / 2, 390);
+
+          // Force explicit Three.js material map updates to bypass browser layout caching
+          const updateTextureMap = () => {
+            const mesh = logoTooltip.getObject3D('mesh');
             if (mesh && mesh.material) {
-              mesh.material.map = texture;
+              mesh.material.map = new THREE.CanvasTexture(canvas);
               mesh.material.transparent = true;
               mesh.material.needsUpdate = true;
-            } else {
-              this.el.addEventListener('object3dset', () => {
-                const innerMesh = this.el.getObject3D('mesh');
-                if (innerMesh && innerMesh.material) {
-                  innerMesh.material.map = texture;
-                  innerMesh.material.transparent = true;
-                  innerMesh.material.needsUpdate = true;
-                }
-              });
             }
+          };
+
+          if (logoTooltip.hasLoaded) {
+            updateTextureMap();
+          } else {
+            logoTooltip.addEventListener('loaded', updateTextureMap);
           }
-        });
+        }
 
         if (logoBtn) {
           let lastClickTime = 0;
