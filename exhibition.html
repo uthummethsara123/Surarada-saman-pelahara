@@ -244,7 +244,6 @@
           let currentZ = position.z;
 
           if (window.galleryState.isBtnScrolling) {
-            // Apply directional rate multiplied by speed factor (1.0 normal, 3.0 fast forward)
             currentZ += window.galleryState.btnScrollDir * 0.05 * window.galleryState.btnScrollSpeedMultiplier; 
           } else if (window.galleryState.isUserTouching) {
             currentZ += window.galleryState.deltaZ * window.galleryState.sensitivity;
@@ -447,29 +446,29 @@
                animation="property: scale; to: 1.08 1.08 1.08; dir: alternate; dur: 1500; loop: true; easing: easeInOutQuad">
       </a-image>
 
-      <a-plane id="logo-tooltip" width="1.8" height="0.65" position="0 -0.85 -2" visible="false"
+      <a-plane id="logo-tooltip" width="1.1" height="0.45" position="0 -0.8 -2" visible="false"
                material="shader: flat; transparent: true; side: double;"></a-plane>
 
-      <a-entity id="left-controls-group" position="-2.9 -1.15 -0.8" rotation="0 90 0" visible="false">
-        <a-plane id="btn-left-ff" class="clickable" position="-0.75 0 0" width="0.45" height="0.35" color="#f59e0b"
-                 text="value: ◀◀; align: center; color: #0f172a; width: 4.5; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-left-normal-left" class="clickable" position="-0.25 0 0" width="0.45" height="0.35" color="#f59e0b"
-                 text="value: ◀; align: center; color: #0f172a; width: 4.5; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-left-normal-right" class="clickable" position="0.25 0 0" width="0.45" height="0.35" color="#f59e0b"
-                 text="value: ▶; align: center; color: #0f172a; width: 4.5; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-left-rw" class="clickable" position="0.75 0 0" width="0.45" height="0.35" color="#f59e0b"
-                 text="value: ▶▶; align: center; color: #0f172a; width: 4.5; font: monospace; bold: true;"></a-plane>
+      <a-entity id="left-controls-group" position="-3.2 -1.15 -0.1" rotation="0 90 0" visible="false">
+        <a-plane id="btn-left-ff" class="clickable" position="-0.75 0 0" width="0.4" height="0.32" color="#f59e0b"
+                 text="value: <<; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
+        <a-plane id="btn-left-normal-left" class="clickable" position="-0.25 0 0" width="0.4" height="0.32" color="#f59e0b"
+                 text="value: <; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
+        <a-plane id="btn-left-normal-right" class="clickable" position="0.25 0 0" width="0.4" height="0.32" color="#f59e0b"
+                 text="value: >; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
+        <a-plane id="btn-left-rw" class="clickable" position="0.75 0 0" width="0.4" height="0.32" color="#f59e0b"
+                 text="value: >>; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
       </a-entity>
 
-      <a-entity id="right-controls-group" position="2.9 -1.15 -0.8" rotation="0 -90 0" visible="false">
-        <a-plane id="btn-right-ff" class="clickable" position="-0.75 0 0" width="0.45" height="0.35" color="#f59e0b"
-                 text="value: ◀◀; align: center; color: #0f172a; width: 4.5; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-right-normal-left" class="clickable" position="-0.25 0 0" width="0.45" height="0.35" color="#f59e0b"
-                 text="value: ◀; align: center; color: #0f172a; width: 4.5; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-right-normal-right" class="clickable" position="0.25 0 0" width="0.45" height="0.35" color="#f59e0b"
-                 text="value: ▶; align: center; color: #0f172a; width: 4.5; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-right-rw" class="clickable" position="0.75 0 0" width="0.45" height="0.35" color="#f59e0b"
-                 text="value: ▶▶; align: center; color: #0f172a; width: 4.5; font: monospace; bold: true;"></a-plane>
+      <a-entity id="right-controls-group" position="3.2 -1.15 -1.5" rotation="0 -90 0" visible="false">
+        <a-plane id="btn-right-ff" class="clickable" position="-0.75 0 0" width="0.4" height="0.32" color="#f59e0b"
+                 text="value: <<; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
+        <a-plane id="btn-right-normal-left" class="clickable" position="-0.25 0 0" width="0.4" height="0.32" color="#f59e0b"
+                 text="value: <; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
+        <a-plane id="btn-right-normal-right" class="clickable" position="0.25 0 0" width="0.4" height="0.32" color="#f59e0b"
+                 text="value: >; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
+        <a-plane id="btn-right-rw" class="clickable" position="0.75 0 0" width="0.4" height="0.32" color="#f59e0b"
+                 text="value: >>; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
       </a-entity>
 
       <a-entity id="main-camera" camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" position="0 0 0"></a-entity>
@@ -634,7 +633,6 @@
           checkHardwareGyroscope();
         }
 
-        // UNIVERSAL REGISTRATION FOR SCROLL CLUSTER INTERACTION ACTION HANDLERS
         function registerPodButton(id, directionalFlag, speedMultiplier) {
           const buttonEl = document.getElementById(id);
           if (!buttonEl) return;
@@ -660,19 +658,19 @@
           buttonEl.addEventListener('touchend', stopScrolling);
         }
 
-        // Left Pod Registration (Controls track movement left/right)
-        registerPodButton('btn-left-ff', 1, 3.5);          // Fast Leftward Scroll
-        registerPodButton('btn-left-normal-left', 1, 1.0);  // Normal Leftward Scroll
-        registerPodButton('btn-left-normal-right', -1, 1.0); // Normal Rightward Scroll
-        registerPodButton('btn-left-rw', -1, 3.5);          // Fast Rightward Scroll
+        // Left Pod Action Listeners Mapping
+        registerPodButton('btn-left-ff', 1, 3.5);          
+        registerPodButton('btn-left-normal-left', 1, 1.0);  
+        registerPodButton('btn-left-normal-right', -1, 1.0); 
+        registerPodButton('btn-left-rw', -1, 3.5);          
 
-        // Right Pod Registration (Controls track movement left/right)
-        registerPodButton('btn-right-ff', 1, 3.5);          // Fast Leftward Scroll
-        registerPodButton('btn-right-normal-left', 1, 1.0);  // Normal Leftward Scroll
-        registerPodButton('btn-right-normal-right', -1, 1.0); // Normal Rightward Scroll
-        registerPodButton('btn-right-rw', -1, 3.5);          // Fast Rightward Scroll
+        // Right Pod Action Listeners Mapping
+        registerPodButton('btn-right-ff', 1, 3.5);          
+        registerPodButton('btn-right-normal-left', 1, 1.0);  
+        registerPodButton('btn-right-normal-right', -1, 1.0); 
+        registerPodButton('btn-right-rw', -1, 3.5);          
 
-        // High Contrast Texture Map generation loop for the tooltip element
+        // Restored Original Transparent White Background Textures map
         if (logoTooltip) {
           const canvas = document.createElement('canvas');
           canvas.width = 1024;
@@ -680,21 +678,16 @@
           const ctx = canvas.getContext('2d');
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           
-          // Solid high-contrast background shield prevents ambient colors bleeding through the text
-          ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+          // Re-applied clean transparent white background plate layout
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
-          
-          // Dynamic accent border line
-          ctx.lineWidth = 12;
-          ctx.strokeStyle = '#f59e0b';
-          ctx.strokeRect(6, 6, canvas.width - 12, canvas.height - 12);
           
           ctx.fillStyle = '#f59e0b'; 
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           
           ctx.font = 'bold 70px monospace';
-          ctx.fillText('↑', canvas.width / 2, 75);
+          ctx.fillText('^', canvas.width / 2, 75);
           
           ctx.font = 'bold 64px monospace';
           ctx.fillText('VIEW WINNERS', canvas.width / 2, 185);
@@ -703,7 +696,6 @@
           ctx.fillStyle = '#ffffff';
           ctx.fillText('DOUBLE TAP TO GO', canvas.width / 2, 295);
           
-          // Strict binding logic injection pattern ensures visibility inside internal WebGL frames
           logoTooltip.setAttribute('material', 'src', canvas);
           logoTooltip.addEventListener('materialtextureloaded', () => {
             const mesh = logoTooltip.getObject3D('mesh');
