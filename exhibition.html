@@ -446,16 +446,10 @@
                animation="property: scale; to: 1.08 1.08 1.08; dir: alternate; dur: 1500; loop: true; easing: easeInOutQuad">
       </a-image>
 
-      <a-plane id="logo-tooltip" width="1.4" height="0.65" position="0 -0.85 -2" visible="false"
-               material="shader: flat; transparent: true; opacity: 0.15; color: #ffffff; side: double;">
-        
-        <a-text value="^" align="center" color="#f59e0b" width="4.5" font="monospace" bold="true" position="0 0.22 0.01"></a-text>
-        
-        <a-text value="VIEW WINNERS" align="center" color="#f59e0b" width="3.2" font="monospace" bold="true" position="0 0.02 0.01"></a-text>
-        
-        <a-text value="DOUBLE TAP TO GO" align="center" color="#ffffff" width="2.5" font="monospace" bold="true" position="0 -0.18 0.01"></a-text>
-        
-      </a-plane>
+      <a-entity id="logo-tooltip" position="0 -0.85 -2" visible="false">
+        <a-plane width="1.4" height="0.65" material="shader: flat; transparent: true; opacity: 0.15; color: #ffffff; side: double;"></a-plane>
+        <a-plane id="logo-tooltip-text-plane" width="1.4" height="0.65" position="0 0 0.01" material="shader: flat; transparent: true; opacity: 1.0; side: double;"></a-plane>
+      </a-entity>
 
 
       <a-entity id="left-controls-group" position="-3.2 -1.15 -0.1" rotation="0 90 0" visible="false">
@@ -691,10 +685,45 @@
         registerPodButton('btn-right-normal-right', -1, 1.0); 
         registerPodButton('btn-right-rw', -1, 3.5);          
 
-        // Clean native link binding verification
+
+        // Render crisp 2D canvas text on an isolated layer to bypass A-Frame text loading and opacity bugs
         if (logoTooltip) {
-          console.log("Tooltip menu loaded successfully.");
+          const textPlane = document.getElementById('logo-tooltip-text-plane');
+          if (textPlane) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 476; // Exact aspect ratio match for 1.4 : 0.65 plane dimensions
+            const ctx = canvas.getContext('2d');
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Line 1: Upward Caret Icon
+            ctx.fillStyle = '#f59e0b'; 
+            ctx.font = 'bold 90px sans-serif'; 
+            ctx.fillText('^', canvas.width / 2, 90);
+            
+            // Line 2: View Winners Header
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = 'bold 64px sans-serif';
+            ctx.fillText('VIEW WINNERS', canvas.width / 2, 225);
+            
+            // Line 3: Double Tap Action Guideline (Vibrant fully opaque white)
+            ctx.fillStyle = '#ffffff'; 
+            ctx.font = 'bold 48px sans-serif';
+            ctx.fillText('DOUBLE TAP TO GO', canvas.width / 2, 360);
+            
+            textPlane.setAttribute('material', 'src', canvas);
+            textPlane.addEventListener('materialtextureloaded', () => {
+              const mesh = textPlane.getObject3D('mesh');
+              if (mesh && mesh.material && mesh.material.map) {
+                mesh.material.map.needsUpdate = true;
+              }
+            });
+          }
         }
+
 
         if (logoBtn) {
           let lastClickTime = 0;
