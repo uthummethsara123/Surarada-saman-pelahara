@@ -9,6 +9,10 @@
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="icon" type="image/png" href="/assets/img/logo.png">
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     
     <style>
@@ -19,6 +23,11 @@
         height: 100%;
         overflow: hidden;
         background-color: transparent !important;
+        font-family: 'Poppins', system-ui, -apple-system, sans-serif !important;
+      }
+
+      h2, h3, h4, p, span, button, div {
+        font-family: 'Poppins', system-ui, -apple-system, sans-serif !important;
       }
 
       #webcam-video {
@@ -47,7 +56,6 @@
         justify-content: center;
         align-items: center;
         color: white;
-        font-family: system-ui, -apple-system, sans-serif;
         text-align: center;
         padding: 20px;
         box-sizing: border-box;
@@ -140,6 +148,13 @@
         text-transform: none;
         opacity: 0.85;
         letter-spacing: 0;
+      }
+
+      /* Hover transition logic for UI info button */
+      #info-btn:hover {
+        background: #f59e0b !important;
+        color: #0f172a !important;
+        transform: scale(1.08);
       }
     </style>
 
@@ -324,6 +339,12 @@
                   connectionStatus.style.display = "none";
                   modeSelectionArea.style.display = "block";
                   
+                  // Dynamically inject structural instructions onto the overlay area
+                  const guideTextDiv = document.getElementById('loading-guide-text');
+                  if (guideTextDiv) {
+                    guideTextDiv.innerHTML = isMobile ? window.exhibitionGuides['mobile-loading'] : window.exhibitionGuides['laptop'];
+                  }
+                  
                   checkHardwareGyroscope();
                 }
               }
@@ -432,6 +453,11 @@
             <span class="sub-text">Use your fingers to swipe the screen to look around.</span>
           </button>
         </div>
+
+        <div id="loading-guide-box" style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 12px; padding: 15px; margin: 20px auto 0 auto; text-align: left; max-width: 380px; width: 100%; box-sizing: border-box;">
+          <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #f59e0b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">💡 Exhibition Guide</h4>
+          <div id="loading-guide-text" style="font-size: 13px; color: #cbd5e1; line-height: 1.4;"></div>
+        </div>
       </div>
     </div>
 
@@ -492,11 +518,70 @@
       <a-entity id="main-camera" camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" position="0 0 0"></a-entity>
     </a-scene>
     
+    <button id="info-btn" style="display: none; position: fixed; bottom: 20px; left: 20px; width: 44px; height: 44px; background: rgba(15, 23, 42, 0.85); border: 2px solid #f59e0b; border-radius: 50%; color: #f59e0b; font-size: 20px; font-weight: bold; cursor: pointer; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.4); justify-content: center; align-items: center; transition: all 0.2s ease; outline: none;">i</button>
+    
+    <div id="info-tooltip-ui" style="position: fixed; bottom: 75px; left: 20px; background: rgba(15, 23, 42, 0.95); color: #ffffff; padding: 6px 12px; border-radius: 6px; font-size: 12px; border: 1px solid rgba(245, 158, 11, 0.4); pointer-events: none; opacity: 0; transition: opacity 0.2s ease; z-index: 1000; font-weight: 500;">Exhibition Guide</div>
+
+    <div id="guide-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 1001; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;">
+      <div style="background: #1e293b; border: 2px solid #f59e0b; border-radius: 16px; max-width: 420px; width: 100%; padding: 25px; color: #f8fafc; box-shadow: 0 10px 30px rgba(0,0,0,0.5); box-sizing: border-box;">
+        <h3 id="modal-guide-title" style="margin: 0 0 15px 0; font-size: 1.3rem; color: #f59e0b; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid rgba(245, 158, 11, 0.2); padding-bottom: 8px; letter-spacing: 0.5px;">Exhibition Guide</h3>
+        <div id="modal-guide-body" style="font-size: 0.95rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 20px;"></div>
+        <button id="close-modal-btn" style="background: #f59e0b; color: #0f172a; border: none; padding: 12px 20px; font-weight: 700; border-radius: 8px; cursor: pointer; width: 100%; text-transform: uppercase; letter-spacing: 0.5px; transition: background 0.2s ease;">Got It</button>
+      </div>
+    </div>
+
     <script>
       document.documentElement.classList.add('lock-scrolling');
       document.body.classList.add('lock-scrolling');
       document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
+
+      // Global reference guide string records built exactly to requested mapping rules
+      window.exhibitionGuides = {
+        'laptop': `
+          <ul style="list-style: none; padding-left: 0; margin: 0;">
+            <li style="margin-bottom: 8px; padding-left: 15px; position: relative;"><span style="color:#f59e0b; position:absolute; left:0;">•</span>view around using left click and drag</li>
+            <li style="margin-bottom: 8px; padding-left: 15px; position: relative;"><span style="color:#f59e0b; position:absolute; left:0;">•</span>make the images scroll using right click and drag OR use arrows to scroll</li>
+            <li style="margin-bottom: 0; padding-left: 15px; position: relative;"><span style="color:#f59e0b; position:absolute; left:0;">•</span>click on the logo to go winners</li>
+          </ul>
+        `,
+        'mobile-ar': `
+          <div style="font-weight: 700; color: #fbbf24; margin-bottom: 6px; text-transform: uppercase; font-size: 13px;">AR Mode Active</div>
+          <ul style="list-style: none; padding-left: 0; margin: 0;">
+            <li style="margin-bottom: 8px; padding-left: 15px; position: relative;"><span style="color:#f59e0b; position:absolute; left:0;">•</span>turn around the phone IRL to look around</li>
+            <li style="margin-bottom: 8px; padding-left: 15px; position: relative;"><span style="color:#f59e0b; position:absolute; left:0;">•</span>touch and drag to scroll the photos or use the arrows</li>
+            <li style="margin-bottom: 0; padding-left: 15px; position: relative;"><span style="color:#f59e0b; position:absolute; left:0;">•</span>Double tap logo to go winners</li>
+          </ul>
+        `,
+        'mobile-basic': `
+          <div style="font-weight: 700; color: #fbbf24; margin-bottom: 6px; text-transform: uppercase; font-size: 13px;">Basic Mode Active</div>
+          <ul style="list-style: none; padding-left: 0; margin: 0;">
+            <li style="margin-bottom: 8px; padding-left: 15px; position: relative;"><span style="color:#f59e0b; position:absolute; left:0;">•</span>use your fingers to look around</li>
+            <li style="margin-bottom: 8px; padding-left: 15px; position: relative;"><span style="color:#f59e0b; position:absolute; left:0;">•</span>use the arrows to scroll the photos</li>
+            <li style="margin-bottom: 0; padding-left: 15px; position: relative;"><span style="color:#f59e0b; position:absolute; left:0;">•</span>Double tap logo to go winners</li>
+          </ul>
+        `,
+        'mobile-loading': `
+          <div style="margin-bottom: 12px;">
+            <div style="font-weight: 700; color: #fbbf24; margin-bottom: 4px; text-transform: uppercase; font-size: 12px;">AR Mode</div>
+            <ul style="list-style: none; padding-left: 12px; margin: 0; font-size: 12px;">
+              <li style="margin-bottom: 4px; padding-left: 12px; position: relative;"><span style="color:#f59e0b; position:absolute; left:0;">•</span>turn around the phone IRL to look around</li>
+              <li style="margin-bottom: 4px; padding-left: 12px; position: relative;"><span style="color:#f59e0b; position:absolute; left:0;">•</span>touch and drag to scroll the photos or use the arrows</li>
+              <li style="margin-bottom: 4px; padding-left: 12px; position: relative;"><span style="color:#f59e0b; position:absolute; left:0;">•</span>Double tap logo to go winners</li>
+            </ul>
+          </div>
+          <div>
+            <div style="font-weight: 700; color: #fbbf24; margin-bottom: 4px; text-transform: uppercase; font-size: 12px;">Basic Mode</div>
+            <ul style="list-style: none; padding-left: 12px; margin: 0; font-size: 12px;">
+              <li style="margin-bottom: 4px; padding-left: 12px; position: relative;"><span style="color:#f59e0b; position:absolute; left:0;">•</span>use your fingers to look around</li>
+              <li style="margin-bottom: 4px; padding-left: 12px; position: relative;"><span style="color:#f59e0b; position:absolute; left:0;">•</span>use the arrows to scroll the photos</li>
+              <li style="margin-bottom: 0; padding-left: 12px; position: relative;"><span style="color:#f59e0b; position:absolute; left:0;">•</span>Double tap logo to go winners</li>
+            </ul>
+          </div>
+        `
+      };
+
+      let activeMode = 'laptop'; // Active context engine tracking identifier variable
 
       const forceUnlockTimeout = setTimeout(() => {
           cleanUpAndDestroyLoader("Safety Timeout Triggered");
@@ -598,8 +683,15 @@
         if (rightGroup) rightGroup.setAttribute('visible', 'true');
       }
 
+      function showInfoBadge() {
+        const infoBtn = document.getElementById('info-btn');
+        if (infoBtn) infoBtn.style.display = 'flex';
+      }
+
       selectArBtn.addEventListener('click', () => {
         overlay.style.display = 'none';
+        activeMode = 'mobile-ar';
+        showInfoBadge();
         if (isMobile) {
           mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: true; touchEnabled: false;');
           forceSceneClearTransparency();
@@ -613,6 +705,8 @@
 
       selectBasicBtn.addEventListener('click', () => {
         overlay.style.display = 'none';
+        activeMode = 'mobile-basic';
+        showInfoBadge();
         revealControlPods();
 
         if (isMobile) {
@@ -641,6 +735,8 @@
               
               document.getElementById('laptop-enter-btn').addEventListener('click', () => {
                 overlay.style.display = 'none';
+                activeMode = 'laptop';
+                showInfoBadge();
                 revealControlPods();
                 if (scene) scene.style.backgroundColor = "#1a1a1a";
                 mainCamera.setAttribute('look-controls', 'touchEnabled: true;');
@@ -688,47 +784,60 @@
         registerPodButton('btn-right-normal-right', -1, 1.0); 
         registerPodButton('btn-right-rw', -1, 3.5);          
 
-
-        // Render high-definition text with a black outline border ONLY on the double tap line
+        // Render high-definition text with a black outline border ONLY on the double-tap line
         if (logoTooltip) {
           const textPlane = document.getElementById('logo-tooltip-text');
           if (textPlane) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 1400;
-            canvas.height = 650; // High-resolution match for 1.4 : 0.65 aspect ratio
-            const ctx = canvas.getContext('2d');
-            
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            const midX = canvas.width / 2;
+            const drawCanvasText = () => {
+              const canvas = document.createElement('canvas');
+              canvas.width = 1400;
+              canvas.height = 650; // High-resolution match for 1.4 : 0.65 aspect ratio
+              const ctx = canvas.getContext('2d');
+              
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              
+              const midX = canvas.width / 2;
 
-            // Line 1: Upward Caret Icon (Solid text - No outline border)
-            ctx.font = 'bold 160px sans-serif';
-            ctx.fillStyle = '#f59e0b';
-            ctx.fillText('^', midX, 120);
-            
-            // Line 2: View Winners Header Text (Solid text - No outline border)
-            ctx.font = 'bold 100px sans-serif';
-            ctx.fillStyle = '#f59e0b';
-            ctx.fillText('VIEW WINNERS', midX, 310);
-            
-            // Line 3: Double Tap Action Guideline (Crisp white with a broad 18px black border outline)
-            const doubleTapText = 'DOUBLE TAP TO GO';
-            ctx.font = 'bold 75px sans-serif';
-            ctx.strokeStyle = '#000000';
-            ctx.lineWidth = 18;
-            ctx.lineJoin = 'round';
-            ctx.miterLimit = 2;
-            ctx.strokeText(doubleTapText, midX, 490); // Draws the thick outer shell outline
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(doubleTapText, midX, 490);   // Fills the core inner white color
+              // Line 1: Upward Caret Icon (Solid text - No outline border, a bit smaller & Poppins)
+              ctx.font = 'bold 120px Poppins, sans-serif';
+              ctx.fillStyle = '#f59e0b';
+              ctx.fillText('^', midX, 130);
+              
+              // Line 2: View Winners Header Text (Solid text - No outline border, a bit smaller & Poppins)
+              ctx.font = 'bold 80px Poppins, sans-serif';
+              ctx.fillStyle = '#f59e0b';
+              ctx.fillText('VIEW WINNERS', midX, 310);
+              
+              // Line 3: Double Tap Action Guideline (White with broad 15px outline, a bit smaller & Poppins)
+              const doubleTapText = 'DOUBLE TAP TO GO';
+              ctx.font = 'bold 60px Poppins, sans-serif';
+              ctx.strokeStyle = '#000000';
+              ctx.lineWidth = 15;
+              ctx.lineJoin = 'round';
+              ctx.miterLimit = 2;
+              ctx.strokeText(doubleTapText, midX, 480);
+              ctx.fillStyle = '#ffffff';
+              ctx.fillText(doubleTapText, midX, 480);
 
-            // Bind the high-definition canvas directly into the A-Frame material texture
-            textPlane.setAttribute('material', 'src', canvas);
+              // Bind the high-definition canvas directly into the A-Frame material texture
+              textPlane.setAttribute('material', 'src', canvas);
+
+              // Update Three.js maps explicitly
+              const mesh = textPlane.getObject3D('mesh');
+              if (mesh && mesh.material && mesh.material.map) {
+                mesh.material.map.needsUpdate = true;
+              }
+            };
+
+            // Double check font verification before pushing canvas pixels
+            if (document.fonts) {
+              document.fonts.ready.then(drawCanvasText);
+            } else {
+              drawCanvasText();
+            }
             
-            // Signal Three.js to immediately force render map updates across mobile graphics engines
             textPlane.addEventListener('materialtextureloaded', () => {
               const mesh = textPlane.getObject3D('mesh');
               if (mesh && mesh.material && mesh.material.map) {
@@ -738,6 +847,44 @@
           }
         }
 
+        // Setup Floating Live Action Info Button & Modal Box Actions
+        const infoBtn = document.getElementById('info-btn');
+        const infoTooltipUi = document.getElementById('info-tooltip-ui');
+        const guideModal = document.getElementById('guide-modal');
+        const modalGuideTitle = document.getElementById('modal-guide-title');
+        const modalGuideBody = document.getElementById('modal-guide-body');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+
+        if (infoBtn) {
+          infoBtn.addEventListener('mouseenter', () => {
+            if (infoTooltipUi) infoTooltipUi.style.opacity = '1';
+          });
+          infoBtn.addEventListener('mouseleave', () => {
+            if (infoTooltipUi) infoTooltipUi.style.opacity = '0';
+          });
+          
+          infoBtn.addEventListener('click', () => {
+            if (guideModal && modalGuideBody && modalGuideTitle) {
+              if (activeMode === 'laptop') {
+                modalGuideTitle.innerText = "Laptop Guide";
+                modalGuideBody.innerHTML = window.exhibitionGuides['laptop'];
+              } else if (activeMode === 'mobile-ar') {
+                modalGuideTitle.innerText = "Mobile AR Guide";
+                modalGuideBody.innerHTML = window.exhibitionGuides['mobile-ar'];
+              } else if (activeMode === 'mobile-basic') {
+                modalGuideTitle.innerText = "Mobile Basic Guide";
+                modalGuideBody.innerHTML = window.exhibitionGuides['mobile-basic'];
+              }
+              guideModal.style.display = 'flex';
+            }
+          });
+        }
+
+        if (closeModalBtn && guideModal) {
+          closeModalBtn.addEventListener('click', () => {
+            guideModal.style.display = 'none';
+          });
+        }
 
         if (logoBtn) {
           let lastClickTime = 0;
