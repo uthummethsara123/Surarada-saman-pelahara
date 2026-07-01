@@ -164,7 +164,7 @@
       /* Hover transition logic for UI info button */
       #info-btn:hover {
         background: #f59e0b !important;
-        color: #0f172a !important;
+        color: #480714 !important;
         transform: scale(1.08);
       }
     </style>
@@ -529,15 +529,15 @@
       <a-entity id="main-camera" camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" position="0 0 0"></a-entity>
     </a-scene>
     
-    <button id="info-btn" style="display: none; position: fixed; bottom: 20px; left: 20px; width: 44px; height: 44px; background: rgba(15, 23, 42, 0.85); border: 2px solid #f59e0b; border-radius: 50%; color: #f59e0b; font-size: 20px; font-weight: bold; cursor: pointer; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.4); justify-content: center; align-items: center; transition: all 0.2s ease; outline: none;">i</button>
+    <button id="info-btn" style="display: none; position: fixed; bottom: 20px; left: 20px; width: 44px; height: 44px; background: #480714f6; border: 2px solid #f59e0b; border-radius: 50%; color: #f59e0b; font-size: 20px; font-weight: bold; cursor: pointer; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.4); justify-content: center; align-items: center; transition: all 0.2s ease; outline: none;">i</button>
     
-    <div id="info-tooltip-ui" style="position: fixed; bottom: 75px; left: 20px; background: #480714e0; color: #ffffff; padding: 6px 12px; border-radius: 6px; font-size: 12px; border: 1px solid rgba(245, 158, 11, 0.4); pointer-events: none; opacity: 0; transition: opacity 0.2s ease; z-index: 1000; font-weight: 500;">Exhibition Guide</div>
+    <div id="info-tooltip-ui" style="position: fixed; bottom: 75px; left: 20px; background: #480714ef; color: #ffffff; padding: 6px 12px; border-radius: 6px; font-size: 12px; border: 1px solid rgba(245, 158, 11, 0.4); pointer-events: none; opacity: 0; transition: opacity 0.2s ease; z-index: 1000; font-weight: 500;">Exhibition Guide</div>
 
-    <div id="guide-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #480714d1; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 1001; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;">
+    <div id="guide-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #480714f7; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 1001; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;">
       <div style="background: #480714; border: 2px solid #f59e0b; border-radius: 16px; max-width: 420px; width: 100%; padding: 25px; color: #f8fafc; box-shadow: 0 10px 30px rgba(0,0,0,0.5); box-sizing: border-box;">
         <h3 id="modal-guide-title" style="margin: 0 0 15px 0; font-size: 1.3rem; color: #f59e0b; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid rgba(245, 158, 11, 0.2); padding-bottom: 8px; letter-spacing: 0.5px;">Exhibition Guide</h3>
         <div id="modal-guide-body" style="font-size: 0.95rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 20px;"></div>
-        <button id="close-modal-btn" style="background: #f59e0b; color: #0f172a; border: none; padding: 12px 20px; font-weight: 700; border-radius: 8px; cursor: pointer; width: 100%; text-transform: uppercase; letter-spacing: 0.5px; transition: background 0.2s ease;">Got It</button>
+        <button id="close-modal-btn" style="background: #f59e0b; color: #480714; border: none; padding: 12px 20px; font-weight: 700; border-radius: 8px; cursor: pointer; width: 100%; text-transform: uppercase; letter-spacing: 0.5px; transition: background 0.2s ease;">Got It</button>
       </div>
     </div>
 
