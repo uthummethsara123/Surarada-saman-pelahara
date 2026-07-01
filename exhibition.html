@@ -56,20 +56,15 @@
         z-index: 999;
         display: flex;
         flex-direction: column;
-        
-        /* 'safe center' ensures it stays centered on large screens, 
-           but behaves like 'flex-start' if the screen is too small so content isn't cut off */
         justify-content: safe center; 
         align-items: center;
         color: white;
         font-family: system-ui, -apple-system, sans-serif;
         text-align: center;
-        padding: 30px 20px; /* Added slight top/bottom padding for breathing room when scrolling */
+        padding: 30px 20px; 
         box-sizing: border-box;
-        
-        /* FIXES THE SCROLL ISSUE */
         overflow-y: auto; 
-        -webkit-overflow-scrolling: touch; /* Smooth momentum scrolling for iOS/Safari devices */
+        -webkit-overflow-scrolling: touch; 
       }
 
       .overlay-logo {
@@ -161,7 +156,6 @@
         letter-spacing: 0;
       }
 
-      /* Hover transition logic for UI info button */
       #info-btn:hover {
         background: #f59e0b !important;
         color: #480714 !important;
@@ -185,6 +179,12 @@
         btnScrollDir: 0,
         btnScrollSpeedMultiplier: 1.0
       };
+
+      // LIVE REAL-TIME SHIELD RESTRUCTURE ENGINE CONTEXTS
+      window.leftTrackItems = [];
+      window.rightTrackItems = [];
+      window.loadedImageUrls = new Set();
+      window.totalImagesProcessed = 0;
 
       window.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) {
@@ -260,10 +260,13 @@
           this.isInitialized = true;
         },
         tick: function () {
-          if (!this.isInitialized) {
-            let globalSpan = (this.data.trackSide === 'left') ? window.galleryState.leftTrackMaxSpan : window.galleryState.rightTrackMaxSpan;
-            if (globalSpan > 0) this.setupBounds(globalSpan);
-            return;
+          // MODIFIED: Read the global track span dynamically every loop iteration to account for additions
+          let globalSpan = (this.data.trackSide === 'left') ? window.galleryState.leftTrackMaxSpan : window.galleryState.rightTrackMaxSpan;
+          
+          if (globalSpan <= 0) return;
+          
+          if (!this.isInitialized || this.totalSpan !== globalSpan) {
+            this.setupBounds(globalSpan);
           }
 
           let position = this.el.getAttribute('position');
@@ -286,6 +289,111 @@
           this.el.setAttribute('position', { x: position.x, y: position.y, z: currentZ });
         }
       });
+
+      // MODIFIED: Background Poller to update the layout automatically every 10 seconds without resetting view
+      function startLivePollingEngine(sceneEl, assetsEl) {
+        setInterval(() => {
+          fetch(LIVE_GET_API_URL)
+            .then(res => res.json())
+            .then(images => {
+              if (!images || images.length === 0) return;
+              
+              // Isolate completely new items that haven't been appended to either track yet
+              let newImages = images.filter(img => !window.loadedImageUrls.has(img.src));
+              if (newImages.length === 0) return;
+              
+              newImages.forEach(imgData => {
+                let currentIndex = window.totalImagesProcessed;
+                window.totalImagesProcessed++;
+                window.loadedImageUrls.add(imgData.src);
+                
+                let isLeft = currentIndex % 2 === 0;
+                let side = isLeft ? 'left' : 'right';
+                let trackArray = isLeft ? window.leftTrackItems : window.rightTrackItems;
+                let xPos = isLeft ? '-3' : '3';
+                let rotation = isLeft ? '0 90 0' : '0 -90 0';
+                
+                // Construct new internal DOM asset item safely
+                let imgAsset = document.createElement('img');
+                imgAsset.setAttribute('id', `live-img-${currentIndex}`);
+                imgAsset.setAttribute('src', imgData.src);
+                imgAsset.setAttribute('crossorigin', 'anonymous');
+                assetsEl.appendChild(imgAsset);
+                
+                let aImg = document.createElement('a-image');
+                aImg.setAttribute('src', `#live-img-${currentIndex}`);
+                aImg.setAttribute('conveyor-item', `trackSide: ${side}`);
+                if (isLeft) {
+                  aImg.setAttribute('material', 'side: double');
+                }
+                
+                let newObj = { item: aImg, asset: imgAsset };
+                
+                const processAndAppend = () => {
+                  let width = imgAsset.naturalWidth || 16;
+                  let height = imgAsset.naturalHeight || 9;
+                  let aspectRatio = width / height;
+                  let maxBoundaryWidth = 3.2;
+                  let maxBoundaryHeight = 1.8;
+
+                  if (aspectRatio > (maxBoundaryWidth / maxBoundaryHeight)) {
+                    newObj.calculatedWidth = maxBoundaryWidth;
+                    newObj.calculatedHeight = maxBoundaryWidth / aspectRatio;
+                  } else {
+                    newObj.calculatedHeight = maxBoundaryHeight;
+                    newObj.calculatedWidth = maxBoundaryHeight * aspectRatio;
+                  }
+                  
+                  aImg.setAttribute('width', newObj.calculatedWidth);
+                  aImg.setAttribute('height', newObj.calculatedHeight);
+                  
+                  // Seamless Spacing Math logic: Appends to track tail based on current active frames
+                  let marginBetweenFrames = 0.8;
+                  let oldSpan = isLeft ? window.galleryState.leftTrackMaxSpan : window.galleryState.rightTrackMaxSpan;
+                  let newSpan = oldSpan + newObj.calculatedWidth + marginBetweenFrames;
+                  
+                  let targetZ = 0;
+                  if (trackArray.length > 0) {
+                    let lastTrackObj = trackArray[trackArray.length - 1];
+                    let lastPos = lastTrackObj.item.getAttribute('position');
+                    // Calculate relative positioning directly derived from the previous live node's active position coordinate
+                    targetZ = lastPos.z + (lastTrackObj.calculatedWidth / 2) + marginBetweenFrames + (newObj.calculatedWidth / 2);
+                  }
+                  
+                  if (isLeft) {
+                    window.galleryState.leftTrackMaxSpan = newSpan;
+                  } else {
+                    window.galleryState.rightTrackMaxSpan = newSpan;
+                  }
+                  
+                  // Wrap coordinate positioning correctly into spatial layout boundaries
+                  let minZ = -newSpan / 2;
+                  let maxZ = newSpan / 2;
+                  while (targetZ > maxZ) targetZ -= newSpan;
+                  while (targetZ < minZ) targetZ += newSpan;
+                  
+                  aImg.setAttribute('position', `${xPos} 0 ${targetZ}`);
+                  aImg.setAttribute('rotation', rotation);
+                  
+                  sceneEl.appendChild(aImg);
+                  trackArray.push(newObj);
+                };
+                
+                if (imgAsset.complete) {
+                  processAndAppend();
+                } else {
+                  imgAsset.addEventListener('load', processAndAppend);
+                  imgAsset.addEventListener('error', () => {
+                    newObj.calculatedWidth = 3.2;
+                    newObj.calculatedHeight = 1.8;
+                    processAndAppend();
+                  });
+                }
+              });
+            })
+            .catch(err => console.error("Live syncing poll cycle failed:", err));
+        }, 10000);
+      }
 
       AFRAME.registerComponent('gallery-loader', {
         init: function () {
@@ -312,10 +420,11 @@
                 return;
               }
 
-              let leftTrackElements = [];
-              let rightTrackElements = [];
+              // MODIFIED: Use global scope references to retain continuity across poller executions
+              window.totalImagesProcessed = images.length;
 
               images.forEach((imgData, index) => {
+                window.loadedImageUrls.add(imgData.src);
                 let imgAsset = document.createElement('img');
                 imgAsset.setAttribute('id', `live-img-${index}`);
                 imgAsset.setAttribute('src', imgData.src);
@@ -330,9 +439,9 @@
                 
                 if (isLeft) {
                   aImg.setAttribute('material', 'side: double');
-                  leftTrackElements.push({ item: aImg, asset: imgAsset });
+                  window.leftTrackItems.push({ item: aImg, asset: imgAsset });
                 } else {
-                  rightTrackElements.push({ item: aImg, asset: imgAsset });
+                  window.rightTrackItems.push({ item: aImg, asset: imgAsset });
                 }
 
                 sceneEl.appendChild(aImg);
@@ -344,23 +453,25 @@
               function checkProcessingComplete() {
                 processedCount++;
                 if (processedCount === totalToProcess) {
-                  arrangeTrackFluidly(leftTrackElements, '-3', '0 90 0', 'left');
-                  arrangeTrackFluidly(rightTrackElements, '3', '0 -90 0', 'right');
+                  arrangeTrackFluidly(window.leftTrackItems, '-3', '0 90 0', 'left');
+                  arrangeTrackFluidly(window.rightTrackItems, '3', '0 -90 0', 'right');
 
                   connectionStatus.style.display = "none";
                   modeSelectionArea.style.display = "block";
                   
-                  // Dynamically inject structural instructions onto the overlay area
                   const guideTextDiv = document.getElementById('loading-guide-text');
                   if (guideTextDiv) {
                     guideTextDiv.innerHTML = isMobile ? window.exhibitionGuides['mobile-loading'] : window.exhibitionGuides['laptop'];
                   }
                   
                   checkHardwareGyroscope();
+                  
+                  // MODIFIED: Fire live listener loop safely after the baseline sequence has fully calculated
+                  startLivePollingEngine(sceneEl, assetsEl);
                 }
               }
 
-              [...leftTrackElements, ...rightTrackElements].forEach(obj => {
+              [...window.leftTrackItems, ...window.rightTrackItems].forEach(obj => {
                 if (obj.asset.complete) {
                   calculateTargetDimensions(obj);
                   checkProcessingComplete();
@@ -485,12 +596,9 @@
 
       <a-plane id="logo-tooltip" width="1.4" height="0.65" position="0 -0.85 -2" visible="false"
                material="shader: flat; transparent: true; opacity: 0.15; color: #ffffff; side: double;">
-        
         <a-plane id="logo-tooltip-text" width="1.4" height="0.65" position="0 0 0.01" 
                  material="shader: flat; transparent: true; side: double;"></a-plane>
-
       </a-plane>
-
 
       <a-entity id="left-controls-group" position="-3.2 -1.15 -0.1" rotation="0 90 0" visible="false">
         <a-plane id="btn-left-ff" class="clickable" position="-0.75 0 0" width="0.4" height="0.32" material="shader: flat; transparent: true; opacity: 0.15; color: #ffffff; side: double;">
@@ -547,7 +655,6 @@
       document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
 
-      // Global reference guide string records built exactly to requested mapping rules
       window.exhibitionGuides = {
         'laptop': `
           <ul style="list-style: none; padding-left: 0; margin: 0;">
@@ -592,7 +699,7 @@
         `
       };
 
-      let activeMode = 'laptop'; // Active context engine tracking identifier variable
+      let activeMode = 'laptop'; 
 
       const forceUnlockTimeout = setTimeout(() => {
           cleanUpAndDestroyLoader("Safety Timeout Triggered");
@@ -783,26 +890,23 @@
           buttonEl.addEventListener('touchend', stopScrolling);
         }
 
-        // Left Pod Action Listeners Mapping
         registerPodButton('btn-left-ff', 1, 3.5);          
         registerPodButton('btn-left-normal-left', 1, 1.0);  
         registerPodButton('btn-left-normal-right', -1, 1.0); 
         registerPodButton('btn-left-rw', -1, 3.5);          
 
-        // Right Pod Action Listeners Mapping
         registerPodButton('btn-right-ff', 1, 3.5);          
         registerPodButton('btn-right-normal-left', 1, 1.0);  
         registerPodButton('btn-right-normal-right', -1, 1.0); 
         registerPodButton('btn-right-rw', -1, 3.5);          
 
-        // Render high-definition text with a black outline border ONLY on the double-tap line
         if (logoTooltip) {
           const textPlane = document.getElementById('logo-tooltip-text');
           if (textPlane) {
             const drawCanvasText = () => {
               const canvas = document.createElement('canvas');
               canvas.width = 1400;
-              canvas.height = 650; // High-resolution match for 1.4 : 0.65 aspect ratio
+              canvas.height = 650; 
               const ctx = canvas.getContext('2d');
               
               ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -811,17 +915,14 @@
               
               const midX = canvas.width / 2;
 
-              // Line 1: Upward Caret Icon (Solid text - No outline border, a bit smaller & Poppins)
               ctx.font = 'bold 120px Poppins, sans-serif';
               ctx.fillStyle = '#f59e0b';
               ctx.fillText('^', midX, 130);
               
-              // Line 2: View Winners Header Text (Solid text - No outline border, a bit smaller & Poppins)
               ctx.font = 'bold 80px Poppins, sans-serif';
               ctx.fillStyle = '#f59e0b';
               ctx.fillText('VIEW WINNERS', midX, 310);
               
-              // Line 3: Double Tap Action Guideline (White with broad 15px outline, a bit smaller & Poppins)
               const doubleTapText = 'DOUBLE TAP TO GO';
               ctx.font = 'bold 60px Poppins, sans-serif';
               ctx.strokeStyle = '#000000';
@@ -832,17 +933,14 @@
               ctx.fillStyle = '#ffffff';
               ctx.fillText(doubleTapText, midX, 480);
 
-              // Bind the high-definition canvas directly into the A-Frame material texture
               textPlane.setAttribute('material', 'src', canvas);
 
-              // Update Three.js maps explicitly
               const mesh = textPlane.getObject3D('mesh');
               if (mesh && mesh.material && mesh.material.map) {
                 mesh.material.map.needsUpdate = true;
               }
             };
 
-            // Double check font verification before pushing canvas pixels
             if (document.fonts) {
               document.fonts.ready.then(drawCanvasText);
             } else {
@@ -858,7 +956,6 @@
           }
         }
 
-        // Setup Floating Live Action Info Button & Modal Box Actions
         const infoBtn = document.getElementById('info-btn');
         const infoTooltipUi = document.getElementById('info-tooltip-ui');
         const guideModal = document.getElementById('guide-modal');
