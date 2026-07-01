@@ -467,7 +467,7 @@
         </a-plane>
       </a-entity>
 
-      <a-entity id="right-controls-group" position="3.2 -1.15 1.5" rotation="0 -90 0" visible="false">
+      <a-entity id="right-controls-group" position="3.2 -1.15 0.1" rotation="0 -90 0" visible="false">
         <a-plane id="btn-right-ff" class="clickable" position="-0.75 0 0" width="0.4" height="0.32" material="shader: flat; transparent: true; opacity: 0.15; color: #ffffff; side: double;">
           <a-triangle vertex-a="0.06 0 0" vertex-b="-0.04 0.08 0" vertex-c="-0.04 -0.08 0" color="#f59e0b" position="0.04 0 0.01" rotation="0 0 180"></a-triangle>
           <a-triangle vertex-a="0.06 0 0" vertex-b="-0.04 0.08 0" vertex-c="-0.04 -0.08 0" color="#f59e0b" position="-0.04 0 0.01" rotation="0 0 180"></a-triangle>
@@ -686,7 +686,7 @@
         // Restored Original Transparent White Background Textures map
         if (logoTooltip) {
           const canvas = document.createElement('canvas');
-          canvas.width = 3000;
+          canvas.width = 1024;
           canvas.height = 384; 
           const ctx = canvas.getContext('2d');
           ctx.clearRect(0, 0, canvas.width, canvas.height);
