@@ -687,8 +687,9 @@
         if (logoTooltip) {
           const canvas = document.createElement('canvas');
           canvas.width = 1024;
-          canvas.height = 512; // 2:1 aspect ratio matches the new plane dimensions
+          canvas.height = 512; 
           const ctx = canvas.getContext('2d');
+          
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           
           // Re-applied clean transparent white background plate layout
@@ -701,25 +702,37 @@
           // Line 1: Upward Arrow Caret (Top Line)
           ctx.fillStyle = '#f59e0b'; 
           ctx.font = 'bold 80px monospace';
-          ctx.fillText('^', canvas.width / 2, 85);
+          ctx.fillText('^', canvas.width / 2, 90);
           
           // Line 2: View Winners Header (Middle Line)
           ctx.fillStyle = '#f59e0b';
           ctx.font = 'bold 64px monospace';
-          ctx.fillText('VIEW WINNERS', canvas.width / 2, 235);
+          ctx.fillText('VIEW WINNERS', canvas.width / 2, 240);
           
           // Line 3: Double Tap Action Guideline (Bottom Line)
-          ctx.fillStyle = '#ffffff'; // Contrasting crisp white color
+          ctx.fillStyle = '#ffffff'; 
           ctx.font = 'bold 50px monospace';
-          ctx.fillText('DOUBLE TAP TO GO', canvas.width / 2, 395);
+          ctx.fillText('DOUBLE TAP TO GO', canvas.width / 2, 390);
           
-          logoTooltip.setAttribute('material', 'src', canvas);
-          logoTooltip.addEventListener('materialtextureloaded', () => {
+          // Direct native WebGL texture mapping to prevent browser cache context cutoffs
+          const texture = new THREE.CanvasTexture(canvas);
+          
+          logoTooltip.addEventListener('object3dset', function () {
             const mesh = logoTooltip.getObject3D('mesh');
-            if (mesh && mesh.material && mesh.material.map) {
-              mesh.material.map.needsUpdate = true;
+            if (mesh && mesh.material) {
+              mesh.material.map = texture;
+              mesh.material.transparent = true;
+              mesh.material.needsUpdate = true;
             }
           });
+
+          // Safety trigger if mesh is already compiled
+          const mesh = logoTooltip.getObject3D('mesh');
+          if (mesh && mesh.material) {
+            mesh.material.map = texture;
+            mesh.material.transparent = true;
+            mesh.material.needsUpdate = true;
+          }
         }
 
         if (logoBtn) {
