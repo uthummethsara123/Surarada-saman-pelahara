@@ -699,20 +699,20 @@
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           
-          // Line 1: Upward Caret Icon (Top Line shifted up to y=70)
+          // Line 1: Upward Caret Icon
           ctx.fillStyle = '#f59e0b'; 
           ctx.font = 'bold 80px monospace';
-          ctx.fillText('^', canvas.width / 2, 70);
+          ctx.fillText('^', canvas.width / 2, 65);
           
-          // Line 2: View Winners Text Header (Middle Line shifted up to y=200)
+          // Line 2: View Winners Text Header
           ctx.fillStyle = '#f59e0b';
           ctx.font = 'bold 64px monospace';
-          ctx.fillText('VIEW WINNERS', canvas.width / 2, 200);
+          ctx.fillText('VIEW WINNERS', canvas.width / 2, 175);
           
-          // Line 3: Double Tap Action Guideline (Bottom Line shifted up safely to y=330)
+          // Line 3: Double Tap Action Guideline (Adjusted down to 38px to fit completely within limits)
           ctx.fillStyle = '#ffffff'; 
-          ctx.font = 'bold 50px monospace';
-          ctx.fillText('DOUBLE TAP TO GO', canvas.width / 2, 330);
+          ctx.font = 'bold 38px monospace';
+          ctx.fillText('DOUBLE TAP TO GO', canvas.width / 2, 285);
 
           // Force explicit Three.js material map updates to bypass browser layout caching
           const updateTextureMap = () => {
