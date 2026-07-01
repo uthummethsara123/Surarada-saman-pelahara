@@ -61,10 +61,10 @@
         color: white;
         font-family: system-ui, -apple-system, sans-serif;
         text-align: center;
-        padding: 30px 20px; 
+        padding: 30px 20px;
         box-sizing: border-box;
         overflow-y: auto; 
-        -webkit-overflow-scrolling: touch; 
+        -webkit-overflow-scrolling: touch;
       }
 
       .overlay-logo {
@@ -180,12 +180,6 @@
         btnScrollSpeedMultiplier: 1.0
       };
 
-      // LIVE REAL-TIME SHIELD RESTRUCTURE ENGINE CONTEXTS
-      window.leftTrackItems = [];
-      window.rightTrackItems = [];
-      window.loadedImageUrls = new Set();
-      window.totalImagesProcessed = 0;
-
       window.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) {
           window.galleryState.isUserTouching = true;
@@ -260,13 +254,10 @@
           this.isInitialized = true;
         },
         tick: function () {
-          // MODIFIED: Read the global track span dynamically every loop iteration to account for additions
-          let globalSpan = (this.data.trackSide === 'left') ? window.galleryState.leftTrackMaxSpan : window.galleryState.rightTrackMaxSpan;
-          
-          if (globalSpan <= 0) return;
-          
-          if (!this.isInitialized || this.totalSpan !== globalSpan) {
-            this.setupBounds(globalSpan);
+          if (!this.isInitialized) {
+            let globalSpan = (this.data.trackSide === 'left') ? window.galleryState.leftTrackMaxSpan : window.galleryState.rightTrackMaxSpan;
+            if (globalSpan > 0) this.setupBounds(globalSpan);
+            return;
           }
 
           let position = this.el.getAttribute('position');
@@ -290,117 +281,13 @@
         }
       });
 
-      // MODIFIED: Background Poller to update the layout automatically every 10 seconds without resetting view
-      function startLivePollingEngine(sceneEl, assetsEl) {
-        setInterval(() => {
-          fetch(LIVE_GET_API_URL)
-            .then(res => res.json())
-            .then(images => {
-              if (!images || images.length === 0) return;
-              
-              // Isolate completely new items that haven't been appended to either track yet
-              let newImages = images.filter(img => !window.loadedImageUrls.has(img.src));
-              if (newImages.length === 0) return;
-              
-              newImages.forEach(imgData => {
-                let currentIndex = window.totalImagesProcessed;
-                window.totalImagesProcessed++;
-                window.loadedImageUrls.add(imgData.src);
-                
-                let isLeft = currentIndex % 2 === 0;
-                let side = isLeft ? 'left' : 'right';
-                let trackArray = isLeft ? window.leftTrackItems : window.rightTrackItems;
-                let xPos = isLeft ? '-3' : '3';
-                let rotation = isLeft ? '0 90 0' : '0 -90 0';
-                
-                // Construct new internal DOM asset item safely
-                let imgAsset = document.createElement('img');
-                imgAsset.setAttribute('id', `live-img-${currentIndex}`);
-                imgAsset.setAttribute('src', imgData.src);
-                imgAsset.setAttribute('crossorigin', 'anonymous');
-                assetsEl.appendChild(imgAsset);
-                
-                let aImg = document.createElement('a-image');
-                aImg.setAttribute('src', `#live-img-${currentIndex}`);
-                aImg.setAttribute('conveyor-item', `trackSide: ${side}`);
-                if (isLeft) {
-                  aImg.setAttribute('material', 'side: double');
-                }
-                
-                let newObj = { item: aImg, asset: imgAsset };
-                
-                const processAndAppend = () => {
-                  let width = imgAsset.naturalWidth || 16;
-                  let height = imgAsset.naturalHeight || 9;
-                  let aspectRatio = width / height;
-                  let maxBoundaryWidth = 3.2;
-                  let maxBoundaryHeight = 1.8;
-
-                  if (aspectRatio > (maxBoundaryWidth / maxBoundaryHeight)) {
-                    newObj.calculatedWidth = maxBoundaryWidth;
-                    newObj.calculatedHeight = maxBoundaryWidth / aspectRatio;
-                  } else {
-                    newObj.calculatedHeight = maxBoundaryHeight;
-                    newObj.calculatedWidth = maxBoundaryHeight * aspectRatio;
-                  }
-                  
-                  aImg.setAttribute('width', newObj.calculatedWidth);
-                  aImg.setAttribute('height', newObj.calculatedHeight);
-                  
-                  // Seamless Spacing Math logic: Appends to track tail based on current active frames
-                  let marginBetweenFrames = 0.8;
-                  let oldSpan = isLeft ? window.galleryState.leftTrackMaxSpan : window.galleryState.rightTrackMaxSpan;
-                  let newSpan = oldSpan + newObj.calculatedWidth + marginBetweenFrames;
-                  
-                  let targetZ = 0;
-                  if (trackArray.length > 0) {
-                    let lastTrackObj = trackArray[trackArray.length - 1];
-                    let lastPos = lastTrackObj.item.getAttribute('position');
-                    // Calculate relative positioning directly derived from the previous live node's active position coordinate
-                    targetZ = lastPos.z + (lastTrackObj.calculatedWidth / 2) + marginBetweenFrames + (newObj.calculatedWidth / 2);
-                  }
-                  
-                  if (isLeft) {
-                    window.galleryState.leftTrackMaxSpan = newSpan;
-                  } else {
-                    window.galleryState.rightTrackMaxSpan = newSpan;
-                  }
-                  
-                  // Wrap coordinate positioning correctly into spatial layout boundaries
-                  let minZ = -newSpan / 2;
-                  let maxZ = newSpan / 2;
-                  while (targetZ > maxZ) targetZ -= newSpan;
-                  while (targetZ < minZ) targetZ += newSpan;
-                  
-                  aImg.setAttribute('position', `${xPos} 0 ${targetZ}`);
-                  aImg.setAttribute('rotation', rotation);
-                  
-                  sceneEl.appendChild(aImg);
-                  trackArray.push(newObj);
-                };
-                
-                if (imgAsset.complete) {
-                  processAndAppend();
-                } else {
-                  imgAsset.addEventListener('load', processAndAppend);
-                  imgAsset.addEventListener('error', () => {
-                    newObj.calculatedWidth = 3.2;
-                    newObj.calculatedHeight = 1.8;
-                    processAndAppend();
-                  });
-                }
-              });
-            })
-            .catch(err => console.error("Live syncing poll cycle failed:", err));
-        }, 10000);
-      }
-
       AFRAME.registerComponent('gallery-loader', {
         init: function () {
           const sceneEl = this.el;
           const assetsEl = document.querySelector('a-assets');
           const connectionStatus = document.getElementById('connection-status');
           const modeSelectionArea = document.getElementById('mode-selection-area');
+          const overlayDesc = document.getElementById('overlay-desc');
 
           sceneEl.addEventListener('render-target-loaded', () => {
             if (sceneEl.renderer) {
@@ -410,132 +297,161 @@
           });
 
           connectionStatus.innerText = "Connecting Live Feed...";
+          
+          // Track the previous state of data to avoid constant rebuilding and flickering
+          this.lastDataString = "";
 
-          fetch(LIVE_GET_API_URL)
-            .then(res => res.json())
-            .then(images => {
-              if(!images || images.length === 0) {
-                document.getElementById('overlay-desc').innerText = "No submitted pictures found in database yet.";
-                connectionStatus.innerText = "Gallery Empty";
-                return;
-              }
-
-              // MODIFIED: Use global scope references to retain continuity across poller executions
-              window.totalImagesProcessed = images.length;
-
-              images.forEach((imgData, index) => {
-                window.loadedImageUrls.add(imgData.src);
-                let imgAsset = document.createElement('img');
-                imgAsset.setAttribute('id', `live-img-${index}`);
-                imgAsset.setAttribute('src', imgData.src);
-                imgAsset.setAttribute('crossorigin', 'anonymous');
-                assetsEl.appendChild(imgAsset);
-
-                let aImg = document.createElement('a-image');
-                let isLeft = index % 2 === 0;
+          const refreshGallery = () => {
+            fetch(LIVE_GET_API_URL)
+              .then(res => res.json())
+              .then(images => {
+                const currentDataString = JSON.stringify(images);
                 
-                aImg.setAttribute('src', `#live-img-${index}`);
-                aImg.setAttribute('conveyor-item', `trackSide: ${isLeft ? 'left' : 'right'}`);
-                
-                if (isLeft) {
-                  aImg.setAttribute('material', 'side: double');
-                  window.leftTrackItems.push({ item: aImg, asset: imgAsset });
-                } else {
-                  window.rightTrackItems.push({ item: aImg, asset: imgAsset });
+                // If the live database hasn't changed, skip updating to prevent visual glitching/flickering
+                if (currentDataString === this.lastDataString) return;
+                this.lastDataString = currentDataString;
+
+                // Lively Clean Up: Remove any old photos/assets currently in the scene
+                document.querySelectorAll('.dynamic-exhibition-item').forEach(el => el.remove());
+                document.querySelectorAll('.dynamic-exhibition-asset').forEach(el => el.remove());
+
+                // Handle Empty Database Case (When you delete form responses)
+                if (!images || images.length === 0) {
+                  overlayDesc.innerText = "No submitted pictures found in database yet.";
+                  connectionStatus.innerText = "Gallery Empty";
+                  connectionStatus.style.display = "block";
+                  
+                  // Reset track sizes so conveyor items stop safely
+                  window.galleryState.leftTrackMaxSpan = 0;
+                  window.galleryState.rightTrackMaxSpan = 0;
+                  return;
                 }
 
-                sceneEl.appendChild(aImg);
-              });
+                // Restore default text if items exist
+                overlayDesc.innerText = "Synchronizing with live data...";
 
-              let processedCount = 0;
-              const totalToProcess = images.length;
+                let leftTrackElements = [];
+                let rightTrackElements = [];
 
-              function checkProcessingComplete() {
-                processedCount++;
-                if (processedCount === totalToProcess) {
-                  arrangeTrackFluidly(window.leftTrackItems, '-3', '0 90 0', 'left');
-                  arrangeTrackFluidly(window.rightTrackItems, '3', '0 -90 0', 'right');
+                images.forEach((imgData, index) => {
+                  let imgAsset = document.createElement('img');
+                  imgAsset.setAttribute('id', `live-img-${index}`);
+                  imgAsset.setAttribute('src', imgData.src);
+                  imgAsset.setAttribute('crossorigin', 'anonymous');
+                  imgAsset.classList.add('dynamic-exhibition-asset'); // Tracked class for cleanup
+                  assetsEl.appendChild(imgAsset);
 
-                  connectionStatus.style.display = "none";
-                  modeSelectionArea.style.display = "block";
+                  let aImg = document.createElement('a-image');
+                  let isLeft = index % 2 === 0;
                   
-                  const guideTextDiv = document.getElementById('loading-guide-text');
-                  if (guideTextDiv) {
-                    guideTextDiv.innerHTML = isMobile ? window.exhibitionGuides['mobile-loading'] : window.exhibitionGuides['laptop'];
+                  aImg.setAttribute('src', `#live-img-${index}`);
+                  aImg.setAttribute('conveyor-item', `trackSide: ${isLeft ? 'left' : 'right'}`);
+                  aImg.classList.add('dynamic-exhibition-item'); // Tracked class for cleanup
+                  
+                  if (isLeft) {
+                    aImg.setAttribute('material', 'side: double');
+                    leftTrackElements.push({ item: aImg, asset: imgAsset });
+                  } else {
+                    rightTrackElements.push({ item: aImg, asset: imgAsset });
                   }
-                  
-                  checkHardwareGyroscope();
-                  
-                  // MODIFIED: Fire live listener loop safely after the baseline sequence has fully calculated
-                  startLivePollingEngine(sceneEl, assetsEl);
-                }
-              }
 
-              [...window.leftTrackItems, ...window.rightTrackItems].forEach(obj => {
-                if (obj.asset.complete) {
-                  calculateTargetDimensions(obj);
-                  checkProcessingComplete();
-                } else {
-                  obj.asset.addEventListener('load', function() {
+                  sceneEl.appendChild(aImg);
+                });
+
+                let processedCount = 0;
+                const totalToProcess = images.length;
+
+                function checkProcessingComplete() {
+                  processedCount++;
+                  if (processedCount === totalToProcess) {
+                    arrangeTrackFluidly(leftTrackElements, '-3', '0 90 0', 'left');
+                    arrangeTrackFluidly(rightTrackElements, '3', '0 -90 0', 'right');
+
+                    connectionStatus.style.display = "none";
+                    modeSelectionArea.style.display = "block";
+                    
+                    const guideTextDiv = document.getElementById('loading-guide-text');
+                    if (guideTextDiv) {
+                      guideTextDiv.innerHTML = isMobile ? window.exhibitionGuides['mobile-loading'] : window.exhibitionGuides['laptop'];
+                    }
+                    
+                    checkHardwareGyroscope();
+                  }
+                }
+
+                [...leftTrackElements, ...rightTrackElements].forEach(obj => {
+                  if (obj.asset.complete) {
                     calculateTargetDimensions(obj);
                     checkProcessingComplete();
+                  } else {
+                    obj.asset.addEventListener('load', function() {
+                      calculateTargetDimensions(obj);
+                      checkProcessingComplete();
+                    });
+                    obj.asset.addEventListener('error', function() {
+                      obj.calculatedWidth = 3.2;
+                      obj.calculatedHeight = 1.8;
+                      checkProcessingComplete();
+                    });
+                  }
+                });
+
+                function calculateTargetDimensions(obj) {
+                  let width = obj.asset.naturalWidth || 16;
+                  let height = obj.asset.naturalHeight || 9;
+                  let aspectRatio = width / height;
+
+                  let maxBoundaryWidth = 3.2;
+                  let maxBoundaryHeight = 1.8;
+
+                  if (aspectRatio > (maxBoundaryWidth / maxBoundaryHeight)) {
+                    obj.calculatedWidth = maxBoundaryWidth;
+                    obj.calculatedHeight = maxBoundaryWidth / aspectRatio;
+                  } else {
+                    obj.calculatedHeight = maxBoundaryHeight;
+                    obj.calculatedWidth = maxBoundaryHeight * aspectRatio;
+                  }
+                  
+                  obj.item.setAttribute('width', obj.calculatedWidth);
+                  obj.item.setAttribute('height', obj.calculatedHeight);
+                }
+
+                function arrangeTrackFluidly(elementsArray, xPos, rotation, sideName) {
+                  let currentZAccumulator = 0;
+                  let marginBetweenFrames = 0.8;
+
+                  elementsArray.forEach(obj => {
+                    currentZAccumulator += (obj.calculatedWidth / 2);
+                    obj.initialZ = currentZAccumulator;
+                    currentZAccumulator += (obj.calculatedWidth / 2) + marginBetweenFrames;
                   });
-                  obj.asset.addEventListener('error', function() {
-                    obj.calculatedWidth = 3.2;
-                    obj.calculatedHeight = 1.8;
-                    checkProcessingComplete();
+
+                  let totalSpan = currentZAccumulator;
+                  if (sideName === 'left') {
+                    window.galleryState.leftTrackMaxSpan = totalSpan;
+                  } else {
+                    window.galleryState.rightTrackMaxSpan = totalSpan;
+                  }
+
+                  elementsArray.forEach(obj => {
+                    let centeredZ = obj.initialZ - (totalSpan / 2);
+                    obj.item.setAttribute('position', `${xPos} 0 ${centeredZ}`);
+                    obj.item.setAttribute('rotation', rotation);
                   });
                 }
+              })
+              .catch(err => {
+                console.error("Live fetch failed:", err);
+                connectionStatus.innerText = "Error syncing submissions with Google Sheet.";
+                connectionStatus.style.display = "block";
               });
+          };
 
-              function calculateTargetDimensions(obj) {
-                let width = obj.asset.naturalWidth || 16;
-                let height = obj.asset.naturalHeight || 9;
-                let aspectRatio = width / height;
+          // Trigger data synchronization immediately on initialization
+          refreshGallery();
 
-                let maxBoundaryWidth = 3.2;
-                let maxBoundaryHeight = 1.8;
-
-                if (aspectRatio > (maxBoundaryWidth / maxBoundaryHeight)) {
-                  obj.calculatedWidth = maxBoundaryWidth;
-                  obj.calculatedHeight = maxBoundaryWidth / aspectRatio;
-                } else {
-                  obj.calculatedHeight = maxBoundaryHeight;
-                  obj.calculatedWidth = maxBoundaryHeight * aspectRatio;
-                }
-                
-                obj.item.setAttribute('width', obj.calculatedWidth);
-                obj.item.setAttribute('height', obj.calculatedHeight);
-              }
-
-              function arrangeTrackFluidly(elementsArray, xPos, rotation, sideName) {
-                let currentZAccumulator = 0;
-                let marginBetweenFrames = 0.8;
-
-                elementsArray.forEach(obj => {
-                  currentZAccumulator += (obj.calculatedWidth / 2);
-                  obj.initialZ = currentZAccumulator;
-                  currentZAccumulator += (obj.calculatedWidth / 2) + marginBetweenFrames;
-                });
-
-                let totalSpan = currentZAccumulator;
-                if (sideName === 'left') {
-                  window.galleryState.leftTrackMaxSpan = totalSpan;
-                } else {
-                  window.galleryState.rightTrackMaxSpan = totalSpan;
-                }
-
-                elementsArray.forEach(obj => {
-                  let centeredZ = obj.initialZ - (totalSpan / 2);
-                  obj.item.setAttribute('position', `${xPos} 0 ${centeredZ}`);
-                  obj.item.setAttribute('rotation', rotation);
-                });
-              }
-            })
-            .catch(err => {
-              console.error("Live fetch failed:", err);
-              document.getElementById('connection-status').innerText = "Error syncing submissions with Google Sheet.";
-            });
+          // Continuously check for dynamic form submissions or deletions every 5 seconds (5000ms)
+          setInterval(refreshGallery, 5000);
         }
       });
     </script>
@@ -596,8 +512,10 @@
 
       <a-plane id="logo-tooltip" width="1.4" height="0.65" position="0 -0.85 -2" visible="false"
                material="shader: flat; transparent: true; opacity: 0.15; color: #ffffff; side: double;">
+        
         <a-plane id="logo-tooltip-text" width="1.4" height="0.65" position="0 0 0.01" 
                  material="shader: flat; transparent: true; side: double;"></a-plane>
+
       </a-plane>
 
       <a-entity id="left-controls-group" position="-3.2 -1.15 -0.1" rotation="0 90 0" visible="false">
@@ -699,7 +617,7 @@
         `
       };
 
-      let activeMode = 'laptop'; 
+      let activeMode = 'laptop';
 
       const forceUnlockTimeout = setTimeout(() => {
           cleanUpAndDestroyLoader("Safety Timeout Triggered");
@@ -906,7 +824,7 @@
             const drawCanvasText = () => {
               const canvas = document.createElement('canvas');
               canvas.width = 1400;
-              canvas.height = 650; 
+              canvas.height = 650;
               const ctx = canvas.getContext('2d');
               
               ctx.clearRect(0, 0, canvas.width, canvas.height);
