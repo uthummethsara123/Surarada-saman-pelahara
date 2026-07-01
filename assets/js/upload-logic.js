@@ -3,7 +3,7 @@ const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oG
 // ==========================================================
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
-const START_DATE = new Date("2026-07-01T23:00:00").getTime();
+const START_DATE = new Date("2026-07-91T23:00:00").getTime();
 // Admin: Extend this date forward whenever you want to grant extra submission time
 const DEADLINE_DATE = new Date("2026-07-27T02:00:00").getTime();
 
@@ -180,7 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const competitionScope = document.getElementById('competitionScope').value;
 
             submitBtn.disabled = true;
-            submitBtn.innerText = "Processing Files 1 by 1...";
+            submitBtn.innerText = "Processing Files...";
             feedback.className = "text-center mt-3 text-warning";
             feedback.innerText = "Starting transmission...";
             feedback.classList.remove('d-none');
@@ -201,62 +201,82 @@ document.addEventListener("DOMContentLoaded", () => {
             
             try {
                 const safeName = participantName.replace(/[^a-zA-Z0-9]/g, "_");
+                const filesArray = [];
+                const activeInputs = [];
 
-                // Sequentially process files 1 by 1
+                // 1. Gather files selected by user
                 for (let input of fileInputs) {
                     if (input.files.length > 0) {
-                        const file = input.files[0];
+                        activeInputs.push(input);
+                    }
+                }
+
+                // 2. Process all selected assets sequentially into base64 clusters
+                for (let input of activeInputs) {
+                    const file = input.files[0];
+                    const targetId = input.name;
+
+                    // Auto-scroll context to current active asset row
+                    const parentWrapperRow = document.getElementById("wrapper_" + targetId);
+                    if (parentWrapperRow) {
+                        parentWrapperRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+
+                    feedback.innerText = `Preparing ${targetId.split('_')[0]} item asset...`;
+                    
+                    const circleContainer = document.getElementById(`circle_container_${targetId}`);
+                    const circleBar = document.getElementById(`circle_bar_${targetId}`);
+                    
+                    if(circleContainer) circleContainer.classList.remove('d-none');
+                    if(circleBar) circleBar.style.strokeDashoffset = "55"; 
+                    
+                    const base64Str = await toBase64(file);
+                    if(circleBar) circleBar.style.strokeDashoffset = "25"; 
+                    
+                    const customTitleInput = document.getElementById("title_" + targetId);
+                    let finalizedTitle = customTitleInput && customTitleInput.value.trim() ? customTitleInput.value.trim() : "untitled";
+                    
+                    finalizedTitle = finalizedTitle.replace(/[^a-zA-Z0-9_\-\s]/g, "");
+                    const cleanRawTitleForSheet = finalizedTitle;
+                    const extension = file.name.substring(file.name.lastIndexOf('.')) || ".jpg";
+                    finalizedTitle += extension;
+
+                    filesArray.push({
+                        category: targetId.split('_')[0],
+                        rawTitle: cleanRawTitleForSheet.replace(/\s+/g, "_"), 
+                        filename: `${safeName}_${targetId}_${finalizedTitle.replace(/\s+/g, "_")}`,
+                        mimeType: file.type,
+                        bytes: base64Str
+                    });
+                }
+
+                // 3. Atomically transmit all grouped files together in ONE payload request
+                if (filesArray.length > 0) {
+                    feedback.innerText = "Transmitting all data assets securely...";
+                    
+                    const itemPayload = {
+                        action: "submitUpload",
+                        participantEmail: participantEmail,
+                        participantName: participantName,
+                        certificateName: document.getElementById('certificateName').value.trim(),
+                        schoolName: schoolName,
+                        competitionScope: competitionScope,
+                        files: filesArray
+                    };
+
+                    await fetch(SUBMISSION_API_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(itemPayload)
+                    });
+
+                    // Update UI status widgets to complete state
+                    for (let input of activeInputs) {
                         const targetId = input.name;
-
-                        // Auto-scroll context to current active asset row
-                        const parentWrapperRow = document.getElementById("wrapper_" + targetId);
-                        if (parentWrapperRow) {
-                            parentWrapperRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-
-                        feedback.innerText = `Uploading ${targetId.split('_')[0]} item asset...`;
-                        
                         const circleContainer = document.getElementById(`circle_container_${targetId}`);
                         const circleBar = document.getElementById(`circle_bar_${targetId}`);
                         
-                        if(circleContainer) circleContainer.classList.remove('d-none');
-                        if(circleBar) circleBar.style.strokeDashoffset = "55"; 
-                        
-                        const base64Str = await toBase64(file);
-                        if(circleBar) circleBar.style.strokeDashoffset = "25"; 
-                        
-                        const customTitleInput = document.getElementById("title_" + targetId);
-                        let finalizedTitle = customTitleInput && customTitleInput.value.trim() ? customTitleInput.value.trim() : "untitled";
-                        
-                        finalizedTitle = finalizedTitle.replace(/[^a-zA-Z0-9_\-\s]/g, "");
-                        const cleanRawTitleForSheet = finalizedTitle;
-                        const extension = file.name.substring(file.name.lastIndexOf('.')) || ".jpg";
-                        finalizedTitle += extension;
-
-                        const itemPayload = {
-                            action: "submitUpload",
-                            participantEmail: participantEmail,
-                            participantName: participantName,
-                            certificateName: document.getElementById('certificateName').value.trim(),
-                            schoolName: schoolName,
-                            competitionScope: competitionScope,
-                            files: [{
-                                category: targetId.split('_')[0],
-                                rawTitle: cleanRawTitleForSheet.replace(/\s+/g, "_"), 
-                                filename: `${safeName}_${targetId}_${finalizedTitle.replace(/\s+/g, "_")}`,
-                                mimeType: file.type,
-                                bytes: base64Str
-                            }]
-                        };
-
-                        await fetch(SUBMISSION_API_URL, {
-                            method: 'POST',
-                            mode: 'no-cors',
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                            body: JSON.stringify(itemPayload)
-                        });
-
-                        // Clear circle spinner and activate tick
                         if(circleBar) circleBar.style.strokeDashoffset = "0";
                         if(circleContainer) circleContainer.classList.add('d-none');
                         
@@ -344,6 +364,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (uploadForm && (new Date().getTime() < DEADLINE_DATE)) {
                     uploadForm.classList.remove("d-none");
                 }
+
+                // FIX: Completely clear previews, remove success indicators, and restore file fields to active view
+                document.querySelectorAll('.preview-trigger').forEach(input => {
+                    const inputName = input.name;
+                    const wrapper = document.getElementById("wrapper_" + inputName);
+                    const previewImg = document.getElementById("prev_" + inputName);
+                    const titleField = document.getElementById("title_" + inputName);
+                    
+                    input.value = ""; 
+                    input.classList.remove('d-none');
+                    if (previewImg) previewImg.src = "";
+                    if (titleField) titleField.value = "";
+                    if (wrapper) wrapper.classList.add('d-none');
+
+                    const container = document.getElementById(`circle_container_${inputName}`);
+                    if(container) container.classList.add('d-none');
+                    const tick = document.getElementById(`tick_${inputName}`);
+                    if(tick) tick.style.display = 'none';
+                });
 
                 confirmDeletionBtn.disabled = false;
                 confirmDeletionBtn.innerText = "Yes, Clear and Reset";
