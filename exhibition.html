@@ -687,33 +687,41 @@
         if (logoTooltip) {
           const canvas = document.createElement('canvas');
           canvas.width = 1024;
-          canvas.height = 384; 
+          canvas.height = 512; // Increased height to ensure no lines are cut off
           const ctx = canvas.getContext('2d');
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           
-          // Re-applied clean transparent white background plate layout
+          // Clean transparent white background plate layout
           ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           
-          // Line 1: Upward Arrow Caret
+          // Line 1: Upward Arrow Caret (Top Line)
           ctx.fillStyle = '#f59e0b'; 
-          ctx.font = 'bold 70px monospace';
-          ctx.fillText('^', canvas.width / 2, 75);
+          ctx.font = 'bold 90px monospace';
+          ctx.fillText('^', canvas.width / 2, 90);
           
-          // Line 2: View Winners Header
+          // Line 2: View Winners Header (Middle Line)
           ctx.fillStyle = '#f59e0b';
-          ctx.font = 'bold 64px monospace';
-          ctx.fillText('VIEW WINNERS', canvas.width / 2, 185);
+          ctx.font = 'bold 72px monospace';
+          ctx.fillText('VIEW WINNERS', canvas.width / 2, 240);
           
-          // Line 3: Double Tap Action Guideline
-          ctx.fillStyle = '#ffffff'; // Set to clean white for readable emphasis
-          ctx.font = 'bold 44px monospace';
-          ctx.fillText('DOUBLE TAP TO GO', canvas.width / 2, 295);
+          // Line 3: Double Tap Guideline (Bottom Line)
+          ctx.fillStyle = '#ffffff'; 
+          ctx.font = 'bold 50px monospace';
+          ctx.fillText('DOUBLE TAP TO GO', canvas.width / 2, 390);
           
-          logoTooltip.setAttribute('material', 'src', canvas);
+          // Set the canvas texture to the plane material
+          logoTooltip.setAttribute('material', {
+            src: canvas,
+            shader: 'flat',
+            transparent: true,
+            side: 'double'
+          });
+
+          // Force WebGL component texture updates
           logoTooltip.addEventListener('materialtextureloaded', () => {
             const mesh = logoTooltip.getObject3D('mesh');
             if (mesh && mesh.material && mesh.material.map) {
