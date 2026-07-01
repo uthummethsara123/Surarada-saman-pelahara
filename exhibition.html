@@ -446,7 +446,7 @@
                animation="property: scale; to: 1.08 1.08 1.08; dir: alternate; dur: 1500; loop: true; easing: easeInOutQuad">
       </a-image>
 
-      <a-plane id="logo-tooltip" width="1.1" height="0.45" position="0 -0.8 -2" visible="false"
+      <a-plane id="logo-tooltip" width="1.2" height="0.6" position="0 -0.8 -2" visible="false"
                material="shader: flat; transparent: true; side: double;"></a-plane>
 
 
@@ -687,11 +687,11 @@
         if (logoTooltip) {
           const canvas = document.createElement('canvas');
           canvas.width = 1024;
-          canvas.height = 512; // Increased height to ensure no lines are cut off
+          canvas.height = 512; // 2:1 aspect ratio matches the new plane dimensions
           const ctx = canvas.getContext('2d');
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           
-          // Clean transparent white background plate layout
+          // Re-applied clean transparent white background plate layout
           ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           
@@ -700,28 +700,20 @@
           
           // Line 1: Upward Arrow Caret (Top Line)
           ctx.fillStyle = '#f59e0b'; 
-          ctx.font = 'bold 90px monospace';
-          ctx.fillText('^', canvas.width / 2, 90);
+          ctx.font = 'bold 80px monospace';
+          ctx.fillText('^', canvas.width / 2, 85);
           
           // Line 2: View Winners Header (Middle Line)
           ctx.fillStyle = '#f59e0b';
-          ctx.font = 'bold 72px monospace';
-          ctx.fillText('VIEW WINNERS', canvas.width / 2, 240);
+          ctx.font = 'bold 64px monospace';
+          ctx.fillText('VIEW WINNERS', canvas.width / 2, 235);
           
-          // Line 3: Double Tap Guideline (Bottom Line)
-          ctx.fillStyle = '#ffffff'; 
+          // Line 3: Double Tap Action Guideline (Bottom Line)
+          ctx.fillStyle = '#ffffff'; // Contrasting crisp white color
           ctx.font = 'bold 50px monospace';
-          ctx.fillText('DOUBLE TAP TO GO', canvas.width / 2, 390);
+          ctx.fillText('DOUBLE TAP TO GO', canvas.width / 2, 395);
           
-          // Set the canvas texture to the plane material
-          logoTooltip.setAttribute('material', {
-            src: canvas,
-            shader: 'flat',
-            transparent: true,
-            side: 'double'
-          });
-
-          // Force WebGL component texture updates
+          logoTooltip.setAttribute('material', 'src', canvas);
           logoTooltip.addEventListener('materialtextureloaded', () => {
             const mesh = logoTooltip.getObject3D('mesh');
             if (mesh && mesh.material && mesh.material.map) {
