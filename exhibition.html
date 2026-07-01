@@ -446,29 +446,39 @@
                animation="property: scale; to: 1.08 1.08 1.08; dir: alternate; dur: 1500; loop: true; easing: easeInOutQuad">
       </a-image>
 
-      <a-plane id="logo-tooltip" width="1.1" height="0.45" position="0 -0.8 -2" visible="false"
-               material="shader: flat; transparent: true; side: double;"></a-plane>
+      <a-entity id="logo-tooltip-group" position="0 -0.8 -1.99" visible="false">
+        <a-plane id="logo-tooltip" width="1.1" height="0.45" material="shader: flat; transparent: true; opacity: 0.15; color: #ffffff; side: double;"></a-plane>
+        <a-text value="^\nVIEW WINNERS\nDOUBLE TAP TO GO" align="center" color="#f59e0b" width="3.2" font="monospace" bold="true" position="0 0 0.01" wrap-count="20"></a-text>
+      </a-entity>
 
       <a-entity id="left-controls-group" position="-3.2 -1.15 -0.1" rotation="0 90 0" visible="false">
-        <a-plane id="btn-left-ff" class="clickable" position="-0.75 0 0" width="0.4" height="0.32" color="#f59e0b"
-                 text="value: <<; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-left-normal-left" class="clickable" position="-0.25 0 0" width="0.4" height="0.32" color="#f59e0b"
-                 text="value: <; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-left-normal-right" class="clickable" position="0.25 0 0" width="0.4" height="0.32" color="#f59e0b"
-                 text="value: >; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-left-rw" class="clickable" position="0.75 0 0" width="0.4" height="0.32" color="#f59e0b"
-                 text="value: >>; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
+        <a-plane id="btn-left-ff" class="clickable" position="-0.75 0 0" width="0.4" height="0.32" color="#f59e0b">
+          <a-text value="<<" align="center" color="#0f172a" width="6.0" font="monospace" bold="true" position="0 0 0.01"></a-text>
+        </a-plane>
+        <a-plane id="btn-left-normal-left" class="clickable" position="-0.25 0 0" width="0.4" height="0.32" color="#f59e0b">
+          <a-text value="<" align="center" color="#0f172a" width="6.0" font="monospace" bold="true" position="0 0 0.01"></a-text>
+        </a-plane>
+        <a-plane id="btn-left-normal-right" class="clickable" position="0.25 0 0" width="0.4" height="0.32" color="#f59e0b">
+          <a-text value=">" align="center" color="#0f172a" width="6.0" font="monospace" bold="true" position="0 0 0.01"></a-text>
+        </a-plane>
+        <a-plane id="btn-left-rw" class="clickable" position="0.75 0 0" width="0.4" height="0.32" color="#f59e0b">
+          <a-text value=">>" align="center" color="#0f172a" width="6.0" font="monospace" bold="true" position="0 0 0.01"></a-text>
+        </a-plane>
       </a-entity>
 
       <a-entity id="right-controls-group" position="3.2 -1.15 -1.5" rotation="0 -90 0" visible="false">
-        <a-plane id="btn-right-ff" class="clickable" position="-0.75 0 0" width="0.4" height="0.32" color="#f59e0b"
-                 text="value: <<; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-right-normal-left" class="clickable" position="-0.25 0 0" width="0.4" height="0.32" color="#f59e0b"
-                 text="value: <; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-right-normal-right" class="clickable" position="0.25 0 0" width="0.4" height="0.32" color="#f59e0b"
-                 text="value: >; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-right-rw" class="clickable" position="0.75 0 0" width="0.4" height="0.32" color="#f59e0b"
-                 text="value: >>; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
+        <a-plane id="btn-right-ff" class="clickable" position="-0.75 0 0" width="0.4" height="0.32" color="#f59e0b">
+          <a-text value="<<" align="center" color="#0f172a" width="6.0" font="monospace" bold="true" position="0 0 0.01"></a-text>
+        </a-plane>
+        <a-plane id="btn-right-normal-left" class="clickable" position="-0.25 0 0" width="0.4" height="0.32" color="#f59e0b">
+          <a-text value="<" align="center" color="#0f172a" width="6.0" font="monospace" bold="true" position="0 0 0.01"></a-text>
+        </a-plane>
+        <a-plane id="btn-right-normal-right" class="clickable" position="0.25 0 0" width="0.4" height="0.32" color="#f59e0b">
+          <a-text value=">" align="center" color="#0f172a" width="6.0" font="monospace" bold="true" position="0 0 0.01"></a-text>
+        </a-plane>
+        <a-plane id="btn-right-rw" class="clickable" position="0.75 0 0" width="0.4" height="0.32" color="#f59e0b">
+          <a-text value=">>" align="center" color="#0f172a" width="6.0" font="monospace" bold="true" position="0 0 0.01"></a-text>
+        </a-plane>
       </a-entity>
 
       <a-entity id="main-camera" camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" position="0 0 0"></a-entity>
@@ -609,7 +619,7 @@
 
       document.addEventListener('DOMContentLoaded', () => {
         const logoBtn = document.getElementById('winners-logo-btn');
-        const logoTooltip = document.getElementById('logo-tooltip');
+        const logoTooltipGroup = document.getElementById('logo-tooltip-group');
 
         if (!isMobile) {
           if (selectArBtn && selectBasicBtn) {
@@ -670,51 +680,16 @@
         registerPodButton('btn-right-normal-right', -1, 1.0); 
         registerPodButton('btn-right-rw', -1, 3.5);          
 
-        // Restored Original Transparent White Background Textures map
-        if (logoTooltip) {
-          const canvas = document.createElement('canvas');
-          canvas.width = 1024;
-          canvas.height = 384; 
-          const ctx = canvas.getContext('2d');
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          
-          // Re-applied clean transparent white background plate layout
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          
-          ctx.fillStyle = '#f59e0b'; 
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          
-          ctx.font = 'bold 70px monospace';
-          ctx.fillText('^', canvas.width / 2, 75);
-          
-          ctx.font = 'bold 64px monospace';
-          ctx.fillText('VIEW WINNERS', canvas.width / 2, 185);
-          
-          ctx.font = 'bold 48px monospace';
-          ctx.fillStyle = '#ffffff';
-          ctx.fillText('DOUBLE TAP TO GO', canvas.width / 2, 295);
-          
-          logoTooltip.setAttribute('material', 'src', canvas);
-          logoTooltip.addEventListener('materialtextureloaded', () => {
-            const mesh = logoTooltip.getObject3D('mesh');
-            if (mesh && mesh.material && mesh.material.map) {
-              mesh.material.map.needsUpdate = true;
-            }
-          });
-        }
-
         if (logoBtn) {
           let lastClickTime = 0;
 
           logoBtn.addEventListener('mouseenter', () => {
             logoBtn.setAttribute('material', 'color', '#ffeaa7'); 
-            if (logoTooltip) logoTooltip.setAttribute('visible', 'true');
+            if (logoTooltipGroup) logoTooltipGroup.setAttribute('visible', 'true');
           });
           logoBtn.addEventListener('mouseleave', () => {
             logoBtn.setAttribute('material', 'color', '#ffffff');
-            if (logoTooltip) logoTooltip.setAttribute('visible', 'false');
+            if (logoTooltipGroup) logoTooltipGroup.setAttribute('visible', 'false');
           });
           
           logoBtn.addEventListener('click', () => {
