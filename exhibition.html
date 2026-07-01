@@ -157,7 +157,10 @@
         sensitivity: 0.02,
         autoScrollSpeed: 0.015,
         leftTrackMaxSpan: 0,
-        rightTrackMaxSpan: 0
+        rightTrackMaxSpan: 0,
+        // Trackers added to handle button holding/scrolling states
+        isBtnScrolling: false,
+        btnScrollDir: 0
       };
 
       // --- TOUCH CONTROLS ---
@@ -248,6 +251,9 @@
 
           if (window.galleryState.isUserTouching) {
             currentZ += window.galleryState.deltaZ * window.galleryState.sensitivity;
+          } else if (window.galleryState.isBtnScrolling) {
+            // Smoothly fast forward/rewind photos while a user holds down a button
+            currentZ += window.galleryState.btnScrollDir * 0.12;
           } else {
             currentZ -= window.galleryState.autoScrollSpeed;
           }
@@ -323,11 +329,9 @@
                   arrangeTrackFluidly(leftTrackElements, '-3', '0 90 0', 'left');
                   arrangeTrackFluidly(rightTrackElements, '3', '0 -90 0', 'right');
 
-                  // Hide loading spinner text, instantly open interactive mode buttons layout
                   connectionStatus.style.display = "none";
                   modeSelectionArea.style.display = "block";
                   
-                  // Run hardware detection window rule
                   checkHardwareGyroscope();
                 }
               }
@@ -440,6 +444,11 @@
     </div>
 
     <video id="webcam-video" autoplay playsinline muted loop></video>
+
+    <div id="mobile-gallery-controls" style="display: none; position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 999; gap: 20px; width: 90%; max-width: 320px; justify-content: center;">
+      <button id="btn-scroll-left" class="btn btn-warning" style="border-radius: 50px; padding: 12px 20px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); flex: 1; white-space: nowrap;">◀ Scroll Left</button>
+      <button id="btn-scroll-right" class="btn btn-warning" style="border-radius: 50px; padding: 12px 20px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); flex: 1; white-space: nowrap;">Scroll Right ▶</button>
+    </div>
 
     <a-scene vr-mode-ui="enabled: false" embedded renderer="alpha: true; colorManagement: true;" gallery-loader cursor="rayOrigin: mouse" raycaster="objects: .clickable">
       <a-assets>
@@ -579,6 +588,7 @@ if (typeof ScrollReveal !== 'undefined') {
       // Action routing for option 1: AR MODE
       selectArBtn.addEventListener('click', () => {
         overlay.style.display = 'none';
+        document.getElementById('mobile-gallery-controls').style.display = 'none'; // Keep buttons hidden in AR Mode
         if (isMobile) {
           mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: true; touchEnabled: false;');
           forceSceneClearTransparency();
@@ -593,6 +603,7 @@ if (typeof ScrollReveal !== 'undefined') {
       selectBasicBtn.addEventListener('click', () => {
         overlay.style.display = 'none';
         if (isMobile) {
+          document.getElementById('mobile-gallery-controls').style.display = 'flex'; // Make controls appear in Basic Mode
           mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: false; touchEnabled: true;');
           if (nativeVideo) nativeVideo.style.display = "none";
           if (scene) scene.style.backgroundColor = "#1a1a1a";
@@ -601,6 +612,33 @@ if (typeof ScrollReveal !== 'undefined') {
           mainCamera.setAttribute('look-controls', 'touchEnabled: true;');
         }
       });
+
+      // Set up automatic scroll button touch handlers for mobile holding loops
+      if (isMobile) {
+        const attachScrollControl = (id, direction) => {
+          const btn = document.getElementById(id);
+          if (!btn) return;
+          
+          btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            window.galleryState.isBtnScrolling = true;
+            window.galleryState.btnScrollDir = direction;
+          }, { passive: false });
+          
+          btn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            window.galleryState.isBtnScrolling = false;
+          }, { passive: false });
+
+          btn.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            window.galleryState.isBtnScrolling = false;
+          }, { passive: false });
+        };
+
+        attachScrollControl('btn-scroll-left', 1);
+        attachScrollControl('btn-scroll-right', -1);
+      }
 
       // Click interaction, gold glow transition, and canvas tooltip system
       document.addEventListener('DOMContentLoaded', () => {
