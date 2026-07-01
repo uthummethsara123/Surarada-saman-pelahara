@@ -695,15 +695,23 @@
           ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           
-          ctx.fillStyle = '#f59e0b'; 
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           
+          // Line 1: Upward Arrow Caret
+          ctx.fillStyle = '#f59e0b'; 
           ctx.font = 'bold 70px monospace';
           ctx.fillText('^', canvas.width / 2, 75);
           
+          // Line 2: View Winners Header
+          ctx.fillStyle = '#f59e0b';
           ctx.font = 'bold 64px monospace';
-          ctx.fillText('DOUBLE TAP TO GO VIEW WINNERS', canvas.width / 2, 185);
+          ctx.fillText('VIEW WINNERS', canvas.width / 2, 185);
+          
+          // Line 3: Double Tap Action Guideline
+          ctx.fillStyle = '#ffffff'; // Set to clean white for readable emphasis
+          ctx.font = 'bold 44px monospace';
+          ctx.fillText('DOUBLE TAP TO GO', canvas.width / 2, 295);
           
           logoTooltip.setAttribute('material', 'src', canvas);
           logoTooltip.addEventListener('materialtextureloaded', () => {
