@@ -450,25 +450,33 @@
                material="shader: flat; transparent: true; side: double;"></a-plane>
 
       <a-entity id="left-controls-group" position="-3.2 -1.15 -0.1" rotation="0 90 0" visible="false">
-        <a-plane id="btn-left-ff" class="clickable" position="-0.75 0 0" width="0.4" height="0.32" color="#f59e0b"
-                 text="value: <<; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-left-normal-left" class="clickable" position="-0.25 0 0" width="0.4" height="0.32" color="#f59e0b"
-                 text="value: <; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-left-normal-right" class="clickable" position="0.25 0 0" width="0.4" height="0.32" color="#f59e0b"
-                 text="value: >; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-left-rw" class="clickable" position="0.75 0 0" width="0.4" height="0.32" color="#f59e0b"
-                 text="value: >>; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
+        <a-plane id="btn-left-ff" class="clickable" position="-0.75 0 0" width="0.4" height="0.32" color="#f59e0b">
+          <a-text value="&lt;&lt;" align="center" color="#0f172a" width="6.0" font="monospace" bold="true" position="0 0 0.01"></a-text>
+        </a-plane>
+        <a-plane id="btn-left-normal-left" class="clickable" position="-0.25 0 0" width="0.4" height="0.32" color="#f59e0b">
+          <a-text value="&lt;" align="center" color="#0f172a" width="6.0" font="monospace" bold="true" position="0 0 0.01"></a-text>
+        </a-plane>
+        <a-plane id="btn-left-normal-right" class="clickable" position="0.25 0 0" width="0.4" height="0.32" color="#f59e0b">
+          <a-text value="&gt;" align="center" color="#0f172a" width="6.0" font="monospace" bold="true" position="0 0 0.01"></a-text>
+        </a-plane>
+        <a-plane id="btn-left-rw" class="clickable" position="0.75 0 0" width="0.4" height="0.32" color="#f59e0b">
+          <a-text value="&gt;&gt;" align="center" color="#0f172a" width="6.0" font="monospace" bold="true" position="0 0 0.01"></a-text>
+        </a-plane>
       </a-entity>
 
       <a-entity id="right-controls-group" position="3.2 -1.15 -1.5" rotation="0 -90 0" visible="false">
-        <a-plane id="btn-right-ff" class="clickable" position="-0.75 0 0" width="0.4" height="0.32" color="#f59e0b"
-                 text="value: <<; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-right-normal-left" class="clickable" position="-0.25 0 0" width="0.4" height="0.32" color="#f59e0b"
-                 text="value: <; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-right-normal-right" class="clickable" position="0.25 0 0" width="0.4" height="0.32" color="#f59e0b"
-                 text="value: >; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
-        <a-plane id="btn-right-rw" class="clickable" position="0.75 0 0" width="0.4" height="0.32" color="#f59e0b"
-                 text="value: >>; align: center; color: #0f172a; width: 5.0; font: monospace; bold: true;"></a-plane>
+        <a-plane id="btn-right-ff" class="clickable" position="-0.75 0 0" width="0.4" height="0.32" color="#f59e0b">
+          <a-text value="&lt;&lt;" align="center" color="#0f172a" width="6.0" font="monospace" bold="true" position="0 0 0.01"></a-text>
+        </a-plane>
+        <a-plane id="btn-right-normal-left" class="clickable" position="-0.25 0 0" width="0.4" height="0.32" color="#f59e0b">
+          <a-text value="&lt;" align="center" color="#0f172a" width="6.0" font="monospace" bold="true" position="0 0 0.01"></a-text>
+        </a-plane>
+        <a-plane id="btn-right-normal-right" class="clickable" position="0.25 0 0" width="0.4" height="0.32" color="#f59e0b">
+          <a-text value="&gt;" align="center" color="#0f172a" width="6.0" font="monospace" bold="true" position="0 0 0.01"></a-text>
+        </a-plane>
+        <a-plane id="btn-right-rw" class="clickable" position="0.75 0 0" width="0.4" height="0.32" color="#f59e0b">
+          <a-text value="&gt;&gt;" align="center" color="#0f172a" width="6.0" font="monospace" bold="true" position="0 0 0.01"></a-text>
+        </a-plane>
       </a-entity>
 
       <a-entity id="main-camera" camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: false;" position="0 0 0"></a-entity>
