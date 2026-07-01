@@ -61,7 +61,7 @@
         color: white;
         font-family: system-ui, -apple-system, sans-serif;
         text-align: center;
-        padding: 30px 20px;
+        padding: 30px 20px; 
         box-sizing: border-box;
         overflow-y: auto; 
         -webkit-overflow-scrolling: touch;
@@ -287,7 +287,6 @@
           const assetsEl = document.querySelector('a-assets');
           const connectionStatus = document.getElementById('connection-status');
           const modeSelectionArea = document.getElementById('mode-selection-area');
-          const overlayDesc = document.getElementById('overlay-desc');
 
           sceneEl.addEventListener('render-target-loaded', () => {
             if (sceneEl.renderer) {
@@ -297,161 +296,219 @@
           });
 
           connectionStatus.innerText = "Connecting Live Feed...";
-          
-          // Track the previous state of data to avoid constant rebuilding and flickering
-          this.lastDataString = "";
 
-          const refreshGallery = () => {
-            fetch(LIVE_GET_API_URL)
-              .then(res => res.json())
-              .then(images => {
-                const currentDataString = JSON.stringify(images);
+          fetch(LIVE_GET_API_URL)
+            .then(res => res.json())
+            .then(images => {
+              if(!images || images.length === 0) {
+                document.getElementById('overlay-desc').innerText = "No submitted pictures found in database yet.";
+                connectionStatus.innerText = "Gallery Empty";
+                return;
+              }
+
+              let leftTrackElements = [];
+              let rightTrackElements = [];
+
+              images.forEach((imgData, index) => {
+                let imgAsset = document.createElement('img');
+                imgAsset.setAttribute('id', `live-img-${index}`);
+                imgAsset.setAttribute('src', imgData.src);
+                imgAsset.setAttribute('crossorigin', 'anonymous');
+                assetsEl.appendChild(imgAsset);
+
+                let aImg = document.createElement('a-image');
+                let isLeft = index % 2 === 0;
                 
-                // If the live database hasn't changed, skip updating to prevent visual glitching/flickering
-                if (currentDataString === this.lastDataString) return;
-                this.lastDataString = currentDataString;
+                aImg.setAttribute('src', `#live-img-${index}`);
+                aImg.setAttribute('conveyor-item', `trackSide: ${isLeft ? 'left' : 'right'}`);
+                aImg.setAttribute('visible', 'false'); // Hide initially to prevent center overlay glitching
+                aImg.setAttribute('material', 'side: double');
+                
+                let participantName = imgData.name || imgData.participantName || "Participant";
 
-                // Lively Clean Up: Remove any old photos/assets currently in the scene
-                document.querySelectorAll('.dynamic-exhibition-item').forEach(el => el.remove());
-                document.querySelectorAll('.dynamic-exhibition-asset').forEach(el => el.remove());
-
-                // Handle Empty Database Case (When you delete form responses)
-                if (!images || images.length === 0) {
-                  overlayDesc.innerText = "No submitted pictures found in database yet.";
-                  connectionStatus.innerText = "Gallery Empty";
-                  connectionStatus.style.display = "block";
-                  
-                  // Reset track sizes so conveyor items stop safely
-                  window.galleryState.leftTrackMaxSpan = 0;
-                  window.galleryState.rightTrackMaxSpan = 0;
-                  return;
+                if (isLeft) {
+                  leftTrackElements.push({ item: aImg, asset: imgAsset, name: participantName });
+                } else {
+                  rightTrackElements.push({ item: aImg, asset: imgAsset, name: participantName });
                 }
 
-                // Restore default text if items exist
-                overlayDesc.innerText = "Synchronizing with live data...";
-
-                let leftTrackElements = [];
-                let rightTrackElements = [];
-
-                images.forEach((imgData, index) => {
-                  let imgAsset = document.createElement('img');
-                  imgAsset.setAttribute('id', `live-img-${index}`);
-                  imgAsset.setAttribute('src', imgData.src);
-                  imgAsset.setAttribute('crossorigin', 'anonymous');
-                  imgAsset.classList.add('dynamic-exhibition-asset'); // Tracked class for cleanup
-                  assetsEl.appendChild(imgAsset);
-
-                  let aImg = document.createElement('a-image');
-                  let isLeft = index % 2 === 0;
-                  
-                  aImg.setAttribute('src', `#live-img-${index}`);
-                  aImg.setAttribute('conveyor-item', `trackSide: ${isLeft ? 'left' : 'right'}`);
-                  aImg.classList.add('dynamic-exhibition-item'); // Tracked class for cleanup
-                  
-                  if (isLeft) {
-                    aImg.setAttribute('material', 'side: double');
-                    leftTrackElements.push({ item: aImg, asset: imgAsset });
-                  } else {
-                    rightTrackElements.push({ item: aImg, asset: imgAsset });
-                  }
-
-                  sceneEl.appendChild(aImg);
-                });
-
-                let processedCount = 0;
-                const totalToProcess = images.length;
-
-                function checkProcessingComplete() {
-                  processedCount++;
-                  if (processedCount === totalToProcess) {
-                    arrangeTrackFluidly(leftTrackElements, '-3', '0 90 0', 'left');
-                    arrangeTrackFluidly(rightTrackElements, '3', '0 -90 0', 'right');
-
-                    connectionStatus.style.display = "none";
-                    modeSelectionArea.style.display = "block";
-                    
-                    const guideTextDiv = document.getElementById('loading-guide-text');
-                    if (guideTextDiv) {
-                      guideTextDiv.innerHTML = isMobile ? window.exhibitionGuides['mobile-loading'] : window.exhibitionGuides['laptop'];
-                    }
-                    
-                    checkHardwareGyroscope();
-                  }
-                }
-
-                [...leftTrackElements, ...rightTrackElements].forEach(obj => {
-                  if (obj.asset.complete) {
-                    calculateTargetDimensions(obj);
-                    checkProcessingComplete();
-                  } else {
-                    obj.asset.addEventListener('load', function() {
-                      calculateTargetDimensions(obj);
-                      checkProcessingComplete();
-                    });
-                    obj.asset.addEventListener('error', function() {
-                      obj.calculatedWidth = 3.2;
-                      obj.calculatedHeight = 1.8;
-                      checkProcessingComplete();
-                    });
-                  }
-                });
-
-                function calculateTargetDimensions(obj) {
-                  let width = obj.asset.naturalWidth || 16;
-                  let height = obj.asset.naturalHeight || 9;
-                  let aspectRatio = width / height;
-
-                  let maxBoundaryWidth = 3.2;
-                  let maxBoundaryHeight = 1.8;
-
-                  if (aspectRatio > (maxBoundaryWidth / maxBoundaryHeight)) {
-                    obj.calculatedWidth = maxBoundaryWidth;
-                    obj.calculatedHeight = maxBoundaryWidth / aspectRatio;
-                  } else {
-                    obj.calculatedHeight = maxBoundaryHeight;
-                    obj.calculatedWidth = maxBoundaryHeight * aspectRatio;
-                  }
-                  
-                  obj.item.setAttribute('width', obj.calculatedWidth);
-                  obj.item.setAttribute('height', obj.calculatedHeight);
-                }
-
-                function arrangeTrackFluidly(elementsArray, xPos, rotation, sideName) {
-                  let currentZAccumulator = 0;
-                  let marginBetweenFrames = 0.8;
-
-                  elementsArray.forEach(obj => {
-                    currentZAccumulator += (obj.calculatedWidth / 2);
-                    obj.initialZ = currentZAccumulator;
-                    currentZAccumulator += (obj.calculatedWidth / 2) + marginBetweenFrames;
-                  });
-
-                  let totalSpan = currentZAccumulator;
-                  if (sideName === 'left') {
-                    window.galleryState.leftTrackMaxSpan = totalSpan;
-                  } else {
-                    window.galleryState.rightTrackMaxSpan = totalSpan;
-                  }
-
-                  elementsArray.forEach(obj => {
-                    let centeredZ = obj.initialZ - (totalSpan / 2);
-                    obj.item.setAttribute('position', `${xPos} 0 ${centeredZ}`);
-                    obj.item.setAttribute('rotation', rotation);
-                  });
-                }
-              })
-              .catch(err => {
-                console.error("Live fetch failed:", err);
-                connectionStatus.innerText = "Error syncing submissions with Google Sheet.";
-                connectionStatus.style.display = "block";
+                sceneEl.appendChild(aImg);
               });
-          };
 
-          // Trigger data synchronization immediately on initialization
-          refreshGallery();
+              let processedCount = 0;
+              const totalToProcess = images.length;
 
-          // Continuously check for dynamic form submissions or deletions every 5 seconds (5000ms)
-          setInterval(refreshGallery, 5000);
+              function checkProcessingComplete() {
+                processedCount++;
+                if (processedCount === totalToProcess) {
+                  arrangeTrackFluidly(leftTrackElements, '-3', '0 90 0', 'left');
+                  arrangeTrackFluidly(rightTrackElements, '3', '0 -90 0', 'right');
+
+                  connectionStatus.style.display = "none";
+                  modeSelectionArea.style.display = "block";
+                  
+                  const guideTextDiv = document.getElementById('loading-guide-text');
+                  if (guideTextDiv) {
+                    guideTextDiv.innerHTML = isMobile ? window.exhibitionGuides['mobile-loading'] : window.exhibitionGuides['laptop'];
+                  }
+                  
+                  checkHardwareGyroscope();
+                }
+              }
+
+              function createTitlePlane(obj, nameText) {
+                let planeWidth = obj.calculatedWidth;
+                let planeHeight = 0.35; // Ideal height for top text box
+                
+                let titlePlane = document.createElement('a-plane');
+                titlePlane.setAttribute('width', planeWidth);
+                titlePlane.setAttribute('height', planeHeight);
+                // Placed precisely above the top edge of the photo
+                titlePlane.setAttribute('position', `0 ${obj.calculatedHeight / 2 + planeHeight / 2 + 0.05} 0.005`);
+                titlePlane.setAttribute('material', 'shader: flat; transparent: true; side: double;');
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.max(512, planeWidth * 300);
+                canvas.height = planeHeight * 300;
+                const ctx = canvas.getContext('2d');
+                
+                // Theme Box Design (#480714 background with gold #f59e0b accents)
+                ctx.fillStyle = 'rgba(72, 7, 20, 0.9)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
+                
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#f59e0b';
+                
+                let baseFontSize = 32;
+                ctx.font = `bold ${baseFontSize}px 'Poppins', system-ui, sans-serif`;
+                
+                function wrapText(text, maxWidth) {
+                  let words = text.split(' ');
+                  let lines = [];
+                  let currentLine = words[0] || '';
+                  
+                  for (let i = 1; i < words.length; i++) {
+                    let word = words[i];
+                    let width = ctx.measureText(currentLine + ' ' + word).width;
+                    if (width < maxWidth) {
+                      currentLine += ' ' + word;
+                    } else {
+                      lines.push(currentLine);
+                      currentLine = word;
+                    }
+                  }
+                  lines.push(currentLine);
+                  return lines;
+                }
+                
+                let padding = 30;
+                let maxWidth = canvas.width - padding;
+                let lines = wrapText(nameText, maxWidth);
+                
+                // If it goes to 3 lines, automatically adjust font smaller to secure 2 lines max
+                if (lines.length > 2) {
+                  baseFontSize = 24;
+                  ctx.font = `bold ${baseFontSize}px 'Poppins', system-ui, sans-serif`;
+                  lines = wrapText(nameText, maxWidth);
+                }
+                
+                let lineHeight = baseFontSize * 1.3;
+                let totalHeight = lines.length * lineHeight;
+                let startY = (canvas.height - totalHeight) / 2 + lineHeight / 2;
+                
+                lines.forEach((line, index) => {
+                  ctx.fillText(line, canvas.width / 2, startY + (index * lineHeight));
+                });
+                
+                titlePlane.setAttribute('material', 'src', canvas);
+                
+                titlePlane.addEventListener('materialtextureloaded', () => {
+                  const mesh = titlePlane.getObject3D('mesh');
+                  if (mesh && mesh.material && mesh.material.map) {
+                    mesh.material.map.needsUpdate = true;
+                  }
+                });
+                
+                // Nested inside the parent object so it maps perfectly along the track
+                obj.item.appendChild(titlePlane);
+              }
+
+              function calculateTargetDimensions(obj, participantName) {
+                let width = obj.asset.naturalWidth || 16;
+                let height = obj.asset.naturalHeight || 9;
+                let aspectRatio = width / height;
+
+                let maxBoundaryWidth = 3.2;
+                let maxBoundaryHeight = 1.8;
+
+                if (aspectRatio > (maxBoundaryWidth / maxBoundaryHeight)) {
+                  obj.calculatedWidth = maxBoundaryWidth;
+                  obj.calculatedHeight = maxBoundaryWidth / aspectRatio;
+                } else {
+                  obj.calculatedHeight = maxBoundaryHeight;
+                  obj.calculatedWidth = maxBoundaryHeight * aspectRatio;
+                }
+                
+                obj.item.setAttribute('width', obj.calculatedWidth);
+                obj.item.setAttribute('height', obj.calculatedHeight);
+                
+                createTitlePlane(obj, participantName);
+              }
+
+              [...leftTrackElements, ...rightTrackElements].forEach(obj => {
+                if (obj.asset.complete) {
+                  calculateTargetDimensions(obj, obj.name);
+                  checkProcessingComplete();
+                } else {
+                  obj.asset.addEventListener('load', function() {
+                    calculateTargetDimensions(obj, obj.name);
+                    checkProcessingComplete();
+                  });
+                  obj.asset.addEventListener('error', function() {
+                    obj.calculatedWidth = 3.2;
+                    obj.calculatedHeight = 1.8;
+                    obj.item.setAttribute('width', obj.calculatedWidth);
+                    obj.item.setAttribute('height', obj.calculatedHeight);
+                    createTitlePlane(obj, obj.name);
+                    checkProcessingComplete();
+                  });
+                }
+              });
+
+              function arrangeTrackFluidly(elementsArray, xPos, rotation, sideName) {
+                let currentZAccumulator = 0;
+                let marginBetweenFrames = 0.8;
+
+                elementsArray.forEach(obj => {
+                  currentZAccumulator += (obj.calculatedWidth / 2);
+                  obj.initialZ = currentZAccumulator;
+                  currentZAccumulator += (obj.calculatedWidth / 2) + marginBetweenFrames;
+                });
+
+                let totalSpan = currentZAccumulator;
+                if (sideName === 'left') {
+                  window.galleryState.leftTrackMaxSpan = totalSpan;
+                } else {
+                  window.galleryState.rightTrackMaxSpan = totalSpan;
+                }
+
+                elementsArray.forEach(obj => {
+                  let centeredZ = obj.initialZ - (totalSpan / 2);
+                  obj.item.setAttribute('position', `${xPos} 0 ${centeredZ}`);
+                  obj.item.setAttribute('rotation', rotation);
+                  obj.item.setAttribute('visible', 'true'); // Show only after loading arrangement finishes completely!
+                });
+              }
+            })
+            .catch(err => {
+              console.error("Live fetch failed:", err);
+              document.getElementById('connection-status').innerText = "Error syncing submissions with Google Sheet.";
+            });
         }
       });
     </script>
@@ -517,6 +574,7 @@
                  material="shader: flat; transparent: true; side: double;"></a-plane>
 
       </a-plane>
+
 
       <a-entity id="left-controls-group" position="-3.2 -1.15 -0.1" rotation="0 90 0" visible="false">
         <a-plane id="btn-left-ff" class="clickable" position="-0.75 0 0" width="0.4" height="0.32" material="shader: flat; transparent: true; opacity: 0.15; color: #ffffff; side: double;">
@@ -824,7 +882,7 @@
             const drawCanvasText = () => {
               const canvas = document.createElement('canvas');
               canvas.width = 1400;
-              canvas.height = 650;
+              canvas.height = 650; 
               const ctx = canvas.getContext('2d');
               
               ctx.clearRect(0, 0, canvas.width, canvas.height);
