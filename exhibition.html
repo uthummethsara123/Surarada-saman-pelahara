@@ -1006,10 +1006,11 @@
         registerPodButton('btn-left-normal-right', -1, 1.0); 
         registerPodButton('btn-left-rw', -1, 3.5);          
 
-        registerPodButton('btn-right-ff', 1, 3.5);          
-        registerPodButton('btn-right-normal-left', 1, 1.0);  
-        registerPodButton('btn-right-normal-right', -1, 1.0); 
-        registerPodButton('btn-right-rw', -1, 3.5);          
+        // Reversed direction flags to compensate for the 180-degree flipped perspective on the right wall
+        registerPodButton('btn-right-ff', -1, 3.5);          
+        registerPodButton('btn-right-normal-left', -1, 1.0);  
+        registerPodButton('btn-right-normal-right', 1, 1.0); 
+        registerPodButton('btn-right-rw', 1, 3.5);          
 
         if (logoTooltip) {
           const textPlane = document.getElementById('logo-tooltip-text');
