@@ -4,7 +4,7 @@ const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oG
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
 // Use standard hyphens instead of dots so browsers can read it cleanly
-const START_DATE = new Date("2026-07-02T12:50:00").getTime();
+const START_DATE = new Date("2026-07-26T00:00:00").getTime();
 // Admin: Extend this date forward whenever you want to grant extra submission time
 const DEADLINE_DATE = new Date("2026-07-27T02:00:00").getTime();
 
