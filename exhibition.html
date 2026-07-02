@@ -332,7 +332,6 @@
               const overlayDesc = document.getElementById('overlay-desc');
               const modeSelectionArea = document.getElementById('mode-selection-area');
               
-              // Handle empty database states cleanly on the fly (Deletions bring count to 0)
               if (!images || images.length === 0) {
                 if (window.loadedImageUrls.size > 0) {
                   let activeConveyorFrames = sceneEl.querySelectorAll('[conveyor-item]');
@@ -354,41 +353,40 @@
               }
 
               const serverSrcSet = new Set(images.map(img => img.src));
+              let tracksChanged = false;
 
-              // LIVE DELETION ENGINE: Filter out removed entries seamlessly without page refreshes
-              const processTrackPurge = (trackArray, sideName) => {
+              // LIVE DELETION ENGINE: Filter out removed entries seamlessly without track snaps
+              const processTrackPurge = (trackArray) => {
                 let indexesToRemove = [];
                 for (let i = trackArray.length - 1; i >= 0; i--) {
                   let src = trackArray[i].asset.getAttribute('src');
                   if (!serverSrcSet.has(src)) {
-                    // Remove entity mesh node out of the active VR scene ecosystem
                     if (trackArray[i].item && trackArray[i].item.parentNode) {
                       trackArray[i].item.parentNode.removeChild(trackArray[i].item);
                     }
-                    // Remove reference DOM image asset out of storage pipeline
                     if (trackArray[i].asset && trackArray[i].asset.parentNode) {
                       trackArray[i].asset.parentNode.removeChild(trackArray[i].asset);
                     }
                     window.loadedImageUrls.delete(src);
                     indexesToRemove.push(i);
+                    tracksChanged = true;
                   }
                 }
                 indexesToRemove.forEach(idx => trackArray.splice(idx, 1));
               };
 
-              processTrackPurge(window.leftTrackItems, 'left');
-              processTrackPurge(window.rightTrackItems, 'right');
+              processTrackPurge(window.leftTrackItems);
+              processTrackPurge(window.rightTrackItems);
 
-              // Isolate completely new items that haven't been appended to either track yet
               let newImages = images.filter(img => !window.loadedImageUrls.has(img.src));
-              
-              // Re-index remaining track items count safely
               window.totalImagesProcessed = window.leftTrackItems.length + window.rightTrackItems.length;
 
               if (newImages.length === 0) {
-                // Re-align and balance remaining pictures dynamically to prevent gaps left behind by deletions
-                rearrangeTrackAfterUpdates(window.leftTrackItems, '-3', '0 90 0', 'left');
-                rearrangeTrackAfterUpdates(window.rightTrackItems, '3', '0 -90 0', 'right');
+                if (tracksChanged) {
+                  // Only re-calculate spans for wrapping limits, do NOT snap active positions
+                  rearrangeTrackAfterUpdates(window.leftTrackItems, '-3', '0 90 0', 'left', false);
+                  rearrangeTrackAfterUpdates(window.rightTrackItems, '3', '0 -90 0', 'right', false);
+                }
                 return;
               }
               
@@ -416,20 +414,18 @@
                   aImg.setAttribute('material', 'side: double');
                 }
 
-                // Create text component for Author Name attached relative to the image frame
                 let aText = document.createElement('a-text');
-                // Replace the old setting line with this smart multi-key lookup fallback:
                 let rawAuthorName = imgData.participantName || imgData.name || imgData.author || "Participant";
                 aText.setAttribute('value', formatAuthorName(rawAuthorName));
                 aText.setAttribute('align', 'center');
                 aText.setAttribute('color', '#000000');
-                aText.setAttribute('width', '1.8'); // Made slightly wider for readability
-                aText.setAttribute('font', 'dejavu'); // Uses system default high-density crisp font
+                aText.setAttribute('width', '1.8'); 
+                aText.setAttribute('font', 'dejavu'); 
                 aText.setAttribute('shader', 'msdf');
                 aText.setAttribute('negate', 'false');
                 aImg.appendChild(aText);
                 
-                let newObj = { item: aImg, asset: imgAsset };
+                let newObj = { item: aImg, asset: imgAsset, txt: aText };
                 
                 const processAndAppend = () => {
                   let width = imgAsset.naturalWidth || 16;
@@ -448,15 +444,31 @@
                   
                   aImg.setAttribute('width', newObj.calculatedWidth);
                   aImg.setAttribute('height', newObj.calculatedHeight);
-
-                  // Position label cleanly just above top edge bounds of this specific image aspect ratio
                   aText.setAttribute('position', `0 ${(newObj.calculatedHeight / 2) + 0.12} 0.1`);
+                  
+                  // Position the new image fluidly right behind the current active coordinate of the last item
+                  let targetZ = 0;
+                  let marginBetweenFrames = 1.2;
+                  if (trackArray.length > 0) {
+                    let lastItemObj = trackArray[trackArray.length - 1];
+                    let lastItemPos = lastItemObj.item.getAttribute('position');
+                    
+                    let isCurrentVertical = (newObj.calculatedHeight > newObj.calculatedWidth);
+                    let isPrevVertical = (lastItemObj.calculatedHeight > lastItemObj.calculatedWidth);
+                    if (isCurrentVertical !== isPrevVertical) {
+                      marginBetweenFrames = 1.8;
+                    }
+                    targetZ = lastItemPos.z + (lastItemObj.calculatedWidth / 2) + marginBetweenFrames + (newObj.calculatedWidth / 2);
+                  }
+
+                  aImg.setAttribute('position', `${xPos} 0 ${targetZ}`);
+                  aImg.setAttribute('rotation', rotation);
                   
                   sceneEl.appendChild(aImg);
                   trackArray.push(newObj);
 
-                  // Execute alignment spacing logic safely
-                  rearrangeTrackAfterUpdates(trackArray, xPos, rotation, side);
+                  // Update track boundaries dynamically without overriding running offsets
+                  rearrangeTrackAfterUpdates(trackArray, xPos, rotation, side, false);
                 };
                 
                 if (imgAsset.complete) {
@@ -476,7 +488,7 @@
       }
 
       // Macro positioning alignment algorithm ensuring strict gaps and handling vertical-landscape collisions
-      function rearrangeTrackAfterUpdates(elementsArray, xPos, rotation, sideName) {
+      function rearrangeTrackAfterUpdates(elementsArray, xPos, rotation, sideName, forceResetPositions = true) {
         let currentZAccumulator = 0;
         
         elementsArray.forEach((obj, idx) => {
@@ -505,11 +517,14 @@
           window.galleryState.rightTrackMaxSpan = totalSpan;
         }
         
-        elementsArray.forEach(obj => {
-          let centeredZ = obj.initialZ - (totalSpan / 2);
-          obj.item.setAttribute('position', `${xPos} 0 ${centeredZ}`);
-          obj.item.setAttribute('rotation', rotation);
-        });
+        // CRUCIAL: Only alter positions during cold initial load to prevent real-time scrolling snapping bugs
+        if (forceResetPositions) {
+          elementsArray.forEach(obj => {
+            let centeredZ = obj.initialZ - (totalSpan / 2);
+            obj.item.setAttribute('position', `${xPos} 0 ${centeredZ}`);
+            obj.item.setAttribute('rotation', rotation);
+          });
+        }
       }
 
       AFRAME.registerComponent('gallery-loader', {
