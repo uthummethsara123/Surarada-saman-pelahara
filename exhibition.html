@@ -637,8 +637,8 @@
 
                 // Dynamically update position relative to final aspect ratio calculations
                 if (obj.txt) {
-                  // Raised slightly to 0.35 to clear widescreen/portrait asset margins perfectly
-                  obj.txt.setAttribute('position', `0 ${(obj.calculatedHeight / 2) + 0.35} 0.05`);
+                  // Placed tightly above the image border frame bounds
+                  obj.txt.setAttribute('position', `0 ${(obj.calculatedHeight / 2) + 0.18} 0.05`);
                 }
               }
             })
