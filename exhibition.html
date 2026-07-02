@@ -421,8 +421,10 @@
                 aText.setAttribute('value', formatAuthorName(imgData.participantName));
                 aText.setAttribute('align', 'center');
                 aText.setAttribute('color', '#ffffff');
-                aText.setAttribute('width', '3');
-                aText.setAttribute('font', 'kalyani'); // standard high contrast clean font
+                aText.setAttribute('width', '4'); // Made slightly wider for readability
+                aText.setAttribute('font', 'dejavu'); // Uses system default high-density crisp font
+                aText.setAttribute('shader', 'msdf');
+                aText.setAttribute('negate', 'false');
                 aImg.appendChild(aText);
                 
                 let newObj = { item: aImg, asset: imgAsset };
@@ -558,8 +560,10 @@
                 aText.setAttribute('value', formatAuthorName(imgData.participantName));
                 aText.setAttribute('align', 'center');
                 aText.setAttribute('color', '#ffffff');
-                aText.setAttribute('width', '3');
-                aText.setAttribute('font', 'kalyani');
+                aText.setAttribute('width', '4');
+                aText.setAttribute('font', 'dejavu');
+                aText.setAttribute('shader', 'msdf');
+                aText.setAttribute('negate', 'false');
                 aImg.appendChild(aText);
 
                 if (isLeft) {
@@ -631,7 +635,8 @@
 
                 // Dynamically update position relative to final aspect ratio calculations
                 if (obj.txt) {
-                  obj.txt.setAttribute('position', `0 ${(obj.calculatedHeight / 2) + 0.25} 0.01`);
+                  // Raised slightly to 0.35 to clear widescreen/portrait asset margins perfectly
+                  obj.txt.setAttribute('position', `0 ${(obj.calculatedHeight / 2) + 0.35} 0.05`);
                 }
               }
             })
