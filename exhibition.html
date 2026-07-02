@@ -477,7 +477,7 @@
             }
           });
 
-          connectionStatus.innerText = "Connecting Live Feed...";
+          connectionStatus.innerText = "Connecting to Live Exhibition...";
 
           fetch(LIVE_GET_API_URL)
             .then(res => res.json())
@@ -575,7 +575,7 @@
             })
             .catch(err => {
               console.error("Live fetch failed:", err);
-              document.getElementById('connection-status').innerText = "Error syncing submissions with Google Sheet.";
+              document.getElementById('connection-status').innerText = "Error occured Please refresh your page.";
             });
         }
       });
