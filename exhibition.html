@@ -600,8 +600,8 @@
               function checkProcessingComplete() {
                 processedCount++;
                 if (processedCount === totalToProcess) {
-                  rearrangeTrackAfterUpdates(window.leftTrackItems, '-3', '0 90 0', 'left');
-                  rearrangeTrackAfterUpdates(window.rightTrackItems, '3', '0 -90 0', 'right');
+                  rearrangeTrackAfterUpdates(window.leftTrackItems, '-3', '0 90 0', 'left', true);
+                  rearrangeTrackAfterUpdates(window.rightTrackItems, '3', '0 -90 0', 'right', true);
 
                   connectionStatus.style.display = "none";
                   modeSelectionArea.style.display = "block";
