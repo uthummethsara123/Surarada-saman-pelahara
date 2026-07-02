@@ -191,7 +191,7 @@
       #guideDisplayModal {
         position: fixed;
         top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(15, 23, 42, 0.95);
+        background: #480714f0;
         z-index: 99999;
         display: none;
         align-items: center;
@@ -200,7 +200,7 @@
         box-sizing: border-box;
       }
       .guide-card {
-        background: #1e293b;
+        background: #480714;
         border: 2px solid #f59e0b;
         padding: 25px;
         border-radius: 16px;
@@ -1104,77 +1104,6 @@ if (isMobile) {
 
         mobileInfoBtn.addEventListener('click', () => {
           openModalGuide(chosenMobileContext);
-        });
-      }
-
-      // ==========================================================
-      // OPTION 1: AR MODE ACTION LOGIC CHAIN
-      // ==========================================================
-      if (selectArBtn) {
-        selectArBtn.addEventListener('click', () => {
-          if (selectArBtn.disabled) return;
-          isBasicOptionActive = false; 
-          if (overlay) overlay.style.display = 'none';
-          
-          if (isMobile) {
-            if (moveHint) moveHint.style.display = 'none';
-            if (mobileNavPad) mobileNavPad.style.display = 'block';
-            if (mainCamera) mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: true; touchEnabled: false;');
-            forceSceneClearTransparency();
-            activateMobilePermissions();
-            
-            // Show Mobile AR Specific dialog box
-            chosenMobileContext = 'mobile-ar';
-            openModalGuide('mobile-ar');
-          } else {
-            if (scene) scene.style.backgroundColor = "#540818";
-            if (hudStatus) hudStatus.style.display = 'block';
-            if (moveHint) {
-              moveHint.innerHTML = "Click screen to lock cursor and start exploring!";
-              moveHint.style.display = 'block';
-            }
-            if (mainCamera) mainCamera.setAttribute('look-controls', 'touchEnabled: true;');
-            
-            // Show Laptop guide directly on desktop confirmation
-            openModalGuide('laptop');
-          }
-        });
-      }
-
-      // ==========================================================
-      // OPTION 2: BASIC MODE ACTION LOGIC CHAIN
-      // ==========================================================
-      if (selectBasicBtn) {
-        selectBasicBtn.addEventListener('click', () => {
-          isBasicOptionActive = true; 
-          if (overlay) overlay.style.display = 'none';
-          
-          if (isMobile) {
-            if (moveHint) moveHint.style.display = 'none';
-            if (mobileNavPad) mobileNavPad.style.display = 'block';
-            
-            if (mainCamera) {
-              mainCamera.removeAttribute('look-controls');
-              mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: false; touchEnabled: true;');
-            }
-            if (nativeVideo) nativeVideo.style.display = 'none';
-            if (scene) scene.style.backgroundColor = "#540818";
-            
-            // Show Mobile Basic Navigation instructions modal
-            chosenMobileContext = 'mobile-basic';
-            openModalGuide('mobile-basic');
-          } else {
-            if (scene) scene.style.backgroundColor = "#540818";
-            if (hudStatus) hudStatus.style.display = 'block';
-            if (moveHint) {
-              moveHint.innerHTML = "Click screen to lock cursor and start exploring!";
-              moveHint.style.display = 'block';
-            }
-            if (mainCamera) mainCamera.setAttribute('look-controls', 'touchEnabled: true;');
-            
-            // Show Laptop Guide for desktop
-            openModalGuide('laptop');
-          }
         });
       }
     </script>
