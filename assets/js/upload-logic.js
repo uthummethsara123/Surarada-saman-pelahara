@@ -4,7 +4,7 @@ const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oG
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
 // Use standard hyphens instead of dots so browsers can read it cleanly
-const START_DATE = new Date("2026-07-02T11:50:00").getTime();
+const START_DATE = new Date("2026-07-26T11:55:00").getTime();
 // Admin: Extend this date forward whenever you want to grant extra submission time
 const DEADLINE_DATE = new Date("2026-07-27T02:00:00").getTime();
 
@@ -180,7 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let targetTime = START_DATE;
         if (isNaN(targetTime)) {
             // Fallback default if the date variable above has formatting issues
-            targetTime = new Date("2026-07-02T11:50:00").getTime();
+            targetTime = START_DATE;
         }
 
         // 1. If current time is BEFORE the portal opening time, show the box with dynamic text
@@ -294,23 +294,6 @@ const runTimelineEngine = () => {
 
     const isCurrentlyUploading = submitBtn && submitBtn.disabled === true;
     const initialSubmissionDetected = localStorage.getItem("submittedUploadEmail") !== null;
-
-    // Inject/Update the official announcement message box directly at the top of the main form wrapper card
-    if (formWrapper) {
-        let infoBox = formWrapper.querySelector('.official-portal-announcement');
-        if (!infoBox) {
-            infoBox = document.createElement('div');
-            infoBox.className = 'official-portal-announcement text-center mb-4 p-3 rounded fw-bold w-100';
-            // Custom blue opacity themed style to look native to your glass theme
-            infoBox.style.backgroundColor = 'rgba(56, 189, 248, 0.1)'; 
-            infoBox.style.border = '1px solid rgba(56, 189, 248, 0.2)';
-            infoBox.style.color = '#38bdf8';
-            infoBox.style.fontSize = '0.95rem';
-            // Insert it as the absolute first item inside the form container box
-            formWrapper.insertBefore(infoBox, formWrapper.firstChild);
-        }
-        infoBox.innerHTML = `<i class="fas fa-calendar-alt me-2"></i>Submission portal opens in July 26th at 12.00am`;
-    }
 
     // RULE 1: Handle users who have already submitted previously
     if (initialSubmissionDetected) {
