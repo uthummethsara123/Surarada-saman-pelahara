@@ -4,7 +4,7 @@ const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oG
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
 // Use standard hyphens instead of dots so browsers can read it cleanly
-const START_DATE = new Date("2026-07-02T11:58:00").getTime();
+const START_DATE = new Date("2026-07-02T12:02:00").getTime();
 // Admin: Extend this date forward whenever you want to grant extra submission time
 const DEADLINE_DATE = new Date("2026-07-27T02:00:00").getTime();
 
@@ -171,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Inject/Update the official announcement message box directly at the top of the main form wrapper card
+        // Inject/Update the official announcement message box directly at the top of the main form wrapper card
     if (formWrapper) {
         let infoBox = formWrapper.querySelector('.official-portal-announcement');
         const currentTime = Date.now();
@@ -185,8 +185,8 @@ document.addEventListener("DOMContentLoaded", () => {
             processedStartDate = START_DATE.getTime();
         }
 
-        // Fallback safety if the variable configuration is empty or corrupted
-        const finalStartTime = (isNaN(processedStartDate) || !processedStartTime) ? Date.now() : processedStartDate;
+        // FIXED TYPO HERE: Changed !processedStartTime to !processedStartDate
+        const finalStartTime = (isNaN(processedStartDate) || !processedStartDate) ? Date.now() : processedStartDate;
 
         // 2. Condition check: If the real-world clock is before the start time, show and update the box
         if (currentTime < finalStartTime) {
