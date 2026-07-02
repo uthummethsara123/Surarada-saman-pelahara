@@ -52,7 +52,7 @@ styleSheet.innerText = `
         stroke-width: 3.5;
         stroke-dasharray: 88;
         stroke-dashoffset: 88;
-        /* Removed CSS transition to allow ultra-smooth requestAnimationFrame updates without stuttering */
+        transition: stroke-dashoffset 0.2s ease;
     }
     .upload-success-tick {
         color: #10b981 !important;
@@ -63,35 +63,6 @@ styleSheet.innerText = `
     }
 `;
 document.head.appendChild(styleSheet);
-
-// Reusable promise-driven fluid animation engine for the circle progress bar
-const animateCircleSmoothly = (circleBar, duration) => {
-    return new Promise((resolve) => {
-        if (!circleBar) {
-            resolve();
-            return;
-        }
-        const startOffset = 88; // 0% progress
-        const endOffset = 0;    // 100% progress
-        const startTime = performance.now();
-
-        function frame(now) {
-            const elapsed = now - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            
-            // Linear mathematical interpolation for flawless frame rendering
-            const currentOffset = startOffset - (startOffset - endOffset) * progress;
-            circleBar.style.strokeDashoffset = currentOffset;
-
-            if (progress < 1) {
-                requestAnimationFrame(frame);
-            } else {
-                resolve();
-            }
-        }
-        requestAnimationFrame(frame);
-    });
-};
 
 document.addEventListener("DOMContentLoaded", () => {
     const uploadForm = document.getElementById('uploadForm');
@@ -200,142 +171,135 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (uploadForm) {
-    uploadForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const participantEmail = emailField.value.trim();
-        const participantName = document.getElementById('participantName').value.trim();
-        const schoolName = document.getElementById('schoolName').value.trim(); 
-        const competitionScope = document.getElementById('competitionScope').value;
+        uploadForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const participantEmail = emailField.value.trim();
+            const participantName = document.getElementById('participantName').value.trim();
+            const schoolName = document.getElementById('schoolName').value.trim(); 
+            const competitionScope = document.getElementById('competitionScope').value;
 
-        submitBtn.disabled = true;
-        submitBtn.innerText = "Processing Files 1 by 1...";
-        feedback.className = "text-center mt-3 text-warning";
-        feedback.innerText = "Starting transmission...";
-        feedback.classList.remove('d-none');
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Processing Files 1 by 1...";
+            feedback.className = "text-center mt-3 text-warning";
+            feedback.innerText = "Starting transmission...";
+            feedback.classList.remove('d-none');
 
-        uploadForm.classList.remove("late-flashing-container");
-        const timerBox = document.querySelector('.countdown-container');
-        if (timerBox) timerBox.classList.remove("late-flashing-container");
+            // Strip out flash classes immediately once upload begins
+            uploadForm.classList.remove("late-flashing-container");
+            const timerBox = document.querySelector('.countdown-container');
+            if (timerBox) timerBox.classList.remove("late-flashing-container");
 
-        const toBase64 = file => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result.split(',')[1]);
-            reader.onerror = error => reject(error);
-        });
+            const toBase64 = file => new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
 
-        const fileInputs = document.querySelectorAll('.preview-trigger');
-        
-        try {
-            const safeName = participantName.replace(/[^a-zA-Z0-9]/g, "_");
+            const fileInputs = document.querySelectorAll('.preview-trigger');
+            
+            try {
+                const safeName = participantName.replace(/[^a-zA-Z0-9]/g, "_");
 
-            // Sequentially process files 1 by 1
-            for (let input of fileInputs) {
-                if (input.files.length > 0) {
-                    const file = input.files[0];
-                    const targetId = input.name;
+                // Sequentially process files 1 by 1
+                for (let input of fileInputs) {
+                    if (input.files.length > 0) {
+                        const file = input.files[0];
+                        const targetId = input.name;
 
-                    const parentWrapperRow = document.getElementById("wrapper_" + targetId);
-                    if (parentWrapperRow) {
-                        parentWrapperRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // Auto-scroll context to current active asset row
+                        const parentWrapperRow = document.getElementById("wrapper_" + targetId);
+                        if (parentWrapperRow) {
+                            parentWrapperRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+
+                        feedback.innerText = `Uploading ${targetId.split('_')[0]} item asset...`;
+                        
+                        const circleContainer = document.getElementById(`circle_container_${targetId}`);
+                        const circleBar = document.getElementById(`circle_bar_${targetId}`);
+                        
+                        if(circleContainer) circleContainer.classList.remove('d-none');
+                        if(circleBar) circleBar.style.strokeDashoffset = "55"; 
+                        
+                        const base64Str = await toBase64(file);
+                        if(circleBar) circleBar.style.strokeDashoffset = "25"; 
+                        
+                        const customTitleInput = document.getElementById("title_" + targetId);
+                        let finalizedTitle = customTitleInput && customTitleInput.value.trim() ? customTitleInput.value.trim() : "untitled";
+                        
+                        finalizedTitle = finalizedTitle.replace(/[^a-zA-Z0-9_\-\s]/g, "");
+                        const cleanRawTitleForSheet = finalizedTitle;
+                        const extension = file.name.substring(file.name.lastIndexOf('.')) || ".jpg";
+                        finalizedTitle += extension;
+
+                        const itemPayload = {
+                            action: "submitUpload",
+                            participantEmail: participantEmail,
+                            participantName: participantName,
+                            certificateName: document.getElementById('certificateName').value.trim(),
+                            schoolName: schoolName,
+                            competitionScope: competitionScope,
+                            files: [{
+                                category: targetId.split('_')[0],
+                                rawTitle: cleanRawTitleForSheet.replace(/\s+/g, "_"), 
+                                filename: `${safeName}_${targetId}_${finalizedTitle.replace(/\s+/g, "_")}`,
+                                mimeType: file.type,
+                                bytes: base64Str
+                            }]
+                        };
+
+                        await fetch(SUBMISSION_API_URL, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify(itemPayload)
+                        });
+
+                        // Clear circle spinner and activate tick
+                        if(circleBar) circleBar.style.strokeDashoffset = "0";
+                        if(circleContainer) circleContainer.classList.add('d-none');
+                        
+                        const successTick = document.getElementById(`tick_${targetId}`);
+                        if(successTick) successTick.style.display = 'inline-block';
                     }
-
-                    feedback.innerText = `Uploading ${targetId.split('_')[0]} item asset...`;
-                    
-                    const circleContainer = document.getElementById(`circle_container_${targetId}`);
-                    const circleBar = document.getElementById(`circle_bar_${targetId}`);
-                    const successTick = document.getElementById(`tick_${targetId}`);
-                    
-                    if(circleContainer) circleContainer.classList.remove('d-none');
-                    if(circleBar) circleBar.style.strokeDashoffset = "55"; 
-                    if(successTick) successTick.style.display = 'none'; // Ensure reset
-                    
-                    const base64Str = await toBase64(file);
-                    if(circleBar) circleBar.style.strokeDashoffset = "25"; 
-                    
-                    const customTitleInput = document.getElementById("title_" + targetId);
-                    let finalizedTitle = customTitleInput && customTitleInput.value.trim() ? customTitleInput.value.trim() : "untitled";
-                    
-                    finalizedTitle = finalizedTitle.replace(/[^a-zA-Z0-9_\-\s]/g, "");
-                    const cleanRawTitleForSheet = finalizedTitle;
-                    const extension = file.name.substring(file.name.lastIndexOf('.')) || ".jpg";
-                    finalizedTitle += extension;
-
-                    const itemPayload = {
-                        action: "submitUpload",
-                        participantEmail: participantEmail,
-                        participantName: participantName,
-                        certificateName: document.getElementById('certificateName').value.trim(),
-                        schoolName: schoolName,
-                        competitionScope: competitionScope,
-                        files: [{
-                            category: targetId.split('_')[0],
-                            rawTitle: cleanRawTitleForSheet.replace(/\s+/g, "_"),
-                            filename: `${safeName}_${targetId}_${finalizedTitle.replace(/\s+/g, "_")}`,
-                            mimeType: file.type,
-                            bytes: base64Str
-                        }]
-                    };
-
-                    // Send with standard CORS handling to parse the return payload accurately
-                    const response = await fetch(SUBMISSION_API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify(itemPayload)
-                    });
-
-                    const resultText = await response.text();
-                    let result;
-                    try {
-                        result = JSON.parse(resultText);
-                    } catch(e) {
-                        result = { status: "error" };
-                    }
-
-                    // Check if the script reported success or failed explicitly
-                    if (!response.ok || result.status === "error" || result.result === "error") {
-                        throw new Error(`Server side rejection uploading: ${targetId}`);
-                    }
-
-                    // Success confirm: remove loading circle indicator and show green checkmark
-                    if(circleBar) circleBar.style.strokeDashoffset = "0";
-                    if(circleContainer) circleContainer.classList.add('d-none');
-                    if(successTick) successTick.style.display = 'inline-block';
                 }
+
+                localStorage.setItem("submittedUploadEmail", participantEmail);
+                localStorage.setItem("submittedUploadName", participantName);
+
+                uploadForm.reset();
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Upload & Submit Portfolio";
+                feedback.classList.add('d-none');
+
+                uploadForm.classList.add("d-none");
+                uploadDashboard.classList.remove("d-none");
+
+                // Auto scroll to success checkmark view dashboard card
+                if (uploadDashboard) {
+                    uploadDashboard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
+                const completionTimestamp = new Date().getTime();
+                if (completionTimestamp >= DEADLINE_DATE) {
+                    completedAfterDeadline = true;
+                } else {
+                    completedAfterDeadline = false;
+                }
+
+                userIsActivelyWorking = false; 
+                submissionFinishedTime = completionTimestamp;
+
+            } catch (err) {
+                console.error(err);
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Upload & Submit Portfolio";
+                feedback.className = "text-center mt-3 text-danger fw-bold";
+                feedback.innerText = "Upload failed. Please check your connection.";
             }
-
-            localStorage.setItem("submittedUploadEmail", participantEmail);
-            localStorage.setItem("submittedUploadName", participantName);
-            uploadForm.reset();
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Upload & Submit Portfolio";
-            feedback.classList.add('d-none');
-            uploadForm.classList.add("d-none");
-            uploadDashboard.classList.remove("d-none");
-
-            if (uploadDashboard) {
-                uploadDashboard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-
-            const completionTimestamp = new Date().getTime();
-            if (completionTimestamp >= DEADLINE_DATE) {
-                completedAfterDeadline = true;
-            } else {
-                completedAfterDeadline = false;
-            }
-            userIsActivelyWorking = false;
-            submissionFinishedTime = completionTimestamp;
-
-        } catch (err) {
-            console.error(err);
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Upload & Submit Portfolio";
-            feedback.className = "text-center mt-3 text-danger fw-bold";
-            feedback.innerText = "Upload encountered an issue. Real database entry was not verified.";
-        }
-    });
-}
+        });
+    }
 
     if (triggerDeleteBtn && uploadModalObj) {
         triggerDeleteBtn.addEventListener("click", () => {
@@ -350,8 +314,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!currentActiveKey) return;
 
             confirmDeletionBtn.disabled = true;
-            // Inject an elegant visual spinner directly inside the action button for responsive visual confirmation
-            confirmDeletionBtn.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i>Deleting submission records...`;
+            confirmDeletionBtn.innerText = "Deleting previous Submission...";
 
             const delPayload = {
                 action: "deleteUpload",
@@ -515,7 +478,7 @@ const runTimelineEngine = () => {
         if (uploadForm) {
             uploadForm.innerHTML = ""; 
             uploadForm.classList.add('d-none');
-            }
+        }
         if (uploadDashboard) {
             uploadDashboard.classList.add('d-none');
         }
