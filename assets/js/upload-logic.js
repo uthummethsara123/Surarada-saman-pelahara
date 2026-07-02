@@ -175,9 +175,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (formWrapper) {
         let infoBox = formWrapper.querySelector('.official-portal-announcement');
         const currentTime = Date.now();
+        const targetTime = new Date(START_DATE).getTime();
 
         // 1. Before portal open time: Show the box with the dynamic variable date
-        if (currentTime < START_DATE) {
+        if (currentTime < targetTime) {
             if (!infoBox) {
                 infoBox = document.createElement('div');
                 infoBox.className = 'official-portal-announcement text-center mb-4 p-3 rounded fw-bold w-100';
@@ -188,18 +189,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 formWrapper.insertBefore(infoBox, formWrapper.firstChild);
             }
             
-            const openingDateTime = new Date(START_DATE);
+            const openingDateTime = new Date(targetTime);
             const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            const monthName = months[openingDateTime.getMonth()];
-            const dayNum = openingDateTime.getDate();
+            const monthName = months[openingDateTime.getUTCMonth()];
+            const dayNum = openingDateTime.getUTCDate();
             
             let daySuffix = "th";
             if (dayNum % 10 === 1 && dayNum !== 11) daySuffix = "st";
             else if (dayNum % 10 === 2 && dayNum !== 12) daySuffix = "nd";
             else if (dayNum % 10 === 3 && dayNum !== 13) daySuffix = "rd";
 
-            let hours = openingDateTime.getHours();
-            const minutes = String(openingDateTime.getMinutes()).padStart(2, '0');
+            let hours = openingDateTime.getUTCHours();
+            const minutes = String(openingDateTime.getUTCMinutes()).padStart(2, '0');
             const ampm = hours >= 12 ? 'pm' : 'am';
             hours = hours % 12;
             hours = hours ? hours : 12; 
