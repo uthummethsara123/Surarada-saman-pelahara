@@ -3,8 +3,7 @@ const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oG
 // ==========================================================
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
-// Standardized from 24:00:00 to 00:00:00 to prevent NaN browser parsing errors
-const START_DATE = new Date("2026-07-02T08:00:00").getTime();
+const START_DATE = new Date("2026-07-22T08:00:00").getTime();
 // Admin: Extend this date forward whenever you want to grant extra submission time
 const DEADLINE_DATE = new Date("2026-07-27T02:00:00").getTime();
 
@@ -53,7 +52,7 @@ styleSheet.innerText = `
         stroke-width: 3.5;
         stroke-dasharray: 88;
         stroke-dashoffset: 88;
-        transition: stroke-dashoffset 0.2s ease;
+        /* Removed CSS transition to allow ultra-smooth requestAnimationFrame updates without stuttering */
     }
     .upload-success-tick {
         color: #10b981 !important;
@@ -64,6 +63,35 @@ styleSheet.innerText = `
     }
 `;
 document.head.appendChild(styleSheet);
+
+// Reusable promise-driven fluid animation engine for the circle progress bar
+const animateCircleSmoothly = (circleBar, duration) => {
+    return new Promise((resolve) => {
+        if (!circleBar) {
+            resolve();
+            return;
+        }
+        const startOffset = 88; // 0% progress
+        const endOffset = 0;    // 100% progress
+        const startTime = performance.now();
+
+        function frame(now) {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Linear mathematical interpolation for flawless frame rendering
+            const currentOffset = startOffset - (startOffset - endOffset) * progress;
+            circleBar.style.strokeDashoffset = currentOffset;
+
+            if (progress < 1) {
+                requestAnimationFrame(frame);
+            } else {
+                resolve();
+            }
+        }
+        requestAnimationFrame(frame);
+    });
+};
 
 document.addEventListener("DOMContentLoaded", () => {
     const uploadForm = document.getElementById('uploadForm');
@@ -199,11 +227,12 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             const fileInputs = document.querySelectorAll('.preview-trigger');
+            const accumulatedFiles = [];
             
             try {
                 const safeName = participantName.replace(/[^a-zA-Z0-9]/g, "_");
 
-                // Sequentially process files 1 by 1
+                // Sequentially animate and process files 1 by 1 visually
                 for (let input of fileInputs) {
                     if (input.files.length > 0) {
                         const file = input.files[0];
@@ -215,16 +244,18 @@ document.addEventListener("DOMContentLoaded", () => {
                             parentWrapperRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
 
-                        feedback.innerText = `Uploading ${targetId.split('_')[0]} item asset...`;
+                        feedback.innerText = `Processing ${targetId.split('_')[0]} item asset...`;
                         
                         const circleContainer = document.getElementById(`circle_container_${targetId}`);
                         const circleBar = document.getElementById(`circle_bar_${targetId}`);
                         
                         if(circleContainer) circleContainer.classList.remove('d-none');
-                        if(circleBar) circleBar.style.strokeDashoffset = "55"; 
+                        if(circleBar) circleBar.style.strokeDashoffset = "88"; 
                         
                         const base64Str = await toBase64(file);
-                        if(circleBar) circleBar.style.strokeDashoffset = "25"; 
+                        
+                        // Execute seamless visual circle fill from 0% to 100%
+                        await animateCircleSmoothly(circleBar, 1200);
                         
                         const customTitleInput = document.getElementById("title_" + targetId);
                         let finalizedTitle = customTitleInput && customTitleInput.value.trim() ? customTitleInput.value.trim() : "untitled";
@@ -234,32 +265,16 @@ document.addEventListener("DOMContentLoaded", () => {
                         const extension = file.name.substring(file.name.lastIndexOf('.')) || ".jpg";
                         finalizedTitle += extension;
 
-                        const itemPayload = {
-                            action: "submitUpload",
-                            participantEmail: participantEmail,
-                            participantName: participantName,
-                            certificateName: document.getElementById('certificateName').value.trim(),
-                            schoolName: schoolName,
-                            competitionScope: competitionScope,
-                            files: [{
-                                category: targetId.split('_')[0],
-                                rawTitle: cleanRawTitleForSheet.replace(/\s+/g, "_"), 
-                                filename: `${safeName}_${targetId}_${finalizedTitle.replace(/\s+/g, "_")}`,
-                                mimeType: file.type,
-                                bytes: base64Str
-                            }]
-                        };
-
-                        // FIXED: Mode changed to 'cors' to ensure true synchronous queueing 1-by-1
-                        await fetch(SUBMISSION_API_URL, {
-                            method: 'POST',
-                            mode: 'cors',
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                            body: JSON.stringify(itemPayload)
+                        // Store processed items into array instead of triggering immediate live API exposure
+                        accumulatedFiles.push({
+                            category: targetId.split('_')[0],
+                            rawTitle: cleanRawTitleForSheet.replace(/\s+/g, "_"), 
+                            filename: `${safeName}_${targetId}_${finalizedTitle.replace(/\s+/g, "_")}`,
+                            mimeType: file.type,
+                            bytes: base64Str
                         });
 
                         // Clear circle spinner and activate tick
-                        if(circleBar) circleBar.style.strokeDashoffset = "0";
                         if(circleContainer) circleContainer.classList.add('d-none');
                         
                         const successTick = document.getElementById(`tick_${targetId}`);
@@ -267,9 +282,30 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 }
 
+                // Fire exactly ONE network execution containing all files together to secure portfolio cleanly
+                if (accumulatedFiles.length > 0) {
+                    feedback.innerText = "Securing portfolio & transmitting directly to exhibition database...";
+                    
+                    const itemPayload = {
+                        action: "submitUpload",
+                        participantEmail: participantEmail,
+                        participantName: participantName,
+                        certificateName: document.getElementById('certificateName').value.trim(),
+                        schoolName: schoolName,
+                        competitionScope: competitionScope,
+                        files: accumulatedFiles
+                    };
+
+                    await fetch(SUBMISSION_API_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(itemPayload)
+                    });
+                }
+
                 localStorage.setItem("submittedUploadEmail", participantEmail);
                 localStorage.setItem("submittedUploadName", participantName);
-                localStorage.removeItem("userRequestedReupload"); // Clear deletion workaround tag on success
 
                 uploadForm.reset();
                 submitBtn.disabled = false;
@@ -317,7 +353,8 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!currentActiveKey) return;
 
             confirmDeletionBtn.disabled = true;
-            confirmDeletionBtn.innerText = "Deleting previous Submission...";
+            // Inject an elegant visual spinner directly inside the action button for responsive visual confirmation
+            confirmDeletionBtn.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i>Deleting submission records...`;
 
             const delPayload = {
                 action: "deleteUpload",
@@ -326,18 +363,15 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             try {
-                // FIXED: Mode changed to 'cors' to synchronize live deletion execution status cleanly
                 await fetch(SUBMISSION_API_URL, {
                     method: 'POST',
-                    mode: 'cors',
+                    mode: 'no-cors',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(delPayload)
                 });
 
                 localStorage.removeItem("submittedUploadEmail");
                 localStorage.removeItem("submittedUploadName");
-                // Workaround flag to ensure timeline engine doesn't snap hide the live dashboard form immediately
-                localStorage.setItem("userRequestedReupload", "true");
 
                 submissionFinishedTime = null;
                 userIsActivelyWorking = false;
@@ -376,11 +410,10 @@ const runTimelineEngine = () => {
     const countdownContainer = document.querySelector(".countdown-container");
     const timerTitle = document.querySelector(".timer-title");
     const submitBtn = document.getElementById('uploadSubmitBtn');
-    const formWrapper = document.querySelector(".form-wrapper");
+    const formWrapper = document.querySelector(".form-wrapper"); // Target the main form container box
 
     const isCurrentlyUploading = submitBtn && submitBtn.disabled === true;
     const initialSubmissionDetected = localStorage.getItem("submittedUploadEmail") !== null;
-    const isReuploading = localStorage.getItem("userRequestedReupload") === "true";
 
     // Inject/Update the official announcement message box directly at the top of the main form wrapper card
     if (formWrapper) {
@@ -388,10 +421,12 @@ const runTimelineEngine = () => {
         if (!infoBox) {
             infoBox = document.createElement('div');
             infoBox.className = 'official-portal-announcement text-center mb-4 p-3 rounded fw-bold w-100';
+            // Custom blue opacity themed style to look native to your glass theme
             infoBox.style.backgroundColor = 'rgba(56, 189, 248, 0.1)'; 
             infoBox.style.border = '1px solid rgba(56, 189, 248, 0.2)';
             infoBox.style.color = '#38bdf8';
             infoBox.style.fontSize = '0.95rem';
+            // Insert it as the absolute first item inside the form container box
             formWrapper.insertBefore(infoBox, formWrapper.firstChild);
         }
         infoBox.innerHTML = `<i class="fas fa-calendar-alt me-2"></i>Submission portal opens in July 26th at 12.00am`;
@@ -410,7 +445,7 @@ const runTimelineEngine = () => {
             if (secondsEl) secondsEl.innerText = "00";
             
             if (uploadForm) {
-                // FIXED: Changed from innerHTML="" to classList.add('d-none') so uniform form text doesn't disappear
+                uploadForm.innerHTML = ""; 
                 uploadForm.classList.add('d-none');
             }
             if (uploadDashboard) uploadDashboard.classList.add('d-none');
@@ -481,9 +516,9 @@ const runTimelineEngine = () => {
         if (secondsEl) secondsEl.innerText = "00";
         
         if (uploadForm) {
-            // FIXED: Changed from innerHTML="" to classList.add('d-none') so uniform form text doesn't disappear
+            uploadForm.innerHTML = ""; 
             uploadForm.classList.add('d-none');
-        }
+            }
         if (uploadDashboard) {
             uploadDashboard.classList.add('d-none');
         }
@@ -506,13 +541,7 @@ const runTimelineEngine = () => {
     if (!hoursEl || !minutesEl || !secondsEl) return;
 
     if (now < START_DATE) {
-        // FIXED: Allows user to interact with the input form when doing a live delete and re-upload reset
-        if (isReuploading) {
-            if (uploadForm) uploadForm.classList.remove('d-none');
-            if (uploadDashboard) uploadDashboard.classList.add('d-none');
-        } else {
-            if (uploadForm) uploadForm.classList.add('d-none');
-        }
+        if (uploadForm) uploadForm.classList.add('d-none');
         if (countdownContainer) countdownContainer.classList.remove('d-none');
         
         const timeToOpen = START_DATE - now;
