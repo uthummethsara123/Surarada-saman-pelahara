@@ -186,6 +186,39 @@
       window.loadedImageUrls = new Set();
       window.totalImagesProcessed = 0;
 
+      // Helper function to format author name: if length > 10 characters, split into 2 lines near middle space
+      function formatAuthorName(name) {
+        if (!name) return "Unknown";
+        if (name.length <= 10) return name;
+        
+        // Find all space indexes to split near the middle
+        const spaces = [];
+        for (let i = 0; i < name.length; i++) {
+          if (name[i] === ' ') spaces.push(i);
+        }
+        
+        if (spaces.length === 0) {
+          // Fallback if no spaces exist: forced middle truncation split
+          const mid = Math.ceil(name.length / 2);
+          return name.substring(0, mid) + '\n' + name.substring(mid);
+        }
+        
+        // Pick the space closest to the exact mathematical center character
+        const center = name.length / 2;
+        let bestSpaceIdx = spaces[0];
+        let minDiff = Math.abs(spaces[0] - center);
+        
+        for (let i = 1; i < spaces.length; i++) {
+          let diff = Math.abs(spaces[i] - center);
+          if (diff < minDiff) {
+            minDiff = diff;
+            bestSpaceIdx = spaces[i];
+          }
+        }
+        
+        return name.substring(0, bestSpaceIdx) + '\n' + name.substring(bestSpaceIdx + 1);
+      }
+
       window.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) {
           window.galleryState.isUserTouching = true;
@@ -382,6 +415,15 @@
                 if (isLeft) {
                   aImg.setAttribute('material', 'side: double');
                 }
+
+                // Create text component for Author Name attached relative to the image frame
+                let aText = document.createElement('a-text');
+                aText.setAttribute('value', formatAuthorName(imgData.participantName));
+                aText.setAttribute('align', 'center');
+                aText.setAttribute('color', '#ffffff');
+                aText.setAttribute('width', '3');
+                aText.setAttribute('font', 'kalyani'); // standard high contrast clean font
+                aImg.appendChild(aText);
                 
                 let newObj = { item: aImg, asset: imgAsset };
                 
@@ -402,6 +444,9 @@
                   
                   aImg.setAttribute('width', newObj.calculatedWidth);
                   aImg.setAttribute('height', newObj.calculatedHeight);
+
+                  // Position label cleanly just above top edge bounds of this specific image aspect ratio
+                  aText.setAttribute('position', `0 ${(newObj.calculatedHeight / 2) + 0.25} 0.01`);
                   
                   sceneEl.appendChild(aImg);
                   trackArray.push(newObj);
@@ -477,7 +522,7 @@
             }
           });
 
-          connectionStatus.innerText = "Connecting to Live Exhibition...";
+          connectionStatus.innerText = "Connecting Live Feed...";
 
           fetch(LIVE_GET_API_URL)
             .then(res => res.json())
@@ -506,9 +551,21 @@
                 
                 if (isLeft) {
                   aImg.setAttribute('material', 'side: double');
-                  window.leftTrackItems.push({ item: aImg, asset: imgAsset });
+                }
+
+                // Add text label for initial load images
+                let aText = document.createElement('a-text');
+                aText.setAttribute('value', formatAuthorName(imgData.participantName));
+                aText.setAttribute('align', 'center');
+                aText.setAttribute('color', '#ffffff');
+                aText.setAttribute('width', '3');
+                aText.setAttribute('font', 'kalyani');
+                aImg.appendChild(aText);
+
+                if (isLeft) {
+                  window.leftTrackItems.push({ item: aImg, asset: imgAsset, txt: aText });
                 } else {
-                  window.rightTrackItems.push({ item: aImg, asset: imgAsset });
+                  window.rightTrackItems.push({ item: aImg, asset: imgAsset, txt: aText });
                 }
 
                 sceneEl.appendChild(aImg);
@@ -571,11 +628,16 @@
                 
                 obj.item.setAttribute('width', obj.calculatedWidth);
                 obj.item.setAttribute('height', obj.calculatedHeight);
+
+                // Dynamically update position relative to final aspect ratio calculations
+                if (obj.txt) {
+                  obj.txt.setAttribute('position', `0 ${(obj.calculatedHeight / 2) + 0.25} 0.01`);
+                }
               }
             })
             .catch(err => {
               console.error("Live fetch failed:", err);
-              document.getElementById('connection-status').innerText = "Error occured Please refresh your page.";
+              document.getElementById('connection-status').innerText = "Error syncing submissions with Google Sheet.";
             });
         }
       });
