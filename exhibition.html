@@ -423,8 +423,8 @@
                 aText.setAttribute('value', formatAuthorName(rawAuthorName));
                 aText.setAttribute('align', 'center');
                 aText.setAttribute('color', '#000000');
-                aText.setAttribute('width', '4'); // Made slightly wider for readability
-                aText.setAttribute('font', 'aileron'); // Uses system default high-density crisp font
+                aText.setAttribute('width', '1.8'); // Made slightly wider for readability
+                aText.setAttribute('font', 'dejavu'); // Uses system default high-density crisp font
                 aText.setAttribute('shader', 'msdf');
                 aText.setAttribute('negate', 'false');
                 aImg.appendChild(aText);
@@ -450,7 +450,7 @@
                   aImg.setAttribute('height', newObj.calculatedHeight);
 
                   // Position label cleanly just above top edge bounds of this specific image aspect ratio
-                  aText.setAttribute('position', `0 ${(newObj.calculatedHeight / 2) + 0.25} 0.01`);
+                  aText.setAttribute('position', `0 ${(newObj.calculatedHeight / 2) + 0.12} 0.1`);
                   
                   sceneEl.appendChild(aImg);
                   trackArray.push(newObj);
@@ -564,8 +564,8 @@
                 aText.setAttribute('value', formatAuthorName(rawInitialAuthorName));
                 aText.setAttribute('align', 'center');
                 aText.setAttribute('color', '#000000');
-                aText.setAttribute('width', '4');
-                aText.setAttribute('font', 'aileron');
+                aText.setAttribute('width', '1.8');
+                aText.setAttribute('font', 'dejavu');
                 aText.setAttribute('shader', 'msdf');
                 aText.setAttribute('negate', 'false');
                 aImg.appendChild(aText);
@@ -637,10 +637,9 @@
                 obj.item.setAttribute('width', obj.calculatedWidth);
                 obj.item.setAttribute('height', obj.calculatedHeight);
 
-                // Dynamically update position relative to final aspect ratio calculations
                 if (obj.txt) {
-                  // Raised slightly to 0.35 to clear widescreen/portrait asset margins perfectly
-                  obj.txt.setAttribute('position', `0 ${(obj.calculatedHeight / 2) + 0.35} 0.05`);
+                  // Reduced height offset to 0.12 so the smaller text sits closer to the top border frame
+                  obj.txt.setAttribute('position', `0 ${(obj.calculatedHeight / 2) + 0.12} 0.1`);
                 }
               }
             })
