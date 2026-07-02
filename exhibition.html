@@ -418,7 +418,9 @@
 
                 // Create text component for Author Name attached relative to the image frame
                 let aText = document.createElement('a-text');
-                aText.setAttribute('value', formatAuthorName(imgData.participantName));
+                // Replace the old setting line with this smart multi-key lookup fallback:
+                let rawAuthorName = imgData.participantName || imgData.name || imgData.author || "Participant";
+                aText.setAttribute('value', formatAuthorName(rawAuthorName));
                 aText.setAttribute('align', 'center');
                 aText.setAttribute('color', '#000000');
                 aText.setAttribute('width', '4'); // Made slightly wider for readability
@@ -557,7 +559,9 @@
 
                 // Add text label for initial load images
                 let aText = document.createElement('a-text');
-                aText.setAttribute('value', formatAuthorName(imgData.participantName));
+                // Replace the old setting line with this smart multi-key lookup fallback:
+                let rawInitialAuthorName = imgData.participantName || imgData.name || imgData.author || "Participant";
+                aText.setAttribute('value', formatAuthorName(rawInitialAuthorName));
                 aText.setAttribute('align', 'center');
                 aText.setAttribute('color', '#000000');
                 aText.setAttribute('width', '4');
