@@ -295,150 +295,136 @@
             }
           });
 
-          connectionStatus.innerText = "Connecting Live Feed...";
-
-          // Clear any existing track items and image assets to safely support live deletions
-          document.querySelectorAll('[id^="live-img-"]').forEach(el => el.remove());
-          document.querySelectorAll('[conveyor-item]').forEach(el => el.remove());
-
-          fetch(LIVE_GET_API_URL)
-            .then(res => res.json())
-            .then(images => {
-              if(!images || images.length === 0) {
-                document.getElementById('overlay-desc').innerText = "No submitted pictures found in database yet.";
-                connectionStatus.innerText = "Gallery Empty";
-                return;
-              }
-
-              let leftTrackElements = [];
-              let rightTrackElements = [];
-
-              images.forEach((imgData, index) => {
-                let imgAsset = document.createElement('img');
-                imgAsset.setAttribute('id', `live-img-${index}`);
-                imgAsset.setAttribute('src', imgData.src);
-                imgAsset.setAttribute('crossorigin', 'anonymous');
-                assetsEl.appendChild(imgAsset);
-
-                let aImg = document.createElement('a-image');
-                let isLeft = index % 2 === 0;
-                
-                aImg.setAttribute('src', `#live-img-${index}`);
-                aImg.setAttribute('conveyor-item', `trackSide: ${isLeft ? 'left' : 'right'}`);
-                
-                // Add Name Label above each photo (with fixed wrapping/alignment to eliminate stretching)
-                let nameLabel = document.createElement('a-entity');
-                nameLabel.setAttribute('text', {
-                  value: imgData.name || `Participant ${index + 1}`,
-                  align: 'center',
-                  color: '#f59e0b',
-                  width: 3.5,
-                  wrapCount: 24,
-                  font: 'https://cdn.aframe.io/fonts/DejaVu-sdf.json'
-                });
-                aImg.appendChild(nameLabel);
-
-                if (isLeft) {
-                  aImg.setAttribute('material', 'side: double');
-                  leftTrackElements.push({ item: aImg, asset: imgAsset, label: nameLabel });
-                } else {
-                  rightTrackElements.push({ item: aImg, asset: imgAsset, label: nameLabel });
+          // Function encapsulated to re-run and listen to live updates continuously
+          const syncLiveExhibitionFeed = () => {
+            fetch(LIVE_GET_API_URL)
+              .then(res => res.json())
+              .then(images => {
+                if(!images || images.length === 0) {
+                  document.getElementById('overlay-desc').innerText = "No submitted pictures found in database yet.";
+                  connectionStatus.innerText = "Gallery Empty";
+                  return;
                 }
 
-                sceneEl.appendChild(aImg);
-              });
+                // If image length hasn't changed, skip DOM layout calculations to save performance
+                if (window.galleryState.currentImageLength === images.length) return;
+                window.galleryState.currentImageLength = images.length;
 
-              let processedCount = 0;
-              const totalToProcess = images.length;
+                // Clean up previous dynamically generated frames to prevent stacking duplicates
+                document.querySelectorAll('.dynamic-live-asset').forEach(el => el.remove());
+                document.querySelectorAll('.dynamic-live-frame').forEach(el => el.remove());
 
-              function checkProcessingComplete() {
-                processedCount++;
-                if (processedCount === totalToProcess) {
-                  arrangeTrackFluidly(leftTrackElements, '-3', '0 90 0', 'left');
-                  arrangeTrackFluidly(rightTrackElements, '3', '0 -90 0', 'right');
+                let leftTrackElements = [];
+                let rightTrackElements = [];
 
-                  connectionStatus.style.display = "none";
-                  modeSelectionArea.style.display = "block";
-                  
-                  const guideTextDiv = document.getElementById('loading-guide-text');
-                  if (guideTextDiv) {
-                    guideTextDiv.innerHTML = isMobile ? window.exhibitionGuides['mobile-loading'] : window.exhibitionGuides['laptop'];
+                images.forEach((imgData, index) => {
+                  let imgAsset = document.createElement('img');
+                  imgAsset.setAttribute('id', `live-img-${index}`);
+                  imgAsset.setAttribute('src', imgData.src);
+                  imgAsset.setAttribute('crossorigin', 'anonymous');
+                  imgAsset.className = 'dynamic-live-asset';
+                  assetsEl.appendChild(imgAsset);
+
+                  let aImg = document.createElement('a-image');
+                  aImg.className = 'dynamic-live-frame';
+                  let isLeft = index % 2 === 0;
+                  aImg.setAttribute('src', `#live-img-${index}`);
+                  aImg.setAttribute('conveyor-item', `trackSide: ${isLeft ? 'left' : 'right'}`);
+                  if (isLeft) {
+                    aImg.setAttribute('material', 'side: double');
+                    leftTrackElements.push({ item: aImg, asset: imgAsset });
+                  } else {
+                    rightTrackElements.push({ item: aImg, asset: imgAsset });
                   }
-                  
-                  checkHardwareGyroscope();
-                }
-              }
+                  sceneEl.appendChild(aImg);
+                });
 
-              [...leftTrackElements, ...rightTrackElements].forEach(obj => {
-                if (obj.asset.complete) {
-                  calculateTargetDimensions(obj);
-                  checkProcessingComplete();
-                } else {
-                  obj.asset.addEventListener('load', function() {
+                let processedCount = 0;
+                const totalToProcess = images.length;
+                function checkProcessingComplete() {
+                  processedCount++;
+                  if (processedCount === totalToProcess) {
+                    arrangeTrackFluidly(leftTrackElements, '-3', '0 90 0', 'left');
+                    arrangeTrackFluidly(rightTrackElements, '3', '0 -90 0', 'right');
+                    connectionStatus.style.display = "none";
+                    modeSelectionArea.style.display = "block";
+                    
+                    const guideTextDiv = document.getElementById('loading-guide-text');
+                    if (guideTextDiv) {
+                      guideTextDiv.innerHTML = isMobile ? window.exhibitionGuides['mobile-loading'] : window.exhibitionGuides['laptop'];
+                    }
+                    if (typeof checkHardwareGyroscope === 'function') checkHardwareGyroscope();
+                  }
+                }
+
+                // Load bindings
+                [...leftTrackElements, ...rightTrackElements].forEach(obj => {
+                  if (obj.asset.complete) {
                     calculateTargetDimensions(obj);
                     checkProcessingComplete();
+                  } else {
+                    obj.asset.addEventListener('load', function() {
+                      calculateTargetDimensions(obj);
+                      checkProcessingComplete();
+                    });
+                    obj.asset.addEventListener('error', function() {
+                      obj.calculatedWidth = 3.2;
+                      obj.calculatedHeight = 1.8;
+                      checkProcessingComplete();
+                    });
+                  }
+                });
+
+                function calculateTargetDimensions(obj) {
+                  let width = obj.asset.naturalWidth || 16;
+                  let height = obj.asset.naturalHeight || 9;
+                  let aspectRatio = width / height;
+                  let maxBoundaryWidth = 3.2;
+                  let maxBoundaryHeight = 1.8;
+                  if (aspectRatio > (maxBoundaryWidth / maxBoundaryHeight)) {
+                    obj.calculatedWidth = maxBoundaryWidth;
+                    obj.calculatedHeight = maxBoundaryWidth / aspectRatio;
+                  } else {
+                    obj.calculatedHeight = maxBoundaryHeight;
+                    obj.calculatedWidth = maxBoundaryHeight * aspectRatio;
+                  }
+                  obj.item.setAttribute('width', obj.calculatedWidth);
+                  obj.item.setAttribute('height', obj.calculatedHeight);
+                }
+
+                function arrangeTrackFluidly(elementsArray, xPos, rotation, sideName) {
+                  let currentZAccumulator = 0;
+                  let marginBetweenFrames = 0.8;
+                  elementsArray.forEach(obj => {
+                    currentZAccumulator += (obj.calculatedWidth / 2);
+                    obj.initialZ = currentZAccumulator;
+                    currentZAccumulator += (obj.calculatedWidth / 2) + marginBetweenFrames;
                   });
-                  obj.asset.addEventListener('error', function() {
-                    obj.calculatedWidth = 3.2;
-                    obj.calculatedHeight = 1.8;
-                    checkProcessingComplete();
+                  let totalSpan = currentZAccumulator;
+                  if (sideName === 'left') {
+                    window.galleryState.leftTrackMaxSpan = totalSpan;
+                  } else {
+                    window.galleryState.rightTrackMaxSpan = totalSpan;
+                  }
+                  elementsArray.forEach(obj => {
+                    let centeredZ = obj.initialZ - (totalSpan / 2);
+                    obj.item.setAttribute('position', `${xPos} 0 ${centeredZ}`);
+                    obj.item.setAttribute('rotation', rotation);
                   });
                 }
+              })
+              .catch(err => {
+                console.error("Live fetch failed:", err);
+                connectionStatus.innerText = "Error syncing submissions with Google Sheet.";
               });
+          };
 
-              function calculateTargetDimensions(obj) {
-                let width = obj.asset.naturalWidth || 16;
-                let height = obj.asset.naturalHeight || 9;
-                let aspectRatio = width / height;
+          // Initial execution on boot
+          connectionStatus.innerText = "Connecting Live Feed...";
+          syncLiveExhibitionFeed();
 
-                let maxBoundaryWidth = 3.2;
-                let maxBoundaryHeight = 1.8;
-
-                if (aspectRatio > (maxBoundaryWidth / maxBoundaryHeight)) {
-                  obj.calculatedWidth = maxBoundaryWidth;
-                  obj.calculatedHeight = maxBoundaryWidth / aspectRatio;
-                } else {
-                  obj.calculatedHeight = maxBoundaryHeight;
-                  obj.calculatedWidth = maxBoundaryHeight * aspectRatio;
-                }
-                
-                obj.item.setAttribute('width', obj.calculatedWidth);
-                obj.item.setAttribute('height', obj.calculatedHeight);
-
-                // Dynamically offset text position based on calculated image height bounds to look fully proportional
-                if (obj.label) {
-                  obj.label.setAttribute('position', `0 ${(obj.calculatedHeight / 2) + 0.25} 0.01`);
-                }
-              }
-
-              function arrangeTrackFluidly(elementsArray, xPos, rotation, sideName) {
-                let currentZAccumulator = 0;
-                let marginBetweenFrames = 0.8;
-
-                elementsArray.forEach(obj => {
-                  currentZAccumulator += (obj.calculatedWidth / 2);
-                  obj.initialZ = currentZAccumulator;
-                  currentZAccumulator += (obj.calculatedWidth / 2) + marginBetweenFrames;
-                });
-
-                let totalSpan = currentZAccumulator;
-                if (sideName === 'left') {
-                  window.galleryState.leftTrackMaxSpan = totalSpan;
-                } else {
-                  window.galleryState.rightTrackMaxSpan = totalSpan;
-                }
-
-                elementsArray.forEach(obj => {
-                  let centeredZ = obj.initialZ - (totalSpan / 2);
-                  obj.item.setAttribute('position', `${xPos} 0 ${centeredZ}`);
-                  obj.item.setAttribute('rotation', rotation);
-                });
-              }
-            })
-            .catch(err => {
-              console.error("Live fetch failed:", err);
-              document.getElementById('connection-status').innerText = "Error syncing submissions with Google Sheet.";
-            });
+          // Poll database every 15 seconds for live submission sync
+          setInterval(syncLiveExhibitionFeed, 15000);
         }
       });
     </script>
