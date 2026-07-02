@@ -171,49 +171,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Inject/Update the official announcement message box directly at the top of the main form wrapper card
-    if (formWrapper) {
-        let infoBox = formWrapper.querySelector('.official-portal-announcement');
-        const currentTime = Date.now();
-        const targetTime = new Date(START_DATE).getTime();
-
-        // 1. Before portal open time: Show the box with the dynamic variable date
-        if (currentTime < targetTime) {
-            if (!infoBox) {
-                infoBox = document.createElement('div');
-                infoBox.className = 'official-portal-announcement text-center mb-4 p-3 rounded fw-bold w-100';
-                infoBox.style.backgroundColor = 'rgba(56, 189, 248, 0.1)'; 
-                infoBox.style.border = '1px solid rgba(56, 189, 248, 0.2)';
-                infoBox.style.color = '#38bdf8';
-                infoBox.style.fontSize = '0.95rem';
-                formWrapper.insertBefore(infoBox, formWrapper.firstChild);
-            }
-            
-            const openingDateTime = new Date(targetTime);
-            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            const monthName = months[openingDateTime.getUTCMonth()];
-            const dayNum = openingDateTime.getUTCDate();
-            
-            let daySuffix = "th";
-            if (dayNum % 10 === 1 && dayNum !== 11) daySuffix = "st";
-            else if (dayNum % 10 === 2 && dayNum !== 12) daySuffix = "nd";
-            else if (dayNum % 10 === 3 && dayNum !== 13) daySuffix = "rd";
-
-            let hours = openingDateTime.getUTCHours();
-            const minutes = String(openingDateTime.getUTCMinutes()).padStart(2, '0');
-            const ampm = hours >= 12 ? 'pm' : 'am';
-            hours = hours % 12;
-            hours = hours ? hours : 12; 
-            const formattedTime = `${hours}.${minutes}${ampm}`;
-
-            infoBox.innerHTML = `<i class="fas fa-calendar-alt me-2"></i>Submission portal opens on ${monthName} ${dayNum}${daySuffix} at ${formattedTime}`;
-        } else {
-            // 2. Once portal open time is reached or past: Disappear completely
-            if (infoBox) {
-                infoBox.remove();
-            }
-        }
-    }
 
     if (triggerDeleteBtn && uploadModalObj) {
         triggerDeleteBtn.addEventListener("click", () => {
@@ -316,6 +273,11 @@ const runTimelineEngine = () => {
                 `;
                 feedback.classList.remove('d-none');
             }
+
+            // Remove announcement text box if closed early
+            const infoBox = document.querySelector('.official-portal-announcement');
+            if (infoBox) infoBox.remove();
+
             return;
         }
 
@@ -345,6 +307,11 @@ const runTimelineEngine = () => {
                 if (uploadForm) uploadForm.classList.remove("late-flashing-container");
                 if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
             }
+
+            // Remove announcement text box if in grace upload configuration
+            const infoBox = document.querySelector('.official-portal-announcement');
+            if (infoBox) infoBox.remove();
+
             return; 
         }
 
@@ -360,6 +327,11 @@ const runTimelineEngine = () => {
                 timerTitle.innerText = "Closing Portal...";
                 timerTitle.style.color = "#ef4444";
             }
+
+            // Clean announcement layout box
+            const infoBox = document.querySelector('.official-portal-announcement');
+            if (infoBox) infoBox.remove();
+
             return; 
         }
 
@@ -389,6 +361,11 @@ const runTimelineEngine = () => {
             `;
             feedback.classList.remove('d-none');
         }
+
+        // Wipe text box on portal exit close tracking
+        const infoBox = document.querySelector('.official-portal-announcement');
+        if (infoBox) infoBox.remove();
+
         return; 
     }
 
@@ -414,6 +391,47 @@ const runTimelineEngine = () => {
             timerTitle.innerText = "Portal Opens In...";
             timerTitle.style.color = "#38bdf8"; 
         }
+
+        // =========================================================================
+        // ADDED STATE: BEFORE TIMER HITS (TEXT BOX GENERATOR & INLINE DISPLAY)
+        // =========================================================================
+        let infoBox = document.querySelector('.official-portal-announcement');
+        if (!infoBox) {
+            infoBox = document.createElement('div');
+            infoBox.className = 'official-portal-announcement text-center mb-4 p-3 rounded fw-bold w-100';
+            infoBox.style.backgroundColor = 'rgba(56, 189, 248, 0.1)'; 
+            infoBox.style.border = '1px solid rgba(56, 189, 248, 0.2)';
+            infoBox.style.color = '#38bdf8';
+            infoBox.style.fontSize = '0.95rem';
+            
+            // Render at the absolute top layout header inside the main active template wrapper
+            const insertionContext = formWrapper || countdownContainer || document.body;
+            if (insertionContext) {
+                insertionContext.insertBefore(infoBox, insertionContext.firstChild);
+            }
+        }
+
+        // Dynamically compute exact date formatting patterns mapping from the START_DATE constant
+        const openingDateTime = new Date(START_DATE);
+        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const monthName = months[openingDateTime.getMonth()];
+        const dayNum = openingDateTime.getDate();
+        
+        let daySuffix = "th";
+        if (dayNum % 10 === 1 && dayNum !== 11) daySuffix = "st";
+        else if (dayNum % 10 === 2 && dayNum !== 12) daySuffix = "nd";
+        else if (dayNum % 10 === 3 && dayNum !== 13) daySuffix = "rd";
+
+        let hoursValue = openingDateTime.getHours();
+        const minutesValue = String(openingDateTime.getMinutes()).padStart(2, '0');
+        const ampm = hoursValue >= 12 ? 'pm' : 'am';
+        hoursValue = hoursValue % 12;
+        hoursValue = hoursValue ? hoursValue : 12; 
+        const formattedTime = `${hoursValue}.${minutesValue}${ampm}`;
+
+        infoBox.innerHTML = `<i class="fas fa-calendar-alt me-2"></i>Submission portal opens on ${monthName} ${dayNum}${daySuffix} at ${formattedTime}`;
+        // =========================================================================
+
     } else {
         if (uploadForm && !initialSubmissionDetected) {
             uploadForm.classList.remove('d-none');
@@ -439,6 +457,15 @@ const runTimelineEngine = () => {
         hoursEl.innerText = hours < 10 ? "0" + hours : hours;
         minutesEl.innerText = minutes < 10 ? "0" + minutes : minutes;
         secondsEl.innerText = seconds < 10 ? "0" + seconds : seconds;
+
+        // =========================================================================
+        // ADDED STATE: AFTER TIMER HITS (DESTRUCTIVE ANNOUNCEMENT HIDING RULE)
+        // =========================================================================
+        const infoBox = document.querySelector('.official-portal-announcement');
+        if (infoBox) {
+            infoBox.remove(); // Safely clears the textbox elements instantly from the DOM structure
+        }
+        // =========================================================================
     }
 };
 
