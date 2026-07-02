@@ -4,7 +4,7 @@ const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oG
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
 // Use standard hyphens instead of dots so browsers can read it cleanly
-const START_DATE = new Date("2026-07-02T11:55:00").getTime();
+const START_DATE = new Date("2026-07-02T11:58:00").getTime();
 // Admin: Extend this date forward whenever you want to grant extra submission time
 const DEADLINE_DATE = new Date("2026-07-27T02:00:00").getTime();
 
@@ -176,45 +176,57 @@ document.addEventListener("DOMContentLoaded", () => {
         let infoBox = formWrapper.querySelector('.official-portal-announcement');
         const currentTime = Date.now();
 
-        // Fallback safety checking: if START_DATE is NaN, try to parse it cleanly
-        let targetTime = START_DATE;
-        if (isNaN(targetTime)) {
-            // Fallback default if the date variable above has formatting issues
-            targetTime = START_DATE;
+        // 1. Standardize formatting variations (like changing dots to hyphens) to ensure the browser reads your date flawlessly
+        let processedStartDate = START_DATE;
+        if (typeof START_DATE === 'string') {
+            let cleanString = START_DATE.trim().replace(/\./g, '-');
+            processedStartDate = new Date(cleanString).getTime();
+        } else if (START_DATE instanceof Date) {
+            processedStartDate = START_DATE.getTime();
         }
 
-        // 1. If current time is BEFORE the portal opening time, show the box with dynamic text
-        if (currentTime < targetTime) {
+        // Fallback safety if the variable configuration is empty or corrupted
+        const finalStartTime = (isNaN(processedStartDate) || !processedStartTime) ? Date.now() : processedStartDate;
+
+        // 2. Condition check: If the real-world clock is before the start time, show and update the box
+        if (currentTime < finalStartTime) {
             if (!infoBox) {
                 infoBox = document.createElement('div');
                 infoBox.className = 'official-portal-announcement text-center mb-4 p-3 rounded fw-bold w-100';
+                // Custom blue opacity themed style to look native to your glass theme
                 infoBox.style.backgroundColor = 'rgba(56, 189, 248, 0.1)'; 
                 infoBox.style.border = '1px solid rgba(56, 189, 248, 0.2)';
                 infoBox.style.color = '#38bdf8';
                 infoBox.style.fontSize = '0.95rem';
+                // Insert it as the absolute first item inside the form container box
                 formWrapper.insertBefore(infoBox, formWrapper.firstChild);
             }
             
-            const openingDateTime = new Date(targetTime);
+            // 3. Dynamically extract the exact month, day, and hours directly from your variable setting
+            const openingDateTime = new Date(finalStartTime);
+            
             const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             const monthName = months[openingDateTime.getMonth()];
             const dayNum = openingDateTime.getDate();
             
+            // Build ordinal suffix (st, nd, rd, th) dynamically
             let daySuffix = "th";
             if (dayNum % 10 === 1 && dayNum !== 11) daySuffix = "st";
             else if (dayNum % 10 === 2 && dayNum !== 12) daySuffix = "nd";
             else if (dayNum % 10 === 3 && dayNum !== 13) daySuffix = "rd";
 
+            // Translate hours and minutes to 12-hour format display with am/pm
             let hours = openingDateTime.getHours();
             const minutes = String(openingDateTime.getMinutes()).padStart(2, '0');
             const ampm = hours >= 12 ? 'pm' : 'am';
             hours = hours % 12;
-            hours = hours ? hours : 12; 
+            hours = hours ? hours : 12; // Adjust 0 hours to 12
             const formattedTime = `${hours}.${minutes}${ampm}`;
 
+            // Render text containing your EXACT configured date and time
             infoBox.innerHTML = `<i class="fas fa-calendar-alt me-2"></i>Submission portal opens on ${monthName} ${dayNum}${daySuffix} at ${formattedTime}`;
         } else {
-            // 2. If the current time is PAST the target time, remove it immediately
+            // 4. Once the current time reaches or passes the opening time, remove the box completely from the page!
             if (infoBox) {
                 infoBox.remove();
             }
