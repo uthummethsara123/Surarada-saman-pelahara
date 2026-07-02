@@ -416,15 +416,14 @@
                   aImg.setAttribute('material', 'side: double');
                 }
 
-                // Create text component for Author Name attached relative to the image frame
+                // Create clean text component for Author Name (Styled like Poppins & scaled smaller)
                 let aText = document.createElement('a-text');
-                // Replace the old setting line with this smart multi-key lookup fallback:
                 let rawAuthorName = imgData.participantName || imgData.name || imgData.author || "Participant";
                 aText.setAttribute('value', formatAuthorName(rawAuthorName));
                 aText.setAttribute('align', 'center');
-                aText.setAttribute('color', '#000000');
-                aText.setAttribute('width', '4'); // Made slightly wider for readability
-                aText.setAttribute('font', 'dejavu'); // Uses system default high-density crisp font
+                aText.setAttribute('color', '#000000'); 
+                aText.setAttribute('width', '2.2'); // Smaller width makes text cleaner
+                aText.setAttribute('font', 'aileron'); // Geometric sans-serif matching Poppins
                 aText.setAttribute('shader', 'msdf');
                 aText.setAttribute('negate', 'false');
                 aImg.appendChild(aText);
@@ -557,15 +556,14 @@
                   aImg.setAttribute('material', 'side: double');
                 }
 
-                // Add text label for initial load images
+                // Add clean text label for initial load images (Styled like Poppins & scaled smaller)
                 let aText = document.createElement('a-text');
-                // Replace the old setting line with this smart multi-key lookup fallback:
                 let rawInitialAuthorName = imgData.participantName || imgData.name || imgData.author || "Participant";
                 aText.setAttribute('value', formatAuthorName(rawInitialAuthorName));
                 aText.setAttribute('align', 'center');
                 aText.setAttribute('color', '#000000');
-                aText.setAttribute('width', '4');
-                aText.setAttribute('font', 'dejavu');
+                aText.setAttribute('width', '2.2'); // Smaller width makes text cleaner
+                aText.setAttribute('font', 'aileron'); // Geometric sans-serif matching Poppins
                 aText.setAttribute('shader', 'msdf');
                 aText.setAttribute('negate', 'false');
                 aImg.appendChild(aText);
