@@ -416,14 +416,15 @@
                   aImg.setAttribute('material', 'side: double');
                 }
 
-                // Create clean text component for Author Name (Styled like Poppins & scaled smaller)
+                // Create text component for Author Name attached relative to the image frame
                 let aText = document.createElement('a-text');
+                // Replace the old setting line with this smart multi-key lookup fallback:
                 let rawAuthorName = imgData.participantName || imgData.name || imgData.author || "Participant";
                 aText.setAttribute('value', formatAuthorName(rawAuthorName));
                 aText.setAttribute('align', 'center');
-                aText.setAttribute('color', '#000000'); 
-                aText.setAttribute('width', '2.2'); // Smaller scale layout
-                aText.setAttribute('font', 'aileron'); // Clean geometric font matching Poppins
+                aText.setAttribute('color', '#000000');
+                aText.setAttribute('width', '4'); // Made slightly wider for readability
+                aText.setAttribute('font', 'aileron'); // Uses system default high-density crisp font
                 aText.setAttribute('shader', 'msdf');
                 aText.setAttribute('negate', 'false');
                 aImg.appendChild(aText);
@@ -556,15 +557,15 @@
                   aImg.setAttribute('material', 'side: double');
                 }
 
-
-                // Add clean text label for initial load images (Styled like Poppins & scaled smaller)
+                // Add text label for initial load images
                 let aText = document.createElement('a-text');
+                // Replace the old setting line with this smart multi-key lookup fallback:
                 let rawInitialAuthorName = imgData.participantName || imgData.name || imgData.author || "Participant";
                 aText.setAttribute('value', formatAuthorName(rawInitialAuthorName));
                 aText.setAttribute('align', 'center');
                 aText.setAttribute('color', '#000000');
-                aText.setAttribute('width', '2.2'); // Smaller scale layout
-                aText.setAttribute('font', 'aileron'); // Clean geometric font matching Poppins
+                aText.setAttribute('width', '4');
+                aText.setAttribute('font', 'aileron');
                 aText.setAttribute('shader', 'msdf');
                 aText.setAttribute('negate', 'false');
                 aImg.appendChild(aText);
@@ -636,11 +637,10 @@
                 obj.item.setAttribute('width', obj.calculatedWidth);
                 obj.item.setAttribute('height', obj.calculatedHeight);
 
-                
                 // Dynamically update position relative to final aspect ratio calculations
                 if (obj.txt) {
-                  // Positioned tightly above the frame bounds
-                  obj.txt.setAttribute('position', `0 ${(obj.calculatedHeight / 2) + 0.18} 0.05`);
+                  // Raised slightly to 0.35 to clear widescreen/portrait asset margins perfectly
+                  obj.txt.setAttribute('position', `0 ${(obj.calculatedHeight / 2) + 0.35} 0.05`);
                 }
               }
             })
