@@ -938,6 +938,8 @@
         showInfoBadge();
         if (isMobile) {
           mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: true; touchEnabled: false;');
+          // Boost the camera Field of View to 95 to expand the portrait width angle on smartphones
+          mainCamera.setAttribute('camera', 'fov', 95);
           forceSceneClearTransparency();
           activateMobilePermissions();
         } else {
@@ -955,6 +957,8 @@
 
         if (isMobile) {
           mainCamera.setAttribute('look-controls', 'magicWindowTrackingEnabled: false; touchEnabled: true;');
+          // Boost the camera Field of View to 95 to expand the portrait width angle on smartphones
+          mainCamera.setAttribute('camera', 'fov', 95);
           if (nativeVideo) nativeVideo.style.display = "none";
           if (scene) scene.style.backgroundColor = "#1a1a1a";
         } else {
