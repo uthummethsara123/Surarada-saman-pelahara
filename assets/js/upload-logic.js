@@ -3,7 +3,7 @@ const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oG
 // ==========================================================
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
-const START_DATE = new Date("2026-07-02T08:00:00").getTime();
+const START_DATE = new Date("2026-07-26T24:00:00").getTime();
 // Admin: Extend this date forward whenever you want to grant extra submission time
 const DEADLINE_DATE = new Date("2026-07-27T02:00:00").getTime();
 
@@ -200,92 +200,68 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (uploadForm) {
-        uploadForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const participantEmail = emailField.value.trim();
-            const participantName = document.getElementById('participantName').value.trim();
-            const schoolName = document.getElementById('schoolName').value.trim(); 
-            const competitionScope = document.getElementById('competitionScope').value;
+    uploadForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const participantEmail = emailField.value.trim();
+        const participantName = document.getElementById('participantName').value.trim();
+        const schoolName = document.getElementById('schoolName').value.trim(); 
+        const competitionScope = document.getElementById('competitionScope').value;
 
-            submitBtn.disabled = true;
-            submitBtn.innerText = "Processing Files 1 by 1...";
-            feedback.className = "text-center mt-3 text-warning";
-            feedback.innerText = "Starting transmission...";
-            feedback.classList.remove('d-none');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Processing Files 1 by 1...";
+        feedback.className = "text-center mt-3 text-warning";
+        feedback.innerText = "Starting transmission...";
+        feedback.classList.remove('d-none');
 
-            // Strip out flash classes immediately once upload begins
-            uploadForm.classList.remove("late-flashing-container");
-            const timerBox = document.querySelector('.countdown-container');
-            if (timerBox) timerBox.classList.remove("late-flashing-container");
+        uploadForm.classList.remove("late-flashing-container");
+        const timerBox = document.querySelector('.countdown-container');
+        if (timerBox) timerBox.classList.remove("late-flashing-container");
 
-            const toBase64 = file => new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = error => reject(error);
-            });
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = error => reject(error);
+        });
 
-            const fileInputs = document.querySelectorAll('.preview-trigger');
-            const accumulatedFiles = [];
-            
-            try {
-                const safeName = participantName.replace(/[^a-zA-Z0-9]/g, "_");
+        const fileInputs = document.querySelectorAll('.preview-trigger');
+        
+        try {
+            const safeName = participantName.replace(/[^a-zA-Z0-9]/g, "_");
 
-                // Sequentially animate and process files 1 by 1 visually
-                for (let input of fileInputs) {
-                    if (input.files.length > 0) {
-                        const file = input.files[0];
-                        const targetId = input.name;
+            // Sequentially process files 1 by 1
+            for (let input of fileInputs) {
+                if (input.files.length > 0) {
+                    const file = input.files[0];
+                    const targetId = input.name;
 
-                        // Auto-scroll context to current active asset row
-                        const parentWrapperRow = document.getElementById("wrapper_" + targetId);
-                        if (parentWrapperRow) {
-                            parentWrapperRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-
-                        feedback.innerText = `Processing ${targetId.split('_')[0]} item asset...`;
-                        
-                        const circleContainer = document.getElementById(`circle_container_${targetId}`);
-                        const circleBar = document.getElementById(`circle_bar_${targetId}`);
-                        
-                        if(circleContainer) circleContainer.classList.remove('d-none');
-                        if(circleBar) circleBar.style.strokeDashoffset = "88"; 
-                        
-                        const base64Str = await toBase64(file);
-                        
-                        // Execute seamless visual circle fill from 0% to 100%
-                        await animateCircleSmoothly(circleBar, 1200);
-                        
-                        const customTitleInput = document.getElementById("title_" + targetId);
-                        let finalizedTitle = customTitleInput && customTitleInput.value.trim() ? customTitleInput.value.trim() : "untitled";
-                        
-                        finalizedTitle = finalizedTitle.replace(/[^a-zA-Z0-9_\-\s]/g, "");
-                        const cleanRawTitleForSheet = finalizedTitle;
-                        const extension = file.name.substring(file.name.lastIndexOf('.')) || ".jpg";
-                        finalizedTitle += extension;
-
-                        // Store processed items into array instead of triggering immediate live API exposure
-                        accumulatedFiles.push({
-                            category: targetId.split('_')[0],
-                            rawTitle: cleanRawTitleForSheet.replace(/\s+/g, "_"), 
-                            filename: `${safeName}_${targetId}_${finalizedTitle.replace(/\s+/g, "_")}`,
-                            mimeType: file.type,
-                            bytes: base64Str
-                        });
-
-                        // Clear circle spinner and activate tick
-                        if(circleContainer) circleContainer.classList.add('d-none');
-                        
-                        const successTick = document.getElementById(`tick_${targetId}`);
-                        if(successTick) successTick.style.display = 'inline-block';
+                    const parentWrapperRow = document.getElementById("wrapper_" + targetId);
+                    if (parentWrapperRow) {
+                        parentWrapperRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
-                }
 
-                // Fire exactly ONE network execution containing all files together to secure portfolio cleanly
-                if (accumulatedFiles.length > 0) {
-                    feedback.innerText = "Securing portfolio & transmitting directly to exhibition database...";
+                    feedback.innerText = `Uploading ${targetId.split('_')[0]} item asset...`;
                     
+                    const circleContainer = document.getElementById(`circle_container_${targetId}`);
+                    const circleBar = document.getElementById(`circle_bar_${targetId}`);
+                    const successTick = document.getElementById(`tick_${targetId}`);
+                    
+                    if(circleContainer) circleContainer.classList.remove('d-none');
+                    if(circleBar) circleBar.style.strokeDashoffset = "55"; 
+                    if(successTick) successTick.style.display = 'none'; // Ensure reset
+                    
+                    const base64Str = await toBase64(file);
+                    if(circleBar) circleBar.style.strokeDashoffset = "25"; 
+                    
+                    const customTitleInput = document.getElementById("title_" + targetId);
+                    let finalizedTitle = customTitleInput && customTitleInput.value.trim() ? customTitleInput.value.trim() : "untitled";
+                    
+                    finalizedTitle = finalizedTitle.replace(/[^a-zA-Z0-9_\-\s]/g, "");
+                    const cleanRawTitleForSheet = finalizedTitle;
+                    const extension = file.name.substring(file.name.lastIndexOf('.')) || ".jpg";
+                    finalizedTitle += extension;
+
                     const itemPayload = {
                         action: "submitUpload",
                         participantEmail: participantEmail,
@@ -293,52 +269,73 @@ document.addEventListener("DOMContentLoaded", () => {
                         certificateName: document.getElementById('certificateName').value.trim(),
                         schoolName: schoolName,
                         competitionScope: competitionScope,
-                        files: accumulatedFiles
+                        files: [{
+                            category: targetId.split('_')[0],
+                            rawTitle: cleanRawTitleForSheet.replace(/\s+/g, "_"),
+                            filename: `${safeName}_${targetId}_${finalizedTitle.replace(/\s+/g, "_")}`,
+                            mimeType: file.type,
+                            bytes: base64Str
+                        }]
                     };
 
-                    await fetch(SUBMISSION_API_URL, {
+                    // Send with standard CORS handling to parse the return payload accurately
+                    const response = await fetch(SUBMISSION_API_URL, {
                         method: 'POST',
-                        mode: 'no-cors',
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                         body: JSON.stringify(itemPayload)
                     });
+
+                    const resultText = await response.text();
+                    let result;
+                    try {
+                        result = JSON.parse(resultText);
+                    } catch(e) {
+                        result = { status: "error" };
+                    }
+
+                    // Check if the script reported success or failed explicitly
+                    if (!response.ok || result.status === "error" || result.result === "error") {
+                        throw new Error(`Server side rejection uploading: ${targetId}`);
+                    }
+
+                    // Success confirm: remove loading circle indicator and show green checkmark
+                    if(circleBar) circleBar.style.strokeDashoffset = "0";
+                    if(circleContainer) circleContainer.classList.add('d-none');
+                    if(successTick) successTick.style.display = 'inline-block';
                 }
-
-                localStorage.setItem("submittedUploadEmail", participantEmail);
-                localStorage.setItem("submittedUploadName", participantName);
-
-                uploadForm.reset();
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Upload & Submit Portfolio";
-                feedback.classList.add('d-none');
-
-                uploadForm.classList.add("d-none");
-                uploadDashboard.classList.remove("d-none");
-
-                // Auto scroll to success checkmark view dashboard card
-                if (uploadDashboard) {
-                    uploadDashboard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-
-                const completionTimestamp = new Date().getTime();
-                if (completionTimestamp >= DEADLINE_DATE) {
-                    completedAfterDeadline = true;
-                } else {
-                    completedAfterDeadline = false;
-                }
-
-                userIsActivelyWorking = false; 
-                submissionFinishedTime = completionTimestamp;
-
-            } catch (err) {
-                console.error(err);
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Upload & Submit Portfolio";
-                feedback.className = "text-center mt-3 text-danger fw-bold";
-                feedback.innerText = "Upload failed. Please check your connection.";
             }
-        });
-    }
+
+            localStorage.setItem("submittedUploadEmail", participantEmail);
+            localStorage.setItem("submittedUploadName", participantName);
+            uploadForm.reset();
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Upload & Submit Portfolio";
+            feedback.classList.add('d-none');
+            uploadForm.classList.add("d-none");
+            uploadDashboard.classList.remove("d-none");
+
+            if (uploadDashboard) {
+                uploadDashboard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            const completionTimestamp = new Date().getTime();
+            if (completionTimestamp >= DEADLINE_DATE) {
+                completedAfterDeadline = true;
+            } else {
+                completedAfterDeadline = false;
+            }
+            userIsActivelyWorking = false;
+            submissionFinishedTime = completionTimestamp;
+
+        } catch (err) {
+            console.error(err);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Upload & Submit Portfolio";
+            feedback.className = "text-center mt-3 text-danger fw-bold";
+            feedback.innerText = "Upload encountered an issue. Real database entry was not verified.";
+        }
+    });
+}
 
     if (triggerDeleteBtn && uploadModalObj) {
         triggerDeleteBtn.addEventListener("click", () => {
