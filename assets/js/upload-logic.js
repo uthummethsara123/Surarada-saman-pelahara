@@ -3,7 +3,8 @@ const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oG
 // ==========================================================
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
-const START_DATE = new Date("2026-07-91T23:00:00").getTime();
+// Standardized from 24:00:00 to 00:00:00 to prevent NaN browser parsing errors
+const START_DATE = new Date("2026-07-02T08:00:00").getTime();
 // Admin: Extend this date forward whenever you want to grant extra submission time
 const DEADLINE_DATE = new Date("2026-07-27T02:00:00").getTime();
 
@@ -180,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const competitionScope = document.getElementById('competitionScope').value;
 
             submitBtn.disabled = true;
-            submitBtn.innerText = "Processing Files...";
+            submitBtn.innerText = "Processing Files 1 by 1...";
             feedback.className = "text-center mt-3 text-warning";
             feedback.innerText = "Starting transmission...";
             feedback.classList.remove('d-none');
@@ -201,82 +202,63 @@ document.addEventListener("DOMContentLoaded", () => {
             
             try {
                 const safeName = participantName.replace(/[^a-zA-Z0-9]/g, "_");
-                const filesArray = [];
-                const activeInputs = [];
 
-                // 1. Gather files selected by user
+                // Sequentially process files 1 by 1
                 for (let input of fileInputs) {
                     if (input.files.length > 0) {
-                        activeInputs.push(input);
-                    }
-                }
-
-                // 2. Process all selected assets sequentially into base64 clusters
-                for (let input of activeInputs) {
-                    const file = input.files[0];
-                    const targetId = input.name;
-
-                    // Auto-scroll context to current active asset row
-                    const parentWrapperRow = document.getElementById("wrapper_" + targetId);
-                    if (parentWrapperRow) {
-                        parentWrapperRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-
-                    feedback.innerText = `Preparing ${targetId.split('_')[0]} item asset...`;
-                    
-                    const circleContainer = document.getElementById(`circle_container_${targetId}`);
-                    const circleBar = document.getElementById(`circle_bar_${targetId}`);
-                    
-                    if(circleContainer) circleContainer.classList.remove('d-none');
-                    if(circleBar) circleBar.style.strokeDashoffset = "55"; 
-                    
-                    const base64Str = await toBase64(file);
-                    if(circleBar) circleBar.style.strokeDashoffset = "25"; 
-                    
-                    const customTitleInput = document.getElementById("title_" + targetId);
-                    let finalizedTitle = customTitleInput && customTitleInput.value.trim() ? customTitleInput.value.trim() : "untitled";
-                    
-                    finalizedTitle = finalizedTitle.replace(/[^a-zA-Z0-9_\-\s]/g, "");
-                    const cleanRawTitleForSheet = finalizedTitle;
-                    const extension = file.name.substring(file.name.lastIndexOf('.')) || ".jpg";
-                    finalizedTitle += extension;
-
-                    filesArray.push({
-                        category: targetId.split('_')[0],
-                        rawTitle: cleanRawTitleForSheet.replace(/\s+/g, "_"), 
-                        filename: `${safeName}_${targetId}_${finalizedTitle.replace(/\s+/g, "_")}`,
-                        mimeType: file.type,
-                        bytes: base64Str
-                    });
-                }
-
-                // 3. Atomically transmit all grouped files together in ONE payload request
-                if (filesArray.length > 0) {
-                    feedback.innerText = "Transmitting all data assets securely...";
-                    
-                    const itemPayload = {
-                        action: "submitUpload",
-                        participantEmail: participantEmail,
-                        participantName: participantName,
-                        certificateName: document.getElementById('certificateName').value.trim(),
-                        schoolName: schoolName,
-                        competitionScope: competitionScope,
-                        files: filesArray
-                    };
-
-                    await fetch(SUBMISSION_API_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify(itemPayload)
-                    });
-
-                    // Update UI status widgets to complete state
-                    for (let input of activeInputs) {
+                        const file = input.files[0];
                         const targetId = input.name;
+
+                        // Auto-scroll context to current active asset row
+                        const parentWrapperRow = document.getElementById("wrapper_" + targetId);
+                        if (parentWrapperRow) {
+                            parentWrapperRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+
+                        feedback.innerText = `Uploading ${targetId.split('_')[0]} item asset...`;
+                        
                         const circleContainer = document.getElementById(`circle_container_${targetId}`);
                         const circleBar = document.getElementById(`circle_bar_${targetId}`);
                         
+                        if(circleContainer) circleContainer.classList.remove('d-none');
+                        if(circleBar) circleBar.style.strokeDashoffset = "55"; 
+                        
+                        const base64Str = await toBase64(file);
+                        if(circleBar) circleBar.style.strokeDashoffset = "25"; 
+                        
+                        const customTitleInput = document.getElementById("title_" + targetId);
+                        let finalizedTitle = customTitleInput && customTitleInput.value.trim() ? customTitleInput.value.trim() : "untitled";
+                        
+                        finalizedTitle = finalizedTitle.replace(/[^a-zA-Z0-9_\-\s]/g, "");
+                        const cleanRawTitleForSheet = finalizedTitle;
+                        const extension = file.name.substring(file.name.lastIndexOf('.')) || ".jpg";
+                        finalizedTitle += extension;
+
+                        const itemPayload = {
+                            action: "submitUpload",
+                            participantEmail: participantEmail,
+                            participantName: participantName,
+                            certificateName: document.getElementById('certificateName').value.trim(),
+                            schoolName: schoolName,
+                            competitionScope: competitionScope,
+                            files: [{
+                                category: targetId.split('_')[0],
+                                rawTitle: cleanRawTitleForSheet.replace(/\s+/g, "_"), 
+                                filename: `${safeName}_${targetId}_${finalizedTitle.replace(/\s+/g, "_")}`,
+                                mimeType: file.type,
+                                bytes: base64Str
+                            }]
+                        };
+
+                        // FIXED: Mode changed to 'cors' to ensure true synchronous queueing 1-by-1
+                        await fetch(SUBMISSION_API_URL, {
+                            method: 'POST',
+                            mode: 'cors',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify(itemPayload)
+                        });
+
+                        // Clear circle spinner and activate tick
                         if(circleBar) circleBar.style.strokeDashoffset = "0";
                         if(circleContainer) circleContainer.classList.add('d-none');
                         
@@ -287,6 +269,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 localStorage.setItem("submittedUploadEmail", participantEmail);
                 localStorage.setItem("submittedUploadName", participantName);
+                localStorage.removeItem("userRequestedReupload"); // Clear deletion workaround tag on success
 
                 uploadForm.reset();
                 submitBtn.disabled = false;
@@ -343,15 +326,18 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             try {
+                // FIXED: Mode changed to 'cors' to synchronize live deletion execution status cleanly
                 await fetch(SUBMISSION_API_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
+                    mode: 'cors',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(delPayload)
                 });
 
                 localStorage.removeItem("submittedUploadEmail");
                 localStorage.removeItem("submittedUploadName");
+                // Workaround flag to ensure timeline engine doesn't snap hide the live dashboard form immediately
+                localStorage.setItem("userRequestedReupload", "true");
 
                 submissionFinishedTime = null;
                 userIsActivelyWorking = false;
@@ -364,25 +350,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (uploadForm && (new Date().getTime() < DEADLINE_DATE)) {
                     uploadForm.classList.remove("d-none");
                 }
-
-                // FIX: Completely clear previews, remove success indicators, and restore file fields to active view
-                document.querySelectorAll('.preview-trigger').forEach(input => {
-                    const inputName = input.name;
-                    const wrapper = document.getElementById("wrapper_" + inputName);
-                    const previewImg = document.getElementById("prev_" + inputName);
-                    const titleField = document.getElementById("title_" + inputName);
-                    
-                    input.value = ""; 
-                    input.classList.remove('d-none');
-                    if (previewImg) previewImg.src = "";
-                    if (titleField) titleField.value = "";
-                    if (wrapper) wrapper.classList.add('d-none');
-
-                    const container = document.getElementById(`circle_container_${inputName}`);
-                    if(container) container.classList.add('d-none');
-                    const tick = document.getElementById(`tick_${inputName}`);
-                    if(tick) tick.style.display = 'none';
-                });
 
                 confirmDeletionBtn.disabled = false;
                 confirmDeletionBtn.innerText = "Yes, Clear and Reset";
@@ -409,10 +376,11 @@ const runTimelineEngine = () => {
     const countdownContainer = document.querySelector(".countdown-container");
     const timerTitle = document.querySelector(".timer-title");
     const submitBtn = document.getElementById('uploadSubmitBtn');
-    const formWrapper = document.querySelector(".form-wrapper"); // Target the main form container box
+    const formWrapper = document.querySelector(".form-wrapper");
 
     const isCurrentlyUploading = submitBtn && submitBtn.disabled === true;
     const initialSubmissionDetected = localStorage.getItem("submittedUploadEmail") !== null;
+    const isReuploading = localStorage.getItem("userRequestedReupload") === "true";
 
     // Inject/Update the official announcement message box directly at the top of the main form wrapper card
     if (formWrapper) {
@@ -420,12 +388,10 @@ const runTimelineEngine = () => {
         if (!infoBox) {
             infoBox = document.createElement('div');
             infoBox.className = 'official-portal-announcement text-center mb-4 p-3 rounded fw-bold w-100';
-            // Custom blue opacity themed style to look native to your glass theme
             infoBox.style.backgroundColor = 'rgba(56, 189, 248, 0.1)'; 
             infoBox.style.border = '1px solid rgba(56, 189, 248, 0.2)';
             infoBox.style.color = '#38bdf8';
             infoBox.style.fontSize = '0.95rem';
-            // Insert it as the absolute first item inside the form container box
             formWrapper.insertBefore(infoBox, formWrapper.firstChild);
         }
         infoBox.innerHTML = `<i class="fas fa-calendar-alt me-2"></i>Submission portal opens in July 26th at 12.00am`;
@@ -444,7 +410,7 @@ const runTimelineEngine = () => {
             if (secondsEl) secondsEl.innerText = "00";
             
             if (uploadForm) {
-                uploadForm.innerHTML = ""; 
+                // FIXED: Changed from innerHTML="" to classList.add('d-none') so uniform form text doesn't disappear
                 uploadForm.classList.add('d-none');
             }
             if (uploadDashboard) uploadDashboard.classList.add('d-none');
@@ -515,7 +481,7 @@ const runTimelineEngine = () => {
         if (secondsEl) secondsEl.innerText = "00";
         
         if (uploadForm) {
-            uploadForm.innerHTML = ""; 
+            // FIXED: Changed from innerHTML="" to classList.add('d-none') so uniform form text doesn't disappear
             uploadForm.classList.add('d-none');
         }
         if (uploadDashboard) {
@@ -540,7 +506,13 @@ const runTimelineEngine = () => {
     if (!hoursEl || !minutesEl || !secondsEl) return;
 
     if (now < START_DATE) {
-        if (uploadForm) uploadForm.classList.add('d-none');
+        // FIXED: Allows user to interact with the input form when doing a live delete and re-upload reset
+        if (isReuploading) {
+            if (uploadForm) uploadForm.classList.remove('d-none');
+            if (uploadDashboard) uploadDashboard.classList.add('d-none');
+        } else {
+            if (uploadForm) uploadForm.classList.add('d-none');
+        }
         if (countdownContainer) countdownContainer.classList.remove('d-none');
         
         const timeToOpen = START_DATE - now;
