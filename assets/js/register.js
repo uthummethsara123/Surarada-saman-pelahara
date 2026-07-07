@@ -2,10 +2,6 @@
 // 2026 PARTICIPATION SYSTEM WITH AUTO-TIMER & GOOGLE DRIVE HOOK
 // ==========================================================================
 
-// 0=january
-const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycbxGNZPK9jYGNTyXYwDmONDu03wXPIg-LnWVIx2PA0n5XQDYWieJ01cVrVry5ML6VFLS/exec";
-const CLOSING_DEADLINE = new Date(2026, 6, 19, 24, 0, 0).getTime();
-
 // --- INNER SCHOOL ADDRESS MAP ---
 const INNER_SCHOOL_ADDRESSES = {
     "Sivali Central College": "Hidellana, Rathnapura",
@@ -15,39 +11,83 @@ const INNER_SCHOOL_ADDRESSES = {
     "Sumana Balika Vidyalaya": "Pothgul vihara mawatha, Rathnapura"
 };
 
+// ==========================================================================
+// 2026 PARTICIPATION SYSTEM WITH AUTO-TIMER & GOOGLE DRIVE HOOK
+// ==========================================================================
+
+// Note: JavaScript months are 0-indexed (6 = July)
+const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycbxGNZPK9jYGNTyXYwDmONDu03wXPIg-LnWVIx2PA0n5XQDYWieJ01cVrVry5ML6VFLS/exec";
+const OPENING_DATE = new Date(2026, 6, 13, 0, 0, 0).getTime();      // July 13th, 2026
+const CLOSING_DEADLINE = new Date(2026, 6, 24, 24, 0, 0).getTime();   // July 24th, 2026 (End of Day)
+
 const countdownInterval = setInterval(function() {
     const now = new Date().getTime();
-    const distance = CLOSING_DEADLINE - now;
-
-    // Fixed time calculations
-    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-    // Grab the elements safely
-    const daysEl = document.getElementById("days");
-    const hoursEl = document.getElementById("hours");
-    const minsEl = document.getElementById("minutes");
-    const secsEl = document.getElementById("seconds");
-
-    if (daysEl && hoursEl && minsEl && secsEl) {
-        daysEl.innerText = days.toString().padStart(2, '0');
-        hoursEl.innerText = hours.toString().padStart(2, '0');
-        minsEl.innerText = minutes.toString().padStart(2, '0');
-        secsEl.innerText = seconds.toString().padStart(2, '0');
+    
+    let distance;
+    const timerLabel = document.querySelector(".timer-label");
+    const formContainer = document.getElementById("formContainer");
+    const closedMessage = document.getElementById("closedMessage");
+    
+    if (now < OPENING_DATE) {
+        // Stage 1: Before July 13th - Countdown to opening date
+        distance = OPENING_DATE - now;
+        if (timerLabel) timerLabel.innerText = "Registration window opens in:";
+        if (formContainer) formContainer.classList.add("d-none");
+        if (closedMessage) closedMessage.classList.add("d-none");
+    } else if (now >= OPENING_DATE && now <= CLOSING_DEADLINE) {
+        // Stage 2: Between July 13th and July 24th - Active registration countdown
+        distance = CLOSING_DEADLINE - now;
+        if (timerLabel) timerLabel.innerText = "Registration Window Closes In:";
+        if (formContainer) {
+            // Show form only if the user hasn't already submitted an entry profile
+            if (!localStorage.getItem("registeredUserEmail")) {
+                formContainer.classList.remove("d-none");
+            }
+        }
+        if (closedMessage) closedMessage.classList.add("d-none");
+    } else {
+        // Stage 3: After July 24th - Registration is closed
+        distance = -1;
     }
 
-    if (distance < 0) {
+    if (distance >= 0) {
+        // Fixed time calculations
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        // Grab the elements safely
+        const daysEl = document.getElementById("days");
+        const hoursEl = document.getElementById("hours");
+        const minsEl = document.getElementById("minutes");
+        const secsEl = document.getElementById("seconds");
+
+        if (daysEl && hoursEl && minsEl && secsEl) {
+            daysEl.innerText = days.toString().padStart(2, '0');
+            hoursEl.innerText = hours.toString().padStart(2, '0');
+            minsEl.innerText = minutes.toString().padStart(2, '0');
+            secsEl.innerText = seconds.toString().padStart(2, '0');
+        }
+    } else {
         clearInterval(countdownInterval);
         const timerWrapper = document.getElementById("countdown-timer");
         if (timerWrapper) timerWrapper.innerHTML = "CLOSED";
-        const formContainer = document.getElementById("formContainer");
+        if (timerLabel) timerLabel.innerText = "Registration is now:";
         if (formContainer) formContainer.classList.add("d-none");
-        const closedMessage = document.getElementById("closedMessage");
         if (closedMessage) closedMessage.classList.remove("d-none");
     }
 }, 1000);
+
+// Automatically update any hardcoded static text inside the page titles dynamically via JavaScript
+document.addEventListener("DOMContentLoaded", () => {
+    const sectionTitlePs = document.querySelectorAll(".section-title p");
+    sectionTitlePs.forEach(p => {
+        if (p.innerText.includes("Deadline:")) {
+            p.innerText = "Deadline: July 24";
+        }
+    });
+});
 
 const regForm = document.getElementById('regForm');
 if(regForm) {
