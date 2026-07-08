@@ -8,6 +8,59 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="icon" type="image/png" href="/assets/img/logo.png">
+    <style>
+        /* --- Flashing Rules Button Styling & Loop Keyframes --- */
+.rules-flash-btn {
+    background-color: rgba(245, 158, 11, 0.1); /* Translucent golden accent tone */
+    color: #f59e0b;
+    border: 1px solid #f59e0b;
+    border-radius: 30px;
+    padding: 8px 24px;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    animation: proceduralFlashEffect 2s infinite ease-in-out;
+}
+
+.rules-flash-btn:hover {
+    background-color: #f59e0b !important;
+    color: #0f172a !important;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+    transform: translateY(-1px);
+}
+
+@keyframes proceduralFlashEffect {
+    0%, 100% {
+        box-shadow: 0 0 4px rgba(245, 158, 11, 0.2);
+        border-color: rgba(245, 158, 11, 0.4);
+        background-color: rgba(245, 158, 11, 0.05);
+    }
+    50% {
+        box-shadow: 0 0 16px rgba(245, 158, 11, 0.6);
+        border-color: rgba(245, 158, 11, 1);
+        background-color: rgba(245, 158, 11, 0.2);
+    }
+}
+
+/* --- Offcanvas Sliding Sidebar Design Extensions --- */
+.custom-dark-offcanvas {
+    background-color: #0f172a !important; /* Matches your background exactly */
+    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    width: 400px !important;
+    max-width: 100%;
+}
+
+.rules-content-wrapper {
+    color: #cbd5e1; /* Subtle modern silver-gray readability text tone */
+    font-size: 0.92rem;
+    line-height: 1.7;
+}
+
+.rules-content-wrapper p {
+    margin-bottom: 12px;
+    padding-left: 4px;
+}
+    </style>
 </head>
 <body style="background: #0f172a;">
 
@@ -34,12 +87,15 @@
         <div class="section-title text-center">
             <h2>Submission Portal</h2>
             <p>Upload your edited masterpieces. Maximum 3 files per category.</p>
-            <p class="text-warning small"><i class="fas fa-info-circle me-1"></i> Please export your edited entries as compressed JPEGs (*Size: Under 4MB per image*).</p>
+            <p class="text-warning small"><i class="fas fa-info-circle me-1"></i> Please export your edited entries as compressed JPEGs (*Size: Under 2MB per image*).</p>
             <div class="mb-4">
                 <a href="index.html" class="btn btn-outline-light back-btn">
                     <i class="fas fa-arrow-left me-2"></i> Back to Home
                 </a>
             </div>
+                        <button class="btn rules-flash-btn fw-semibold" type="button" data-bs-toggle="offcanvas" data-bs-target="#rulesOffcanvas" aria-controls="rulesOffcanvas">
+                <i class="fas fa-scroll me-2"></i> View Rules & Regulations
+            </button>
         </div>
 
         <div class="countdown-container mt-3 mb-4">
@@ -59,6 +115,39 @@
                     <span id="seconds" class="time-num">00</span>
                     <span class="time-label">Sec</span>
                 </div>
+            </div>
+
+
+        </div>
+
+
+
+        <div class="offcanvas offcanvas-end custom-dark-offcanvas" tabindex="-1" id="rulesOffcanvas" aria-labelledby="rulesOffcanvasLabel">
+            <div class="offcanvas-header border-bottom border-secondary border-opacity-25 py-4">
+                <h5 class="offcanvas-title text-warning fw-bold d-flex align-items-center" id="rulesOffcanvasLabel">
+                    <i class="fas fa-gavel text-danger me-2"></i> Competition Rules & Regulations
+                </h5>
+                <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body py-4">
+                <div class="rules-content-wrapper">
+                    <h6 class="text-white fw-semibold mb-3"><i class="fas fa-check-circle text-success me-2"></i> general Guidelines</h6>
+                    <p>1. Each participant can participate in 3 categories and can upload up to 1-3 photographs per category.</p>
+                    <p>2. All entries must be original photographs taken entirely by the participant.</p>
+                    <p>3. Use of AI/Manipulation is strictly prohibited and may be Disqualified.</p>
+                    <p>4. Ensure all photography work submitted is completely genuine and captured within the requested timeline parameters.</p>
+                    
+                    <h6 class="text-white fw-semibold mt-4 mb-3"><i class="fas fa-image text-info me-2"></i> Technical Requirements</h6>
+                    <p>1. Maximum images size should be (<span class="text-warning">Under 2MB per upload</span>). You can use your preferred resolution.</p>
+                    <p>2. Only basic global adjustments (Contrast, exposure, saturation) are permitted. Heavy digital composite manipulations are subject to evaluation parameters.</p>
+                    <p>3. You can mask the photo but cannot entirely manipulate the Image. Color correction is allowes</p>
+                    <p>4. AI Noise reduction is allowed.</p>
+                </div>
+            </div>
+            <div class="offcanvas-footer p-3 border-top border-secondary border-opacity-25">
+                <button type="button" class="btn btn-outline-light w-100 fw-semibold py-2" data-bs-dismiss="offcanvas">
+                    Close & Return to Form
+                </button>
             </div>
         </div>
 
