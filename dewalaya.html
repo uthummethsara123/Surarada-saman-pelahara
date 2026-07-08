@@ -8,79 +8,233 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/png" href="/assets/img/logo.png">
     <link rel="stylesheet" href="assets/css/style.css">
+
+    <style>
+        /* ==========================================================================
+           MODERN ANIMATION & MOBILE INTERACTION ENGINE (NO BLUE GRADIENTS)
+           ========================================================================== */
+
+        /* Smooth CSS Entrance Effects */
+        @keyframes customFadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes goldTextGlow {
+            0%, 100% { text-shadow: 0 0 10px rgba(245, 158, 11, 0.1); }
+            50% { text-shadow: 0 0 20px rgba(245, 158, 11, 0.4); }
+        }
+
+        @keyframes profileFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* Base Theme Alignment Safeties */
+        body.dewalaya-page {
+            background-color: #540818 !important; /* Preserves exact deep slate background */
+        }
+
+        .text-gold {
+            color: #f59e0b !important;
+        }
+
+        /* Hero Entry Load Animation */
+        .hero-section {
+            animation: customFadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Mobile Scroll-Reveal Hidden Initial State */
+        .reveal-on-scroll {
+            opacity: 0;
+            transform: translateY(35px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Triggered automatically on mobile scroll / laptop entrance via JS */
+        .reveal-on-scroll.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Glassmorphic Card Upgrades */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.02) !important;
+            border: 1px solid rgba(255, 255, 255, 0.07) !important;
+            border-radius: 16px !important;
+            padding: 35px !important;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Interactive Hover/Active Touch States (Works cleanly across PC & Mobile Taps) */
+        .glass-card:hover,
+        .glass-card:active, 
+        .glass-card.mobile-tapped {
+            transform: translateY(-5px);
+            border-color: rgba(245, 158, 11, 0.35) !important;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4), 0 0 20px rgba(245, 158, 11, 0.04);
+        }
+
+        .back-btn {
+            transition: all 0.3s ease;
+            border-radius: 30px;
+            padding: 6px 18px;
+        }
+
+        .back-btn:hover {
+            background-color: #f59e0b !important;
+            border-color: #f59e0b !important;
+            color: #0f172a !important;
+            transform: translateX(-3px);
+        }
+
+        .hero-section h1 {
+            animation: goldTextGlow 3s infinite ease-in-out;
+            letter-spacing: -0.5px;
+        }
+
+        /* Premium Floating Visual Profile Frame for Nilame */
+        .nilame-floating-wrapper {
+            display: inline-block;
+            animation: profileFloat 4s infinite ease-in-out;
+        }
+
+        .nilame-img {
+            border: 3px solid #f59e0b !important;
+            padding: 4px;
+            border-radius: 50% !important;
+            transition: transform 0.4s ease !important;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .nilame-floating-wrapper:hover .nilame-img {
+            transform: scale(1.05) rotate(2deg);
+        }
+
+        p {
+            line-height: 1.75;
+            color: #cbd5e1;
+        }
+    </style>
 </head>
 <body class="dewalaya-page">
 
-            <div id="loader">
-    <div class="loader-container">
-        <img src="/assets/img/logo.png" alt="Logo" class="loader-logo">
-    </div>
-</div>
-
-<nav class="navbar navbar-expand-lg fixed-top glass-navbar">
-  <div class="container">
-    <a class="navbar-brand" href="#">
-        <img src="assets/img/logo.png" alt="Surarada Saman Pelahara" height="100">
-    </a>
+    <div id="loader">
+        <div class="loader-container">
+            <img src="/assets/img/logo.png" alt="Logo" class="loader-logo">
         </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg fixed-top glass-navbar">
+      <div class="container">
+        <a class="navbar-brand" href="#">
+            <img src="assets/img/logo.png" alt="Surarada Saman Pelahara" height="100">
+        </a>
+      </div>
     </nav>
 
-    <header class="hero-section text-center">
+    <header class="hero-section text-center" style="padding-top: 130px; padding-bottom: 30px;">
         <div class="container">
-
             <div class="year-selector mb-5">
-    <button class="year-btn active" data-year-select="2025">2025</button>
-    <button class="year-btn year-btn-dewalaya" data-year-select="2026" disabled>2026</button>
-</div>
-            <span class="badge bg-warning text-dark mb-2 px-3 py-2 fw-bold text-uppercase">800th Historical Milestone</span>
+                <button class="year-btn active" data-year-select="2025">2025</button>
+                <button class="year-btn year-btn-dewalaya" data-year-select="2026" disabled>2026</button>
+            </div>
+            <span class="badge bg-warning text-dark mb-2 px-3 py-2 fw-bold text-uppercase tracking-wider shadow-sm">800th Historical Milestone</span>
             <h1 class="display-4 fw-bold text-white">Sabaragamuwa Saman Dewalaya Esala Maha Perahera</h1>
-            <p class="lead text-gold">Sabaragamuwa Maha Saman Dewalaya</p>
+            <p class="lead text-gold fw-semibold">Sabaragamuwa Maha Saman Dewalaya</p>
         </div>
     </header>
 
     <main class="container my-5">
-
-
         <div class="row g-4">
-            <div class="col-lg-8">
+            
+            <div class="col-lg-8 reveal-on-scroll">
                 <div class="glass-card h-100">
-                                <div class="mb-4">
-                <a href="index.html" class="btn btn-outline-light back-btn">
-                    <i class="fas fa-arrow-left me-2"></i> Back to Home
-                </a>
-            </div>
-                    <h3 class="text-gold mb-4"><i class="fas fa-landmark me-2"></i>The 800th Esala Maha Perahera</h3>
+                    <div class="mb-4">
+                        <a href="index.html" class="btn btn-outline-light back-btn">
+                            <i class="fas fa-arrow-left me-2"></i> Back to Home
+                        </a>
+                    </div>
+                    <h3 class="text-gold mb-4 fw-bold"><i class="fas fa-landmark me-2"></i>The 800th Esala Maha Perahera</h3>
                     <p>The historic <strong>Sabaragamuwa Maha Saman Dewalaya</strong> celebrated its monumental <strong>800th annual Esala Maha Perahera festival</strong>, marking eight centuries of profound religious heritage, cultural pride, and devotion to Deity Saman—the guardian protector of Sri Pada.</p>
                     
                     <p>Originating out of deep-rooted rituals initiated centuries ago, this festival brings alive majestic features unique to the Sabaragamuwa province. The grand celebration honors ancient customs through a spectacular progression of cultural phases: the initial spiritual protection through an all-night Parithrana Dhamma Sermon, the symbolic planting of the <em>Kap</em>, followed by the five nights of the internal <em>Maluwe Perahera</em>, the five vibrant nights of the <em>Devele (Veedi) Perahera</em>, and culminating in the magnificent <em>Randoli Maha Perahera</em> pageants.</p>
                     
-                    <p>The milestone procession showcased the grandeur of a bygone era, featuring over 45 diverse traditional dance troupes reflecting Up-Country, Low-Country, and authentic Sabaragamuwa dance heritages, accompanied by the footsteps of over 30 majestic decorated tuskers parading through Ratnapura.</p>
+                    <p class="mb-0">The milestone procession showcased the grandeur of a bygone era, featuring over 45 diverse traditional dance troupes reflecting Up-Country, Low-Country, and authentic Sabaragamuwa dance heritages, accompanied by the footsteps of over 30 majestic decorated tuskers parading through Ratnapura.</p>
                 </div>
             </div>
 
-            <div class="col-lg-4">
-                <div class="glass-card text-center h-100">
-                    <h4 class="text-gold mb-3"><i class="fas fa-user-shield me-2"></i>Basnayake Nilame</h4>
+            <div class="col-lg-4 reveal-on-scroll">
+                <div class="glass-card text-center h-100 d-flex flex-column justify-content-center py-4">
+                    <h4 class="text-gold mb-3 fw-bold"><i class="fas fa-user-shield me-2"></i>Basnayake Nilame</h4>
                     <div class="mb-4 d-flex justify-content-center">
-                        <img src="assets/img/2025/Sanka Mapitigama.jpg" alt="Sanka Mapitigama" class="nilame-img">
+                        <div class="nilame-floating-wrapper">
+                            <img src="assets/img/2025/Sanka Mapitigama.jpg" alt="Sanka Mapitigama" class="nilame-img" width="150" height="150">
+                        </div>
                     </div>
-                    <h5 class="text-white mb-1">Hishan Sanka Mapitigama</h5>
-                    <p class="text-white small text-uppercase tracking-wider">Honorable Chief Lay Custodian</p>
-                    <p class="small text-slate-300">Elected as the chief lay custodian to lead and preserve the historic traditions of the 800th annual Esala Maha Perahera pageant.</p>
+                    <h5 class="text-white mb-1 fw-bold">Hishan Sanka Mapitigama</h5>
+                    <p class="text-white small text-uppercase tracking-wider mb-3">Honorable Chief Lay Custodian</p>
+                    <p class="small text-slate-300 mb-0">Elected as the chief lay custodian to lead and preserve the historic traditions of the 800th annual Esala Maha Perahera pageant.</p>
                 </div>
             </div>
+            
         </div>
-
     </main>
 
-<footer class="site-footer">
-    © 2026 Surarada Saman Pelahara
-    <br>
-    Organized by Sivali Central College, Prince College, Gankanda Central College & Sumana Balika Vidyalaya.
-</footer>
+    <footer class="site-footer">
+        © 2026 Surarada Saman Pelahara
+        <br>
+        Organized by Sivali Central College, Prince College, Gankanda Central College & Sumana Balika Vidyalaya.
+    </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/script.js"></script>
 
-<script src="assets/js/script.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // 1. Mobile & Global Intersection Observer Scroll Reveal
+            const observerOptions = {
+                root: null,
+                threshold: 0.1, // Trigger when 10% of card is on mobile viewport screen
+                rootMargin: "0px 0px -40px 0px"
+            };
+
+            const scrollObserver = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        // Add staggered animation delay spacing dynamically
+                        setTimeout(() => {
+                            entry.target.classList.add('active');
+                        }, index * 100);
+                        scrollObserver.unobserve(entry.target); // Optimize memory once loaded
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.reveal-on-scroll').forEach(el => {
+                scrollObserver.observe(el);
+            });
+
+            // 2. Mobile Touch Event Listeners for feedback tap states
+            document.querySelectorAll('.glass-card').forEach(card => {
+                card.addEventListener('touchstart', () => {
+                    card.classList.add('mobile-tapped');
+                }, {passive: true});
+                
+                card.addEventListener('touchend', () => {
+                    setTimeout(() => {
+                        card.classList.remove('mobile-tapped');
+                    }, 300);
+                }, {passive: true});
+            });
+        });
+    </script>
 </body>
 </html>
