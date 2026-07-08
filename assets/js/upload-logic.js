@@ -4,7 +4,7 @@ const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oG
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
 // Use standard hyphens instead of dots so browsers can read it cleanly
-const START_DATE = new Date("2026-07-26T00:00:00").getTime();
+const START_DATE = new Date("2026-07-27T00:00:00").getTime();
 // Admin: Extend this date forward whenever you want to grant extra submission time
 const DEADLINE_DATE = new Date("2026-07-27T02:00:00").getTime();
 
@@ -130,6 +130,49 @@ document.addEventListener("DOMContentLoaded", () => {
             
             if (this.files.length > 0) {
                 const file = this.files[0];
+
+            // =========================================================================
+            // BOOTSTRAP 5 CUSTOM MODAL VALIDATION FOR 2MB IMAGE LIMITS
+            // =========================================================================
+            const maxSizeBytes = 2 * 1024 * 1024; // 2MB
+            if (file.size > maxSizeBytes) {
+                this.value = ""; // Clear file selection instantly
+
+                // 1. Check if our custom modal structural container exists. If not, generate it.
+                let warningModalEl = document.getElementById('sizeWarningModal');
+                if (!warningModalEl) {
+                    const modalHtml = `
+                    <div class="modal fade" id="sizeWarningModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content text-white" style="background-color: #1e1b4b; border: 2px solid #ef4444; border-radius: 12px;">
+                                <div class="modal-header border-0 pb-0" style="padding: 20px 20px 10px 20px;">
+                                    <h5 class="modal-title d-flex align-items-center text-danger fw-bold" style="font-size: 1.25rem;">
+                                        <i class="bi bi-exclamation-triangle-fill me-2" style="font-size: 1.5rem;"></i> File Too Large
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body py-3" style="padding: 0 20px; font-size: 0.95rem; line-height: 1.6; color: #cbd5e1;">
+                                    <p class="mb-2">The image you selected, <span class="text-warning fw-medium">"${file.name}"</span>, exceeds our allowed file size limit.</p>
+                                    <p class="mb-0">Please reduce or compress your image to <span class="text-success fw-bold">under 2MB</span> before uploading. This ensures your data processes instantly and prevents server traffic jams.</p>
+                                </div>
+                                <div class="modal-footer border-0 pt-0" style="padding: 10px 20px 20px 20px;">
+                                    <button type="button" class="btn btn-danger w-100 fw-semibold" data-bs-dismiss="modal" style="border-radius: 6px; padding: 8px 16px;">Got it</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                    document.body.insertAdjacentHTML('beforeend', modalHtml);
+                    warningModalEl = document.getElementById('sizeWarningModal');
+                }
+
+                // 2. Safely trigger the Bootstrap 5 Modal API instance directly via script
+                const bsModal = new bootstrap.Modal(warningModalEl);
+                bsModal.show();
+                
+                return; // Stop execution
+            }
+            // =========================================================================
+
                 const reader = new FileReader();
                 
                 reader.onload = function(e) {
