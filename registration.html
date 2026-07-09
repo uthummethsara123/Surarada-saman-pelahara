@@ -131,7 +131,7 @@
                             <input type="text" class="form-control glass-input" id="presidentNameInput" name="presidentName" placeholder="Enter president name">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold text-warning" id="presidentContactLabel">President Contact Number</label>
+                            <label class="form-label fw-bold text-warning" id="presidentContactLabel">President Whatsapp Number</label>
                             <input type="tel" class="form-control glass-input" id="presidentContactInput" name="presidentContact" placeholder="Enter president contact number">
                         </div>
                     </div>
@@ -172,7 +172,7 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label class="form-label text-warning-light">Contact Number <span class="text-danger">*</span></label>
+                            <label class="form-label text-warning-light">Whatsapp Number <span class="text-danger">*</span></label>
                             <input type="tel" name="delegate_phone_1" class="form-control glass-input" placeholder="e.g. 0771111111" required>
                         </div>
                         
@@ -200,15 +200,24 @@
             
             <div id="submittedStateDashboard" class="text-center p-4 border border-warning rounded glass-panel d-none mt-2">
                 <i class="fas fa-check-circle text-success mb-3" style="font-size: 3.5rem;"></i>
-                <h3 class="text-white mb-2">Delegation Already Submitted!</h3>
+                <h3 class="text-white mb-2" id="dashboardStatusTitle">Delegation Submitted!</h3>
                 <p class="text-white mb-4">Your registration for the 2026 portal is securely locked based on your email address.</p>
-                
+
                 <hr class="border-secondary my-4">
                 
                 <p class="text-warning-lightfw-bold mb-3">Do you want to refill the form?</p>
                 <button type="button" id="triggerDeleteBtn" class="btn btn-danger btn-sm px-4 py-2">
                     <i class="fas fa-trash-alt me-2"></i>Delete Previous Entry & Refill
                 </button>
+
+                <hr class="border-secondary my-4">
+
+                <div class="p-3 mb-4 rounded text-start shadow-sm" style="background-color: rgba(25, 135, 84, 0.15); border: 1px solid rgba(25, 135, 84, 0.3);">
+                    <p class="text-white mb-2 small text-center text-uppercase tracking-wider fw-bold text-success-light">Next Step Integration</p>
+                    <a href="https://chat.whatsapp.com/DuluTesYIWe61CDDcaIE4U" target="_blank" class="btn btn-success btn-lg px-4 py-3 fw-bold w-100 d-flex align-items-center justify-content-center border-0 shadow">
+                        <i class="fab fa-whatsapp me-2" style="font-size: 1.6rem;"></i> Join the official Participations group in whatsapp
+                    </a>
+                </div>
             </div>
 
             <div id="formFeedback" class="text-center mt-3 d-none"></div>
