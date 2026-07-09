@@ -17,7 +17,7 @@ const INNER_SCHOOL_ADDRESSES = {
 
 // Note: JavaScript months are 0-indexed (6 = July)
 const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycbxGNZPK9jYGNTyXYwDmONDu03wXPIg-LnWVIx2PA0n5XQDYWieJ01cVrVry5ML6VFLS/exec";
-const OPENING_DATE = new Date(2026, 6, 13, 0, 0, 0).getTime();      // July 13th, 2026
+const OPENING_DATE = new Date(2026, 6, 10, 0, 0, 0).getTime();      // July 13th, 2026
 const CLOSING_DEADLINE = new Date(2026, 6, 24, 24, 0, 0).getTime();   // July 24th, 2026 (End of Day)
 
 const countdownInterval = setInterval(function() {
@@ -192,8 +192,10 @@ if(regForm) {
             submitBtn.disabled = false;
             submitBtn.innerText = "Submit Delegation Entry";
 
-            // Swap interface to hidden dashboard window layout layer
+            // Swap interface to hidden dashboard window layout layer & set custom status text
             if (submittedStateDashboard) {
+                const statusTitle = document.getElementById("dashboardStatusTitle");
+                if (statusTitle) statusTitle.innerText = "Registration Successful!";
                 regForm.classList.add("d-none");
                 submittedStateDashboard.classList.remove("d-none");
             }
@@ -254,6 +256,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Check if the current user has already submitted a form profile matching their active environment
     const storedEmailSession = localStorage.getItem("registeredUserEmail");
     if (storedEmailSession && regForm && submittedStateDashboard) {
+        const statusTitle = document.getElementById("dashboardStatusTitle");
+        if (statusTitle) statusTitle.innerText = "Delegation Already Submitted!";
         regForm.classList.add("d-none");
         submittedStateDashboard.classList.remove("d-none");
     }
