@@ -437,7 +437,7 @@ function updatePortalStatesLive() {
 
     // Centralized Date Tracking Matrix (Months are 0-indexed: 6 = July)
     const REGISTRATION_DEADLINE = new Date(2026, 6, 24, 24, 0, 0).getTime(); // July 24th Midnight (24:00)
-    const UPLOAD_START_TIME     = new Date(2026, 6, 27, 0, 0, 0).getTime();  // July 27th Midnight (00:00)
+    const UPLOAD_START_TIME     = new Date(2026, 6, 26, 14, 0, 0).getTime();  // July 26th (14:00)
     const UPLOAD_GRAY_TIME      = new Date(2026, 6, 27, 2, 0, 0).getTime();  // July 27th 2:00 AM
 
     // --- Part A: Handle Live Registration Button States ---
