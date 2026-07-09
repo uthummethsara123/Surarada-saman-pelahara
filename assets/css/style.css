@@ -252,6 +252,69 @@ html{
     animation: buttonShine 2s infinite ease-in-out;
 }
 
+
+/* Nav upload btn and hero upload btn configurations. */
+
+/* ==========================================================================
+   TIME-BASED LOGIC OVERRIDES (AUTOMATION ENGINE)
+   ========================================================================== */
+
+/* 1. Registration Closed Overrides (Explicit Target Priority) */
+.cta-btn-closed,
+.hero-cta-btn.cta-btn-closed,
+.nav-cta-btn.cta-btn-closed {
+    background: #334155 !important; /* Premium Dark Grey (Slate-700) */
+    color: #94a3b8 !important;      /* Light Grey Text (Slate-400) */
+    box-shadow: none !important;
+    transform: none !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    cursor: pointer !important;      /* Remains clickable to navigate to page */
+    transition: none !important;
+    animation: none !important;
+}
+
+/* Hard shutdown for background pulse animations and glowing custom rings */
+.cta-btn-closed::after, .cta-btn-closed::before,
+.hero-cta-btn.cta-btn-closed::after, .hero-cta-btn.cta-btn-closed::before {
+    display: none !important;
+    animation: none !important;
+    content: none !important;
+}
+
+/* Forcefully removes all hover zoom interactions */
+.cta-btn-closed:hover,
+.hero-cta-btn.cta-btn-closed:hover,
+.nav-cta-btn.cta-btn-closed:hover {
+    background: #334155 !important;
+    color: #94a3b8 !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* 2. Photo Submission Portal Grayed-Out Overrides */
+.upload-btn-grayed,
+.hero-upload-icon-btn.upload-btn-grayed,
+.nav-upload-icon-btn.upload-btn-grayed {
+    background: #334155 !important; 
+    color: #94a3b8 !important;      
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: none !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+}
+
+.upload-btn-grayed:hover,
+.hero-upload-icon-btn.upload-btn-grayed:hover,
+.nav-upload-icon-btn.upload-btn-grayed:hover {
+    background: #334155 !important;
+    color: #94a3b8 !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+
+
 /* ==========================================================================
 3. HERO SECTION (UPGRADED THEME CONFIGURATION)
 ========================================================================== */
