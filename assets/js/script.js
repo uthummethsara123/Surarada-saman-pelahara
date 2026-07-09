@@ -428,3 +428,69 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 });
+
+// ==========================================================================
+// 7. REAL-TIME TIME-BASED SCHEDULER ENGINE (LIVE REFRESHLESS UPDATES)
+// ==========================================================================
+function updatePortalStatesLive() {
+    const now = new Date().getTime();
+
+    // Centralized Date Tracking Matrix (Months are 0-indexed: 6 = July)
+    const REGISTRATION_DEADLINE = new Date(2026, 6, 24, 24, 0, 0).getTime(); // July 24th Midnight (24:00)
+    const UPLOAD_START_TIME     = new Date(2026, 6, 27, 0, 0, 0).getTime();  // July 27th Midnight (00:00)
+    const UPLOAD_GRAY_TIME      = new Date(2026, 6, 27, 2, 0, 0).getTime();  // July 27th 2:00 AM
+
+    // --- Part A: Handle Live Registration Button States ---
+    if (now > REGISTRATION_DEADLINE) {
+        const regButtons = document.querySelectorAll('.nav-cta-btn, .hero-cta-btn');
+        regButtons.forEach(btn => {
+            if (btn.textContent !== "Registration Closed") {
+                btn.textContent = "Registration Closed";
+            }
+            if (!btn.classList.contains('cta-btn-closed')) {
+                btn.classList.add('cta-btn-closed');
+                btn.classList.remove('btn-warning'); // Removes conflicting Bootstrap yellow background
+            }
+        });
+    }
+
+    // --- Part B: Handle Live Photo Upload Portal States ---
+    const navUploadItem  = document.getElementById('nav-upload-item');
+    const heroUploadItem = document.getElementById('hero-upload-item');
+    const navUploadBtn   = document.getElementById('nav-upload-btn');
+    const heroUploadBtn  = document.getElementById('hero-upload-btn');
+
+    if (now >= UPLOAD_START_TIME) {
+        // Dynamically shows elements instantly when time is reached
+        if (navUploadItem && navUploadItem.style.display === 'none') {
+            navUploadItem.style.setProperty('display', 'block', 'important');
+        }
+        if (heroUploadItem && heroUploadItem.style.display === 'none') {
+            heroUploadItem.style.setProperty('display', 'block', 'important');
+        }
+
+        // Grays out buttons instantly when 2:00 AM hits
+        if (now >= UPLOAD_GRAY_TIME) {
+            if (navUploadBtn && !navUploadBtn.classList.contains('upload-btn-grayed')) {
+                navUploadBtn.classList.add('upload-btn-grayed');
+            }
+            if (heroUploadBtn && !heroUploadBtn.classList.contains('upload-btn-grayed')) {
+                heroUploadBtn.classList.add('upload-btn-grayed');
+            }
+        }
+    } else {
+        // Ensures items stay hidden if a user manually changes things ahead of schedule
+        if (navUploadItem && navUploadItem.style.display !== 'none') {
+            navUploadItem.style.setProperty('display', 'none', 'important');
+        }
+        if (heroUploadItem && heroUploadItem.style.display !== 'none') {
+            heroUploadItem.style.setProperty('display', 'none', 'important');
+        }
+    }
+}
+
+// Initialize the real-time loop engine
+document.addEventListener("DOMContentLoaded", () => {
+    updatePortalStatesLive(); // Run immediately on page mount
+    setInterval(updatePortalStatesLive, 1000); // Check and apply updates every 1 second continuously
+});
