@@ -556,8 +556,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const guidelinesDisplaySheet = document.getElementById("guidelinesDisplaySheet");
         const scrollWrapper = document.getElementById("guidelinesScrollWrapper");
 
-        const ENGLISH_IMAGE_SOURCE = "assets/img/25 guideline.png";
-        const SINHALA_IMAGE_SOURCE = "assets/img/25 guideline.png";
+        const ENGLISH_IMAGE_SOURCE = "assets/img/26 guideline eng.png";
+        const SINHALA_IMAGE_SOURCE = "assets/img/26 guideline sin.png";
 
         let isZoomed = false;
         
