@@ -17,7 +17,7 @@ const INNER_SCHOOL_ADDRESSES = {
 
 // Note: JavaScript months are 0-indexed (6 = July)
 const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycbxGNZPK9jYGNTyXYwDmONDu03wXPIg-LnWVIx2PA0n5XQDYWieJ01cVrVry5ML6VFLS/exec";
-const OPENING_DATE = new Date(2026, 6, 11, 0, 0, 0).getTime();      // July 13th, 2026
+const OPENING_DATE = new Date(2026, 6, 12, 0, 0, 0).getTime();      // July 13th, 2026
 const CLOSING_DEADLINE = new Date(2026, 6, 24, 24, 0, 0).getTime();   // July 24th, 2026 (End of Day)
 
 const countdownInterval = setInterval(function() {
