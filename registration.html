@@ -62,6 +62,62 @@
             </div>
         </div>
 
+        <div class="text-center mb-4 mt-2">
+    <button type="button" class="btn btn-outline-warning fw-bold px-4 py-2.5 shadow-sm" data-bs-toggle="modal" data-bs-target="#guidelinesModal" style="border-width: 2px; letter-spacing: 0.5px;">
+        <i class="fas fa-file-contract me-2 animate-pulse"></i>View Rules and regulations
+    </button>
+</div>
+
+<div class="modal fade" id="guidelinesModal" tabindex="-1" aria-labelledby="guidelinesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content text-white border-warning glass-panel" style="background-color: #540818; border: 1px solid rgba(234, 179, 8, 0.25); box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+            
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-warning fw-bold" id="guidelinesModalLabel">
+                    <i class="fas fa-scroll me-2"></i>Rules & Regulations Guidelines
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body text-center p-3">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 px-2">
+                    <div class="d-flex gap-2">
+                        <button type="button" id="langBtnEng" class="btn btn-warning btn-sm fw-bold px-4 py-2 shadow-sm transition-all">English</button>
+                        <button type="button" id="langBtnSin" class="btn btn-outline-warning btn-sm fw-bold px-4 py-2 transition-all">සිංහල</button>
+                    </div>
+                    <div>
+                        <button type="button" id="zoomToggleBtn" class="btn btn-outline-info btn-sm fw-bold px-3 py-2">
+                            <i class="fas fa-search-plus me-1"></i> Click Image to Zoom
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="guidelinesScrollWrapper" class="rounded border border-secondary p-1 bg-black-subtle shadow-inner" 
+                     style="background: rgba(0,0,0,0.3); overflow: auto; max-height: 60vh; position: relative; cursor: grab; user-select: none; -webkit-user-drag: none;">
+                    
+                    <img id="guidelinesDisplaySheet" 
+                         src="assets/img/25 guideline.png" 
+                         alt="Surarada Saman Pelahara Guidelines Sheet" 
+                         class="img-fluid rounded shadow" 
+                         style="width: 100%; max-width: none; display: block; cursor: zoom-in; transition: width 0.25s ease-in-out; -webkit-user-drag: none;"
+                         draggable="false">
+                         
+                </div>
+                <div class="text-white small mt-2 text-start px-2 d-flex justify-content-between">
+                    <span><i class="fas fa-info-circle me-1"></i> Use <b>Click & Drag</b> to move around when zoomed in.</span>
+                    <span class="d-none d-md-inline text-warning-light">Resolution Optimised</span>
+                </div>
+            </div>
+            
+            <div class="modal-footer border-secondary justify-content-between bg-black-subtle px-4">
+                <small class="text-white">Surarada Saman Pelahara Official Guide</small>
+                <button type="button" class="btn btn-primary px-4 fw-bold" data-bs-dismiss="modal">Close</button>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
         <div class="timer-wrapper text-center">
             <p class="timer-label">Registration Window Closes In:</p>
             <div id="countdown-timer">
