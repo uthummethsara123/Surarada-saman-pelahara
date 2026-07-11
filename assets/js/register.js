@@ -548,3 +548,118 @@ if (typeof ScrollReveal !== 'undefined') {
         interval: 200
     });
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+        const langBtnEng = document.getElementById("langBtnEng");
+        const langBtnSin = document.getElementById("langBtnSin");
+        const zoomToggleBtn = document.getElementById("zoomToggleBtn");
+        const guidelinesDisplaySheet = document.getElementById("guidelinesDisplaySheet");
+        const scrollWrapper = document.getElementById("guidelinesScrollWrapper");
+
+        const ENGLISH_IMAGE_SOURCE = "assets/img/25 guideline.png";
+        const SINHALA_IMAGE_SOURCE = "assets/img/25 guideline.png";
+
+        let isZoomed = false;
+        
+        // Drag-to-Scroll variables
+        let isDown = false;
+        let startX, startY;
+        let scrollLeft, scrollTop;
+        let draggedDistance = 0; // Distinguishes between a quick click vs a drag pan movement
+
+        // Language toggle controller
+        function setLanguageView(activeLang) {
+            if (activeLang === 'en') {
+                langBtnEng.className = "btn btn-warning btn-sm fw-bold px-4 py-2 shadow-sm";
+                langBtnSin.className = "btn btn-outline-warning btn-sm fw-bold px-4 py-2";
+                guidelinesDisplaySheet.src = ENGLISH_IMAGE_SOURCE;
+            } else if (activeLang === 'si') {
+                langBtnSin.className = "btn btn-warning btn-sm fw-bold px-4 py-2 shadow-sm";
+                langBtnEng.className = "btn btn-outline-warning btn-sm fw-bold px-4 py-2";
+                guidelinesDisplaySheet.src = SINHALA_IMAGE_SOURCE;
+            }
+        }
+
+        // Zoom Engine Toggle
+        function toggleImageZoom() {
+            if (!isZoomed) {
+                guidelinesDisplaySheet.style.width = "180%"; 
+                guidelinesDisplaySheet.style.cursor = "zoom-out";
+                scrollWrapper.style.cursor = "grab";
+                zoomToggleBtn.innerHTML = '<i class="fas fa-search-minus me-1"></i> Zoom Out';
+                zoomToggleBtn.className = "btn btn-info btn-sm fw-bold px-3 py-2 text-white";
+                isZoomed = true;
+            } else {
+                guidelinesDisplaySheet.style.width = "100%";
+                guidelinesDisplaySheet.style.cursor = "zoom-in";
+                scrollWrapper.style.cursor = "default";
+                zoomToggleBtn.innerHTML = '<i class="fas fa-search-plus me-1"></i> Click Image to Zoom';
+                zoomToggleBtn.className = "btn btn-outline-info btn-sm fw-bold px-3 py-2";
+                isZoomed = false;
+            }
+        }
+
+        // --- 🖱️ MOUSE DRAG TO PAN MAPPING ENGINE ---
+        scrollWrapper.addEventListener('mousedown', (e) => {
+            if (!isZoomed) return; // Only allow panning dragging if zoomed in
+            isDown = true;
+            scrollWrapper.style.cursor = 'grabbing';
+            guidelinesDisplaySheet.style.cursor = 'grabbing';
+            
+            startX = e.pageX - scrollWrapper.offsetLeft;
+            startY = e.pageY - scrollWrapper.offsetTop;
+            scrollLeft = scrollWrapper.scrollLeft;
+            scrollTop = scrollWrapper.scrollTop;
+            draggedDistance = 0;
+        });
+
+        scrollWrapper.addEventListener('mouseleave', () => {
+            if (!isDown) return;
+            isDown = false;
+            scrollWrapper.style.cursor = isZoomed ? 'grab' : 'default';
+        });
+
+        scrollWrapper.addEventListener('mouseup', (e) => {
+            if (!isDown) return;
+            isDown = false;
+            scrollWrapper.style.cursor = isZoomed ? 'grab' : 'default';
+            if (isZoomed) guidelinesDisplaySheet.style.cursor = 'zoom-out';
+        });
+
+        scrollWrapper.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            
+            const x = e.pageX - scrollWrapper.offsetLeft;
+            const y = e.pageY - scrollWrapper.offsetTop;
+            
+            const walkX = (x - startX) * 1.5; // 1.5 speed multiplier acceleration
+            const walkY = (y - startY) * 1.5;
+            
+            scrollWrapper.scrollLeft = scrollLeft - walkX;
+            scrollWrapper.scrollTop = scrollTop - walkY;
+            
+            draggedDistance += Math.abs(walkX) + Math.abs(walkY);
+        });
+
+        // Click evaluation wrapper
+        guidelinesDisplaySheet.addEventListener('click', (e) => {
+            // If the user moved their mouse more than 8 pixels, treat it as a drag pan, not a click zoom command
+            if (draggedDistance > 8) {
+                e.preventDefault();
+                return;
+            }
+            toggleImageZoom();
+        });
+
+        // Action Bindings
+        langBtnEng.addEventListener("click", () => setLanguageView('en'));
+        langBtnSin.addEventListener("click", () => setLanguageView('si'));
+        zoomToggleBtn.addEventListener("click", toggleImageZoom);
+
+        // Auto clean zoom setting state when modal hides away
+        const modalElement = document.getElementById('guidelinesModal');
+        modalElement.addEventListener('hidden.bs.modal', () => {
+            if (isZoomed) toggleImageZoom();
+        });
+    });
