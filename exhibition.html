@@ -219,6 +219,11 @@
         return name.substring(0, bestSpaceIdx) + '\n' + name.substring(bestSpaceIdx + 1);
       }
 
+      // Passed directly through since Google Apps Script handles formatting at the data layer
+      function getDirectImageUrl(url) {
+        return url;
+      }
+
       window.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) {
           window.galleryState.isUserTouching = true;
@@ -359,7 +364,9 @@
               const processTrackPurge = (trackArray) => {
                 let indexesToRemove = [];
                 for (let i = trackArray.length - 1; i >= 0; i--) {
-                  let src = trackArray[i].asset.getAttribute('src');
+                  // CHANGE THIS LINE to read data-original-src:
+                  let src = trackArray[i].asset.getAttribute('data-original-src');
+                  
                   if (!serverSrcSet.has(src)) {
                     if (trackArray[i].item && trackArray[i].item.parentNode) {
                       trackArray[i].item.parentNode.removeChild(trackArray[i].item);
@@ -401,9 +408,13 @@
                 let xPos = isLeft ? '-3' : '3';
                 let rotation = isLeft ? '0 90 0' : '0 -90 0';
                 
+                // REPLACE THE imgAsset CREATION WITH THIS:
+                let safeUrl = getDirectImageUrl(imgData.src); // Convert to WebGL friendly format
+                
                 let imgAsset = document.createElement('img');
                 imgAsset.setAttribute('id', `live-img-${Date.now()}-${currentIndex}`);
-                imgAsset.setAttribute('src', imgData.src);
+                imgAsset.setAttribute('src', safeUrl); // Use the converted URL
+                imgAsset.setAttribute('data-original-src', imgData.src); // Save original for deletion tracking
                 imgAsset.setAttribute('crossorigin', 'anonymous');
                 assetsEl.appendChild(imgAsset);
                 
@@ -556,9 +567,14 @@
 
               images.forEach((imgData, index) => {
                 window.loadedImageUrls.add(imgData.src);
+                
+                // REPLACE THE imgAsset CREATION WITH THIS:
+                let safeUrl = getDirectImageUrl(imgData.src); // Convert to WebGL friendly format
+
                 let imgAsset = document.createElement('img');
                 imgAsset.setAttribute('id', `live-img-${index}`);
-                imgAsset.setAttribute('src', imgData.src);
+                imgAsset.setAttribute('src', safeUrl); // Use the converted URL
+                imgAsset.setAttribute('data-original-src', imgData.src); // Save original for deletion tracking
                 imgAsset.setAttribute('crossorigin', 'anonymous');
                 assetsEl.appendChild(imgAsset);
 
