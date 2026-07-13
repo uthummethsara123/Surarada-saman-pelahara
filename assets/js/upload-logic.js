@@ -4,7 +4,7 @@ const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oG
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
 // Use standard hyphens instead of dots so browsers can read it cleanly
-const START_DATE = new Date("2026-07-27T00:00:00").getTime();
+const START_DATE = new Date("2026-07-26T00:00:00").getTime();
 // Admin: Extend this date forward whenever you want to grant extra submission time
 const DEADLINE_DATE = new Date("2026-07-27T02:00:00").getTime();
 
@@ -53,7 +53,7 @@ styleSheet.innerText = `
         stroke-width: 3.5;
         stroke-dasharray: 88;
         stroke-dashoffset: 88;
-        transition: stroke-dashoffset 0.2s ease;
+        transition: stroke-dashoffset 1.2s ease-in-out;   /* ← Updated */
     }
     .upload-success-tick {
         color: #10b981 !important;
@@ -132,9 +132,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const file = this.files[0];
 
             // =========================================================================
-            // BOOTSTRAP 5 CUSTOM MODAL VALIDATION FOR 2MB IMAGE LIMITS
+            // BOOTSTRAP 5 CUSTOM MODAL VALIDATION FOR 5MB IMAGE LIMITS
             // =========================================================================
-            const maxSizeBytes = 2 * 1024 * 1024; // 2MB
+            const maxSizeBytes = 5 * 1024 * 1024; // 5MB
             if (file.size > maxSizeBytes) {
                 this.value = ""; // Clear file selection instantly
 
@@ -153,7 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </div>
                                 <div class="modal-body py-3" style="padding: 0 20px; font-size: 0.95rem; line-height: 1.6; color: #cbd5e1;">
                                     <p class="mb-2">The image you selected, <span class="text-warning fw-medium">"${file.name}"</span>, exceeds our allowed file size limit.</p>
-                                    <p class="mb-0">Please reduce or compress your image to <span class="text-success fw-bold">under 2MB</span> before uploading. This ensures your data processes instantly and prevents server traffic jams.</p>
+                                    <p class="mb-0">Please reduce or compress your image to <span class="text-success fw-bold">under 5MB</span> before uploading. This ensures your data processes instantly and prevents server traffic jams.</p>
                                 </div>
                                 <div class="modal-footer border-0 pt-0" style="padding: 10px 20px 20px 20px;">
                                     <button type="button" class="btn btn-danger w-100 fw-semibold" data-bs-dismiss="modal" style="border-radius: 6px; padding: 8px 16px;">Got it</button>
@@ -193,6 +193,195 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // =========================================================================
+    // UNIFIED HIGH-RELIABILITY FORM SUBMISSION ENGINE WITH AUTOSCROLL
+    // =========================================================================
+
+            if (uploadForm) {
+        uploadForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById("uploadSubmitBtn");
+            const participantEmail = document.getElementById("participantEmail")?.value.trim();
+            const participantName = document.getElementById("participantName")?.value.trim();
+            const certificateName = document.getElementById("certificateName")?.value.trim();
+            const schoolName = document.getElementById("schoolName")?.value.trim();
+            const competitionScope = document.getElementById("competitionScope")?.value;
+
+            if (!participantEmail || !participantName || !schoolName) {
+                let missingInfoModal = document.getElementById('missingInfoModal');
+                if (!missingInfoModal) {
+                    const html = `<div class="modal fade" id="missingInfoModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content text-white" style="background-color: #1e1b4b; border: 2px solid #ef4444; border-radius: 12px;"><div class="modal-header border-0"><h5 class="modal-title text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Missing Information</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body">Please fill out all identity and school information fields.</div><div class="modal-footer border-0"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">OK</button></div></div></div></div>`;
+                    document.body.insertAdjacentHTML('beforeend', html);
+                    missingInfoModal = document.getElementById('missingInfoModal');
+                }
+                new bootstrap.Modal(missingInfoModal).show();
+                return;
+            }
+
+            const fileInputs = document.querySelectorAll('.preview-trigger');
+            const activeSlots = [];
+
+            fileInputs.forEach(input => {
+                if (input.files && input.files.length > 0) {
+                    const slotId = input.name;
+                    const titleField = document.getElementById("title_" + slotId);
+                    activeSlots.push({
+                        slot: slotId,
+                        file: input.files[0],
+                        title: titleField ? titleField.value.trim() : "Untitled"
+                    });
+                }
+            });
+
+            if (activeSlots.length === 0) {
+                let emptyPortfolioModal = document.getElementById('emptyPortfolioModal');
+                if (!emptyPortfolioModal) {
+                    const html = `<div class="modal fade" id="emptyPortfolioModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content text-white" style="background-color: #1e1b4b; border: 2px solid #ef4444; border-radius: 12px;"><div class="modal-header border-0"><h5 class="modal-title text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Empty Portfolio</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body">Your portfolio is empty! Please select at least one photograph to submit.</div><div class="modal-footer border-0"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">OK</button></div></div></div></div>`;
+                    document.body.insertAdjacentHTML('beforeend', html);
+                    emptyPortfolioModal = document.getElementById('emptyPortfolioModal');
+                }
+                new bootstrap.Modal(emptyPortfolioModal).show();
+                return;
+            }
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Processing Portfolio...`;
+            }
+
+            try {
+                const unifiedPayload = {
+                    email: participantEmail,
+                    name: participantName,
+                    certName: certificateName,
+                    school: schoolName,
+                    scope: competitionScope
+                };
+
+                // ONE PHOTO AT A TIME - Circle stays until upload is done
+                for (let i = 0; i < activeSlots.length; i++) {
+                    const item = activeSlots[i];
+                    const slot = item.slot;
+
+                    if (submitBtn) {
+                        submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Processing Photo ${i + 1}/${activeSlots.length}...`;
+                    }
+
+                    // FIXED: Removed the lines that were hiding previous green ticks!
+                    // We only want to manipulate the specific circle for THIS slot.
+                    const containerCircle = document.getElementById(`circle_container_${slot}`);
+                    const circleBar = document.getElementById(`circle_bar_${slot}`);
+                    const tickMark = document.getElementById(`tick_${slot}`);
+
+                    // Show current circle
+                    if (containerCircle) {
+                        containerCircle.classList.remove('d-none');
+                        containerCircle.style.display = 'inline-block';
+                    }
+
+                    // Slow fill to 90%
+                    if (circleBar) {
+                        circleBar.style.transition = 'stroke-dashoffset 5s linear';
+                        circleBar.style.strokeDashoffset = '88';
+                        setTimeout(() => {
+                            circleBar.style.strokeDashoffset = '9';
+                        }, 100);
+                    }
+
+                    containerCircle.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    // Base64
+                    const base64Content = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(item.file);
+                        reader.onload = () => resolve(reader.result.split(',')[1]);
+                        reader.onerror = reject;
+                    });
+
+                    // Wait a bit so user sees 90%
+                    await new Promise(resolve => setTimeout(resolve, 800));
+
+                    // FIXED DUPLICATION: We create a brand new payload for THIS photo ONLY.
+                    // We do not inject it into the global unifiedPayload, which stops them from stacking up.
+                    const singlePayload = { 
+                        ...unifiedPayload, // Copies email, name, school, etc.
+                        [slot]: base64Content,
+                        [slot + "_name"]: item.file.name,
+                        [slot + "_type"]: item.file.type,
+                        [slot + "_title"]: item.title
+                    };
+
+                    // Now upload this single photo
+                    const response = await fetch(SUBMISSION_API_URL, {
+                        method: "POST",
+                        mode: "cors",
+                        body: JSON.stringify(singlePayload)
+                    });
+
+                    const result = await response.json();
+                    if (result.success !== true) {
+                        throw new Error(result.message || "Upload failed");
+                    }
+
+                    // Now show green tick
+                    if (circleBar) {
+                        circleBar.style.transition = 'stroke-dashoffset 0.6s ease';
+                        circleBar.style.strokeDashoffset = '0';
+                    }
+
+                    if (containerCircle) {
+                        setTimeout(() => {
+                            containerCircle.classList.add('d-none');
+                            containerCircle.style.display = 'none';
+                        }, 200);
+                    }
+
+                    if (tickMark) {
+                        tickMark.style.display = 'inline-block';
+                        tickMark.style.color = '#22c55e'; // Keeps the tick perfectly green and visible
+                    }
+
+                    await new Promise(resolve => setTimeout(resolve, 900));
+                }
+
+                // Final Success
+                submissionFinishedTime = new Date().getTime();
+                userIsActivelyWorking = false;
+
+                if (submitBtn) {
+                    submitBtn.innerHTML = `<i class="fas fa-check-double me-2"></i>Portfolio Uploaded!`;
+                    submitBtn.className = "btn btn-success w-100 py-2 fw-semibold";
+                    submitBtn.disabled = true;
+                }
+
+                localStorage.setItem("submittedUploadEmail", participantEmail);
+                localStorage.setItem("submittedUploadName", participantName);
+
+                const uploadFormEl = document.getElementById('uploadForm');
+                const uploadDashboardEl = document.getElementById('uploadSubmittedDashboard');
+                if (uploadFormEl) uploadFormEl.classList.add('d-none');
+                if (uploadDashboardEl) uploadDashboardEl.classList.remove('d-none');
+
+            } catch (error) {
+                console.error("Submission Error:", error);
+                let uploadFailModal = document.getElementById('uploadFailModal');
+                if (!uploadFailModal) {
+                    const html = `<div class="modal fade" id="uploadFailModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content text-white" style="background-color: #1e1b4b; border: 2px solid #ef4444; border-radius: 12px;"><div class="modal-header border-0"><h5 class="modal-title text-danger fw-bold"><i class="bi bi-x-circle-fill me-2"></i>Upload Failed</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body">Upload failed: ${error.message}<br><br>Please try again.</div><div class="modal-footer border-0"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">OK</button></div></div></div></div>`;
+                    document.body.insertAdjacentHTML('beforeend', html);
+                    uploadFailModal = document.getElementById('uploadFailModal');
+                }
+                new bootstrap.Modal(uploadFailModal).show();
+                
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = `<i class="fas fa-redo-alt me-2"></i>Retry Submission`;
+                    submitBtn.className = "btn btn-danger w-100 py-2 fw-semibold";
+                }
+            }
+        });
+    }
+
     document.querySelectorAll('.remove-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const targetInputName = this.getAttribute('data-target');
@@ -221,7 +410,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    if (confirmDeletionBtn) {
+        if (confirmDeletionBtn) {
         confirmDeletionBtn.addEventListener("click", async () => {
             const currentActiveKey = localStorage.getItem("submittedUploadEmail");
             const currentActiveName = localStorage.getItem("submittedUploadName");
@@ -244,6 +433,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     body: JSON.stringify(delPayload)
                 });
 
+                // Clear localStorage
                 localStorage.removeItem("submittedUploadEmail");
                 localStorage.removeItem("submittedUploadName");
 
@@ -251,20 +441,74 @@ document.addEventListener("DOMContentLoaded", () => {
                 userIsActivelyWorking = false;
                 completedAfterDeadline = false;
 
-                if (uploadForm) uploadForm.reset();
-                if (uploadModalObj) uploadModalObj.hide();
-                if (uploadDashboard) uploadDashboard.classList.add("d-none");
-                
-                if (uploadForm && (new Date().getTime() < DEADLINE_DATE)) {
-                    uploadForm.classList.remove("d-none");
+                //FULL RESET
+                if (uploadForm) {
+                    uploadForm.reset();
+                    uploadForm.classList.remove('d-none');
                 }
 
-                confirmDeletionBtn.disabled = false;
-                confirmDeletionBtn.innerText = "Yes, Clear and Reset";
+                // Reset all file inputs and previews
+                document.querySelectorAll('.preview-trigger').forEach(input => {
+                    input.value = "";
+                    input.classList.remove('d-none');
+                });
+
+                document.querySelectorAll('.preview-control-box').forEach(wrapper => {
+                    wrapper.classList.add('d-none');
+                });
+
+                document.querySelectorAll('input[id^="title_"]').forEach(title => {
+                    title.value = "";
+                });
+
+                // Reset circles and ticks (this is the important part)
+                document.querySelectorAll('.progress-circle-container').forEach(el => {
+                    el.classList.add('d-none');
+                });
+                document.querySelectorAll('.upload-success-tick').forEach(tick => {
+                    tick.style.display = 'none';
+                });
+
+                // Reset submit button
+                const submitBtn = document.getElementById('uploadSubmitBtn');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = `Upload & Submit Portfolio`;
+                    submitBtn.className = "btn btn-light submit-btn w-100 mt-4";
+                }
+
+                // Hide dashboard
+                const uploadDashboard = document.getElementById('uploadSubmittedDashboard');
+                if (uploadDashboard) uploadDashboard.classList.add('d-none');
+
+                if (uploadModalObj) uploadModalObj.hide();
+
 
             } catch (err) {
                 console.error("Deletion Error:", err);
-                alert("Could not process data reset.");
+                // Custom Alert: Delete Failed
+let deleteFailModal = document.getElementById('deleteFailModal');
+if (!deleteFailModal) {
+    const html = `
+    <div class="modal fade" id="deleteFailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-white" style="background-color: #1e1b4b; border: 2px solid #ef4444; border-radius: 12px;">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Delete Failed</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">Could not process data reset. Please try again.</div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+    deleteFailModal = document.getElementById('deleteFailModal');
+}
+new bootstrap.Modal(deleteFailModal).show();
+            } finally {
                 confirmDeletionBtn.disabled = false;
                 confirmDeletionBtn.innerText = "Yes, Clear and Reset";
             }
