@@ -182,7 +182,7 @@ if(regForm) {
             }
         }
 
-        for (let i = 2; i <= 5; i++) {
+        for (let i = 2; i <= 8; i++) {
             if (!formData.has(`delegate_name_${i}`)) {
                 searchParams.append(`delegate_name_${i}`, "");
                 searchParams.append(`delegate_dob_${i}`, "");
@@ -279,7 +279,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const presidentContactLabel = document.getElementById("presidentContactLabel");
 
     window.globalDelegateCount = 1;
-    const maxDelegates = 5;
+    const maxDelegates = 8;
     const addDelegateBtn = document.getElementById('add-delegate-btn');
     const delegateContainer = document.getElementById('delegates-form-container');
 
