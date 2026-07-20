@@ -16,13 +16,13 @@
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     
     <style>
-      html, body {
+     html, body {
         margin: 0;
         padding: 0;
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background-color: transparent !important;
+        background-color: #3a0510 !important;
         font-family: 'Poppins', system-ui, -apple-system, sans-serif !important;
       }
 
@@ -30,20 +30,9 @@
         font-family: 'Poppins', system-ui, -apple-system, sans-serif !important;
       }
 
-      #webcam-video {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        object-fit: cover;
-        z-index: -1;
-        display: none;
-      }
-
       a-scene, .a-canvas {
-        background-color: transparent !important;
-        background: transparent !important;
+        background-color: #3a0510 !important;
+        background: #3a0510 !important;
       }
 
       #overlay {
@@ -597,7 +586,7 @@
                 let rawInitialAuthorName = imgData.participantName || imgData.name || imgData.author || "Participant";
                 aText.setAttribute('value', formatAuthorName(rawInitialAuthorName));
                 aText.setAttribute('align', 'center');
-                aText.setAttribute('color', '#000000');
+                aText.setAttribute('color', '#ffffff');
                 aText.setAttribute('width', '1.8');
                 aText.setAttribute('font', 'dejavu');
                 aText.setAttribute('shader', 'msdf');
@@ -728,12 +717,365 @@
       </div>
     </div>
 
-    <video id="webcam-video" autoplay playsinline muted loop></video>
+    
 
     <a-scene vr-mode-ui="enabled: false" embedded renderer="alpha: true; colorManagement: true;" gallery-loader cursor="rayOrigin: mouse" raycaster="objects: .clickable">
       <a-assets>
         <img id="logo-img" src="assets/img/logo.png" crossorigin="anonymous">
       </a-assets>
+
+      <a-sky color="#3a0510"></a-sky>
+      
+      <a-entity animation="property: rotation; to: 0 360 0; dur: 120000; loop: true; easing: linear">
+        <a-sphere position="-3 2 -5" radius="0.03" color="#f59e0b" material="shader: flat; opacity: 0.65"></a-sphere>
+        <a-sphere position="4 4 -6" radius="0.04" color="#ffeaa7" material="shader: flat; opacity: 0.50"></a-sphere>
+        <a-sphere position="-5 -1 -3" radius="0.02" color="#f59e0b" material="shader: flat; opacity: 0.70"></a-sphere>
+        <a-sphere position="6 1 -8" radius="0.05" color="#ffeaa7" material="shader: flat; opacity: 0.45"></a-sphere>
+        <a-sphere position="-1 5 -10" radius="0.035" color="#f59e0b" material="shader: flat; opacity: 0.60"></a-sphere>
+        <a-sphere position="2 -2 -4" radius="0.025" color="#f59e0b" material="shader: flat; opacity: 0.80"></a-sphere>
+        <a-sphere position="-7 3 -7" radius="0.045" color="#ffeaa7" material="shader: flat; opacity: 0.55"></a-sphere>
+        <a-sphere position="5 -3 -9" radius="0.03" color="#f59e0b" material="shader: flat; opacity: 0.65"></a-sphere>
+        <a-sphere position="0 2.5 -12" radius="0.04" color="#ffeaa7" material="shader: flat; opacity: 0.50"></a-sphere>
+        <a-sphere position="-4 -2 -6" radius="0.02" color="#f59e0b" material="shader: flat; opacity: 0.75"></a-sphere>
+      </a-entity>
+
+      <a-entity position="0 0 0">
+        <a-entity position="-3 -3 -5" animation="property: position; to: -3 6 -5; dur: 18000; loop: true; easing: linear">
+          <a-sphere position="0 0 0" radius="0.04" color="#f59e0b" material="shader: flat; opacity: 0.6"></a-sphere>
+          <a-sphere position="1.5 -1.5 2" radius="0.03" color="#ffeaa7" material="shader: flat; opacity: 0.5"></a-sphere>
+          <a-sphere position="-1 -3 -2" radius="0.05" color="#f59e0b" material="shader: flat; opacity: 0.4"></a-sphere>
+        </a-entity>
+
+        <a-entity position="3 -2 4" animation="property: position; to: 3 7 4; dur: 24000; loop: true; easing: linear">
+          <a-sphere position="0 0 0" radius="0.035" color="#ff7675" material="shader: flat; opacity: 0.6"></a-sphere>
+          <a-sphere position="-2.5 -2 -1" radius="0.04" color="#d63031" material="shader: flat; opacity: 0.4"></a-sphere>
+          <a-sphere position="1.2 -4 3" radius="0.02" color="#ff7675" material="shader: flat; opacity: 0.7"></a-sphere>
+        </a-entity>
+
+        <a-entity position="0 -4 -9" animation="property: position; to: 0 8 -9; dur: 30000; loop: true; easing: linear">
+          <a-sphere position="-2 0 0" radius="0.05" color="#ffeaa7" material="shader: flat; opacity: 0.3"></a-sphere>
+          <a-sphere position="3 -2 -2" radius="0.03" color="#f59e0b" material="shader: flat; opacity: 0.5"></a-sphere>
+          <a-sphere position="-4 -5 4" radius="0.045" color="#ff7675" material="shader: flat; opacity: 0.4"></a-sphere>
+          <a-sphere position="2 -7 -3" radius="0.025" color="#ffeaa7" material="shader: flat; opacity: 0.6"></a-sphere>
+        </a-entity>
+      </a-entity>
+      
+      <a-entity rotation="35 45 0" animation="property: rotation; to: 35 405 0; dur: 85000; loop: true; easing: linear">
+        <a-sphere position="3 1 4" radius="0.04" color="#ff7675" material="shader: flat; opacity: 0.60"></a-sphere>
+        <a-sphere position="-4 3 5" radius="0.035" color="#d63031" material="shader: flat; opacity: 0.55"></a-sphere>
+        <a-sphere position="2 -2 6" radius="0.025" color="#ff7675" material="shader: flat; opacity: 0.70"></a-sphere>
+        <a-sphere position="-5 -1 2" radius="0.045" color="#d63031" material="shader: flat; opacity: 0.40"></a-sphere>
+        <a-sphere position="5 4 1" radius="0.03" color="#ff7675" material="shader: flat; opacity: 0.65"></a-sphere>
+        <a-sphere position="-2 5 7" radius="0.05" color="#d63031" material="shader: flat; opacity: 0.50"></a-sphere>
+        <a-sphere position="1 -3 3" radius="0.02" color="#ff7675" material="shader: flat; opacity: 0.75"></a-sphere>
+        <a-sphere position="-6 2 8" radius="0.035" color="#ff7675" material="shader: flat; opacity: 0.55"></a-sphere>
+        <a-sphere position="4 -4 5" radius="0.04" color="#d63031" material="shader: flat; opacity: 0.45"></a-sphere>
+        <a-sphere position="-1 0 9" radius="0.025" color="#ff7675" material="shader: flat; opacity: 0.65"></a-sphere>
+      </a-entity>
+
+      <a-entity rotation="-45 15 30" animation="property: rotation; to: -45 -345 30; dur: 100000; loop: true; easing: linear">
+        <a-sphere position="-6 4 -2" radius="0.05" color="#f59e0b" material="shader: flat; opacity: 0.40"></a-sphere>
+        <a-sphere position="7 -2 -5" radius="0.03" color="#ffeaa7" material="shader: flat; opacity: 0.50"></a-sphere>
+        <a-sphere position="1 5 6" radius="0.045" color="#ff7675" material="shader: flat; opacity: 0.45"></a-sphere>
+        <a-sphere position="-3 -3 8" radius="0.025" color="#f59e0b" material="shader: flat; opacity: 0.60"></a-sphere>
+        <a-sphere position="4 2 -8" radius="0.035" color="#ffeaa7" material="shader: flat; opacity: 0.55"></a-sphere>
+        <a-sphere position="-5 1 -11" radius="0.04" color="#ff7675" material="shader: flat; opacity: 0.40"></a-sphere>
+        <a-sphere position="8 3 4" radius="0.02" color="#f59e0b" material="shader: flat; opacity: 0.70"></a-sphere>
+        <a-sphere position="-2 -4 -4" radius="0.05" color="#ffeaa7" material="shader: flat; opacity: 0.35"></a-sphere>
+        <a-sphere position="3 -1 10" radius="0.03" color="#ff7675" material="shader: flat; opacity: 0.60"></a-sphere>
+        <a-sphere position="-7 5 3" radius="0.025" color="#f59e0b" material="shader: flat; opacity: 0.65"></a-sphere>
+      </a-entity>
+      
+
+      <!-- <a-entity id="ar-telemetry-background" position="0 0 0">
+        
+        <a-entity rotation="0 0 0" animation="property: rotation; to: 0 360 0; dur: 160000; loop: true; easing: linear">
+          <a-octahedron position="-4 2 -6" radius="1.2" color="#f59e0b" material="wireframe: true; wireframeLinewidth: 1.5; opacity: 0.15; shader: flat;"></a-octahedron>
+          <a-octahedron position="5 4 -8" radius="1.8" color="#ffeaa7" material="wireframe: true; wireframeLinewidth: 1; opacity: 0.12; shader: flat;"></a-octahedron>
+          <a-octahedron position="-6 -2 -3" radius="1.0" color="#f59e0b" material="wireframe: true; wireframeLinewidth: 1.5; opacity: 0.15; shader: flat;"></a-octahedron>
+          
+          <a-sphere position="-4 3.2 -6" radius="0.035" color="#f59e0b" material="shader: flat; opacity: 0.7"></a-sphere>
+          <a-sphere position="-2.8 2 -6" radius="0.025" color="#ffeaa7" material="shader: flat; opacity: 0.6"></a-sphere>
+          <a-sphere position="5 5.8 -8" radius="0.04" color="#ffeaa7" material="shader: flat; opacity: 0.5"></a-sphere>
+          <a-sphere position="3.2 4 -8" radius="0.03" color="#f59e0b" material="shader: flat; opacity: 0.7"></a-sphere>
+          <a-sphere position="-6 -1 -3" radius="0.035" color="#f59e0b" material="shader: flat; opacity: 0.7"></a-sphere>
+          <a-sphere position="-5 -2 -2" radius="0.025" color="#ffeaa7" material="shader: flat; opacity: 0.6"></a-sphere>
+        </a-entity>
+        
+        <a-entity rotation="25 45 10" animation="property: rotation; to: 25 405 10; dur: 110000; loop: true; easing: linear">
+          <a-icosahedron position="4 1 5" radius="1.5" color="#ff7675" material="wireframe: true; wireframeLinewidth: 1.5; opacity: 0.16; shader: flat;"></a-icosahedron>
+          <a-icosahedron position="-5 3 6" radius="1.3" color="#ff7675" material="wireframe: true; wireframeLinewidth: 1; opacity: 0.14; shader: flat;"></a-icosahedron>
+          <a-icosahedron position="2 -3 4" radius="2.0" color="#d63031" material="wireframe: true; wireframeLinewidth: 1.2; opacity: 0.10; shader: flat;"></a-icosahedron>
+          
+          <a-sphere position="4 2.5 5" radius="0.03" color="#ff7675" material="shader: flat; opacity: 0.7"></a-sphere>
+          <a-sphere position="5.5 1 5" radius="0.02" color="#ffeaa7" material="shader: flat; opacity: 0.6"></a-sphere>
+          <a-sphere position="-5 4.3 6" radius="0.035" color="#ff7675" material="shader: flat; opacity: 0.7"></a-sphere>
+          <a-sphere position="-3.7 3 6" radius="0.025" color="#ffeaa7" material="shader: flat; opacity: 0.8"></a-sphere>
+          <a-sphere position="2 -1 4" radius="0.045" color="#ff7675" material="shader: flat; opacity: 0.5"></a-sphere>
+          <a-sphere position="0.5 -3 4" radius="0.03" color="#d63031" material="shader: flat; opacity: 0.6"></a-sphere>
+        </a-entity>
+
+        <a-entity rotation="-45 15 30" animation="property: rotation; to: -45 -345 30; dur: 135000; loop: true; easing: linear">
+          <a-dodecahedron position="0 6 -15" radius="2.5" color="#ffeaa7" material="wireframe: true; wireframeLinewidth: 1; opacity: 0.08; shader: flat;"></a-dodecahedron>
+          <a-dodecahedron position="-9 4 -12" radius="2.0" color="#f59e0b" material="wireframe: true; wireframeLinewidth: 1; opacity: 0.08; shader: flat;"></a-dodecahedron>
+          <a-dodecahedron position="9 -4 -10" radius="2.2" color="#ff7675" material="wireframe: true; wireframeLinewidth: 1; opacity: 0.07; shader: flat;"></a-dodecahedron>
+          
+          <a-sphere position="0 8.5 -15" radius="0.035" color="#ffeaa7" material="shader: flat; opacity: 0.6"></a-sphere>
+          <a-sphere position="-2.5 6 -15" radius="0.02" color="#f59e0b" material="shader: flat; opacity: 0.5"></a-sphere>
+          <a-sphere position="-9 6 -12" radius="0.04" color="#f59e0b" material="shader: flat; opacity: 0.5"></a-sphere>
+          <a-sphere position="9 -1.8 -10" radius="0.03" color="#ff7675" material="shader: flat; opacity: 0.6"></a-sphere>
+        </a-entity>
+
+      </a-entity> -->
+      
+      <a-entity id="perahera-wireframe-matrix">
+
+        <a-entity id="master-elephant-xyz" position="-8 0 -8" rotation="0 0 0">
+  <a-entity line="start: -0.8 2.2 -0.5; end: 0.8 2.2 -0.5; color: #f59e0b; opacity: 0.6"
+            line__2="start: 0.8 2.2 -0.5; end: 0.8 2.2 0.5; color: #f59e0b; opacity: 0.6"
+            line__3="start: 0.8 2.2 0.5; end: -0.8 2.2 0.5; color: #f59e0b; opacity: 0.6"
+            line__4="start: -0.8 2.2 0.5; end: -0.8 2.2 -0.5; color: #f59e0b; opacity: 0.6"
+            line__5="start: -0.8 2.4 -0.5; end: 0.8 2.4 -0.5; color: #ffeaa7; opacity: 0.5"
+            line__6="start: 0.8 2.4 -0.5; end: 0.8 2.4 0.5; color: #ffeaa7; opacity: 0.5"
+            line__7="start: 0.8 2.4 0.5; end: -0.8 2.4 0.5; color: #ffeaa7; opacity: 0.5"
+            line__8="start: -0.8 2.4 0.5; end: -0.8 2.4 -0.5; color: #ffeaa7; opacity: 0.5"
+            line__9="start: -0.8 2.2 -0.5; end: -0.8 2.4 -0.5; color: #f59e0b; opacity: 0.5"
+            line__10="start: 0.8 2.2 -0.5; end: 0.8 2.4 -0.5; color: #f59e0b; opacity: 0.5"
+            line__11="start: 0.8 2.2 0.5; end: 0.8 2.4 0.5; color: #f59e0b; opacity: 0.5"
+            line__12="start: -0.8 2.2 0.5; end: -0.8 2.4 0.5; color: #f59e0b; opacity: 0.5"></a-entity>
+
+  <a-entity line="start: -0.5 2.4 -0.4; end: 0.5 2.4 -0.4; color: #ffeaa7; opacity: 0.7"
+            line__2="start: 0.5 2.4 -0.4; end: 0.5 2.8 -0.4; color: #f59e0b; opacity: 0.8"
+            line__3="start: -0.5 2.4 -0.4; end: -0.5 2.8 -0.4; color: #f59e0b; opacity: 0.8"
+            line__4="start: -0.5 2.4 0.4; end: 0.5 2.4 0.4; color: #ffeaa7; opacity: 0.7"
+            line__5="start: 0.5 2.4 0.4; end: 0.5 2.8 0.4; color: #f59e0b; opacity: 0.8"
+            line__6="start: -0.5 2.4 0.4; end: -0.5 2.8 0.4; color: #f59e0b; opacity: 0.8"
+            line__7="start: -0.5 2.8 -0.4; end: 0.5 2.8 -0.4; color: #ffeaa7; opacity: 0.8"
+            line__8="start: -0.5 2.8 0.4; end: 0.5 2.8 0.4; color: #ffeaa7; opacity: 0.8"
+            line__9="start: -0.5 2.8 -0.4; end: -0.5 2.8 0.4; color: #ffeaa7; opacity: 0.6"
+            line__10="start: 0.5 2.8 -0.4; end: 0.5 2.8 0.4; color: #ffeaa7; opacity: 0.6"></a-entity>
+
+  <a-entity line="start: -0.5 2.8 -0.4; end: 0 3.6 0; color: #ffeaa7; opacity: 0.8"
+            line__2="start: 0.5 2.8 -0.4; end: 0 3.6 0; color: #ffeaa7; opacity: 0.8"
+            line__3="start: -0.5 2.8 0.4; end: 0 3.6 0; color: #ffeaa7; opacity: 0.8"
+            line__4="start: 0.5 2.8 0.4; end: 0 3.6 0; color: #ffeaa7; opacity: 0.8"
+            line__5="start: 0 2.8 -0.4; end: 0 3.6 0; color: #f59e0b; opacity: 0.7"
+            line__6="start: 0 2.8 0.4; end: 0 3.6 0; color: #f59e0b; opacity: 0.7"
+            line__7="start: -0.5 2.8 0; end: 0 3.6 0; color: #f59e0b; opacity: 0.7"
+            line__8="start: 0.5 2.8 0; end: 0 3.6 0; color: #f59e0b; opacity: 0.7"></a-entity>
+  <a-sphere position="0 3.6 0" radius="0.08" color="#ffffff" material="shader: flat; opacity: 0.95"></a-sphere>
+
+  <a-entity line="start: -2.2 1.2 -0.5; end: -1.2 1.9 -0.6; color: #f59e0b; opacity: 0.5"
+            line__2="start: -1.2 1.9 -0.6; end: 0 2.2 -0.6; color: #f59e0b; opacity: 0.5"
+            line__3="start: 0 2.2 -0.6; end: 1.2 2.1 -0.5; color: #f59e0b; opacity: 0.5"
+            line__4="start: -2.2 0.3 -0.6; end: -1.0 0.2 -0.7; color: #f59e0b; opacity: 0.4"
+            line__5="start: -1.0 0.2 -0.7; end: 0.4 0.1 -0.7; color: #f59e0b; opacity: 0.4"
+            line__6="start: 0.4 0.1 -0.7; end: 1.3 0.4 -0.6; color: #f59e0b; opacity: 0.4"
+            line__7="start: -1.2 1.9 -0.6; end: -1.0 0.2 -0.7; color: #ffeaa7; opacity: 0.3"
+            line__8="start: 0 2.2 -0.6; end: 0.4 0.1 -0.7; color: #ffeaa7; opacity: 0.3"
+            line__9="start: 1.2 2.1 -0.5; end: 1.3 0.4 -0.6; color: #ffeaa7; opacity: 0.3"></a-entity>
+
+  <a-entity line="start: -2.2 1.2 0.5; end: -1.2 1.9 0.5; color: #f59e0b; opacity: 0.5"
+            line__2="start: -1.2 1.9 0.5; end: 0 2.2 0.5; color: #f59e0b; opacity: 0.5"
+            line__3="start: 0 2.2 0.5; end: 1.2 2.1 0.5; color: #f59e0b; opacity: 0.5"
+            line__4="start: -2.2 0.3 0.5; end: -1.0 0.2 0.7; color: #f59e0b; opacity: 0.4"
+            line__5="start: -1.0 0.2 0.7; end: 0.4 0.1 0.7; color: #f59e0b; opacity: 0.4"
+            line__6="start: 0.4 0.1 0.7; end: 1.3 0.4 0.5; color: #f59e0b; opacity: 0.4"
+            line__7="start: -1.2 1.9 0.5; end: -1.0 0.2 0.7; color: #ffeaa7; opacity: 0.3"
+            line__8="start: 0 2.2 0.5; end: 0.4 0.1 0.7; color: #ffeaa7; opacity: 0.3"
+            line__9="start: 1.2 2.1 0.5; end: 1.3 0.4 0.5; color: #ffeaa7; opacity: 0.3"></a-entity>
+
+  <a-entity line="start: -2.2 1.2 -0.5; end: -2.2 1.2 0.5; color: #ffeaa7; opacity: 0.4"
+            line__2="start: -1.2 1.9 -0.6; end: -1.2 1.9 0.5; color: #ffeaa7; opacity: 0.4"
+            line__3="start: 1.2 2.1 -0.5; end: 1.2 2.1 0.5; color: #ffeaa7; opacity: 0.4"
+            line__4="start: 1.3 0.4 -0.6; end: 1.3 0.4 0.5; color: #ffeaa7; opacity: 0.4"
+            line__5="start: -2.2 1.2 0; end: -2.5 0.5 0; color: #f59e0b; opacity: 0.5"
+            line__6="start: -2.5 0.5 0; end: -2.4 -0.3 0; color: #f59e0b; opacity: 0.4"></a-entity>
+
+  <a-entity line="start: 1.2 2.1 -0.5; end: 1.9 2.2 0; color: #ffeaa7; opacity: 0.6"
+            line__2="start: 1.2 2.1 0.5; end: 1.9 2.2 0; color: #ffeaa7; opacity: 0.6"
+            line__3="start: 1.9 2.2 0; end: 2.3 1.5 -0.3; color: #f59e0b; opacity: 0.7"
+            line__4="start: 1.9 2.2 0; end: 2.3 1.5 0.3; color: #f59e0b; opacity: 0.7"
+            line__5="start: 2.3 1.5 -0.3; end: 2.1 0.9 -0.2; color: #f59e0b; opacity: 0.6"
+            line__6="start: 2.3 1.5 0.3; end: 2.1 0.9 0.2; color: #f59e0b; opacity: 0.6"
+            line__7="start: 2.1 0.8 -0.15; end: 3.0 1.3 -0.5; color: #ffffff; opacity: 0.9"
+            line__8="start: 2.1 0.8 0.15; end: 3.0 1.3 0.5; color: #ffffff; opacity: 0.9"></a-entity>
+  <a-sphere position="3.0 1.3 -0.5" radius="0.035" color="#ffffff" material="shader: flat; opacity: 0.95"></a-sphere>
+  <a-sphere position="3.0 1.3 0.5" radius="0.035" color="#ffffff" material="shader: flat; opacity: 0.95"></a-sphere>
+
+  <a-entity line="start: 1.2 2.1 -0.5; end: 1.0 1.4 -0.9; color: #ff7675; opacity: 0.5"
+            line__2="start: 1.0 1.4 -0.9; end: 1.4 0.8 -0.7; color: #ff7675; opacity: 0.5"
+            line__3="start: 1.4 0.8 -0.7; end: 1.3 0.4 -0.6; color: #ff7675; opacity: 0.4"
+            line__4="start: 1.2 2.1 0.5; end: 1.0 1.4 0.9; color: #ff7675; opacity: 0.5"
+            line__5="start: 1.0 1.4 0.9; end: 1.4 0.8 0.7; color: #ff7675; opacity: 0.5"
+            line__6="start: 1.4 0.8 0.7; end: 1.3 0.4 0.5; color: #ff7675; opacity: 0.4"></a-entity>
+
+  <a-entity line="start: 2.1 0.9 0; end: 2.4 0.2 -0.05; color: #f59e0b; opacity: 0.6"
+            line__2="start: 2.4 0.2 -0.05; end: 2.2 -0.5 0.05; color: #f59e0b; opacity: 0.6"
+            line__3="start: 2.2 -0.5 0.05; end: 2.5 -1.1 0.1; color: #ffeaa7; opacity: 0.7"
+            line__4="start: 2.5 -1.1 0.1; end: 2.9 -1.4 0.0; color: #ffeaa7; opacity: 0.8"></a-entity>
+  <a-sphere position="2.9 -1.4 0.0" radius="0.04" color="#ffeaa7" material="shader: flat; opacity: 0.85"></a-sphere>
+
+  <a-entity line="start: 1.1 0.4 -0.6; end: 1.2 -0.5 -0.6; color: #f59e0b; opacity: 0.5"
+            line__2="start: 1.4 0.4 -0.4; end: 1.4 -0.5 -0.4; color: #f59e0b; opacity: 0.5"
+            line__3="start: 1.2 -0.5 -0.6; end: 1.3 -1.5 -0.6; color: #ffeaa7; opacity: 0.6"
+            line__4="start: 1.4 -0.5 -0.4; end: 1.4 -1.5 -0.4; color: #ffeaa7; opacity: 0.6"
+            line__5="start: 1.3 -1.5 -0.6; end: 1.4 -1.5 -0.4; color: #f59e0b; opacity: 0.4"></a-entity>
+  <a-entity line="start: 1.1 0.4 0.6; end: 1.2 -0.5 0.6; color: #f59e0b; opacity: 0.5"
+            line__2="start: 1.4 0.4 0.4; end: 1.4 -0.5 0.4; color: #f59e0b; opacity: 0.5"
+            line__3="start: 1.2 -0.5 0.6; end: 1.3 -1.5 0.6; color: #ffeaa7; opacity: 0.6"
+            line__4="start: 1.4 -0.5 0.4; end: 1.4 -1.5 0.4; color: #ffeaa7; opacity: 0.6"
+            line__5="start: 1.3 -1.5 0.6; end: 1.4 -1.5 0.4; color: #f59e0b; opacity: 0.4"></a-entity>
+  <a-entity line="start: -1.4 0.3 -0.6; end: -1.3 -0.5 -0.6; color: #f59e0b; opacity: 0.5"
+            line__2="start: -1.1 0.3 -0.4; end: -1.1 -0.5 -0.4; color: #f59e0b; opacity: 0.5"
+            line__3="start: -1.3 -0.5 -0.6; end: -1.4 -1.5 -0.6; color: #ffeaa7; opacity: 0.6"
+            line__4="start: -1.1 -0.5 -0.4; end: -1.2 -1.5 -0.4; color: #ffeaa7; opacity: 0.6"></a-entity>
+  <a-entity line="start: -1.4 0.3 0.6; end: -1.3 -0.5 0.6; color: #f59e0b; opacity: 0.5"
+            line__2="start: -1.1 0.3 0.4; end: -1.1 -0.5 0.4; color: #f59e0b; opacity: 0.5"
+            line__3="start: -1.3 -0.5 0.6; end: -1.4 -1.5 0.6; color: #ffeaa7; opacity: 0.6"
+            line__4="start: -1.1 -0.5 0.4; end: -1.2 -1.5 0.4; color: #ffeaa7; opacity: 0.6"></a-entity>
+</a-entity>
+
+
+
+
+
+
+<a-entity id="ves-dancer-xyz" position="0 0.6 -4" rotation="0 0 0">
+  <a-sphere position="0 1.4 0" radius="0.065" color="#ffeaa7" material="shader: flat; opacity: 0.9"></a-sphere>
+  <a-entity line="start: 0 1.4 0; end: 0 1.85 0; color: #ffffff; opacity: 0.85"
+            line__2="start: 0 1.4 0; end: -0.25 1.75 0; color: #ffeaa7; opacity: 0.75"
+            line__3="start: 0 1.4 0; end: 0.25 1.75 0; color: #ffeaa7; opacity: 0.75"
+            line__4="start: 0 1.4 0; end: -0.35 1.55 0; color: #ffeaa7; opacity: 0.7"
+            line__5="start: 0 1.4 0; end: 0.35 1.55 0; color: #ffeaa7; opacity: 0.7"
+            line__6="start: -0.25 1.75 0; end: 0 1.85 0; color: #ffffff; opacity: 0.6"
+            line__7="start: 0.25 1.75 0; end: 0 1.85 0; color: #ffffff; opacity: 0.6"></a-entity>
+  
+  <a-sphere position="-0.09 1.38 0" radius="0.02" color="#f59e0b" material="shader: flat"></a-sphere>
+  <a-sphere position="0.09 1.38 0" radius="0.02" color="#f59e0b" material="shader: flat"></a-sphere>
+
+  <a-entity line="start: 0 1.3 0; end: -0.25 1.0 0.1; color: #ff7675; opacity: 0.7"
+            line__2="start: 0 1.3 0; end: 0.25 1.0 0.1; color: #ff7675; opacity: 0.7"
+            line__3="start: -0.25 1.0 0.1; end: 0 0.6 0; color: #ffffff; opacity: 0.8"
+            line__4="start: 0.25 1.0 0.1; end: 0 0.6 0; color: #ffffff; opacity: 0.8"
+            line__5="start: -0.25 1.0 0.1; end: 0.25 1.0 0.1; color: #f59e0b; opacity: 0.6"
+            line__6="start: -0.12 1.15 0.05; end: 0.12 0.85 0.05; color: #ffeaa7; opacity: 0.6"
+            line__7="start: 0.12 1.15 0.05; end: -0.12 0.85 0.05; color: #ffeaa7; opacity: 0.6"
+            line__8="start: 0 1.3 0; end: 0 0.6 0; color: #ffeaa7; opacity: 0.5"></a-entity>
+
+  <a-entity line="start: -0.25 1.0 0.1; end: -0.65 1.1 0.2; color: #ff7675; opacity: 0.7"
+            line__2="start: -0.65 1.1 0.2; end: -0.9 1.4 0.3; color: #ffeaa7; opacity: 0.8"
+            line__3="start: 0.25 1.0 0.1; end: 0.65 1.1 0.2; color: #ff7675; opacity: 0.7"
+            line__4="start: 0.65 1.1 0.2; end: 0.9 1.4 0.3; color: #ffeaa7; opacity: 0.8"></a-entity>
+  <a-sphere position="-0.9 1.4 0.3" radius="0.025" color="#ffffff"></a-sphere>
+  <a-sphere position="0.9 1.4 0.3" radius="0.025" color="#ffffff"></a-sphere>
+
+  <a-entity line="start: 0 0.6 0; end: -0.5 0.2 0.2; color: #ff7675; opacity: 0.7"
+            line__2="start: -0.5 0.2 0.2; end: -0.4 -0.4 0.1; color: #ffffff; opacity: 0.7"
+            line__3="start: 0 0.6 0; end: 0.5 0.2 -0.2; color: #ff7675; opacity: 0.7"
+            line__4="start: 0.4 -0.4 -0.1; color: #ffffff; opacity: 0.7"
+            line__5="start: -0.5 0.2 0.2; end: 0.5 0.2 -0.2; color: #ffeaa7; opacity: 0.4"></a-entity>
+</a-entity>
+
+
+
+
+<a-entity id="uddekki-dancer-xyz" position="3 -0.4 -3" rotation="0 -30 0">
+  <a-sphere position="0 1.35 0" radius="0.06" color="#ffffff" material="shader: flat; opacity: 0.85"></a-sphere>
+  <a-entity line="start: -0.07 1.4 0; end: 0.07 1.4 0; color: #ffeaa7; opacity: 0.8"
+            line__2="start: -0.06 1.45 0; end: 0.06 1.45 0; color: #ffffff; opacity: 0.9"></a-entity>
+
+  <a-entity line="start: 0 1.25 0; end: 0 0.55 0; color: #ffeaa7; opacity: 0.7"
+            line__2="start: -0.2 1.1 0; end: 0.2 1.1 0; color: #ff7675; opacity: 0.6"
+            line__3="start: -0.15 0.6 0; end: 0.15 0.6 0; color: #ff7675; opacity: 0.5"></a-entity>
+
+  <a-entity position="0 0.9 0.25" rotation="20 0 10">
+    <a-entity line="start: -0.15 0.08 -0.08; end: -0.15 0.08 0.08; color: #f59e0b; opacity: 0.8"
+              line__2="start: -0.15 0.08 0.08; end: -0.15 -0.08 0.08; color: #f59e0b; opacity: 0.8"
+              line__3="start: -0.15 -0.08 0.08; end: -0.15 -0.08 -0.08; color: #f59e0b; opacity: 0.8"
+              line__4="start: -0.15 -0.08 -0.08; end: -0.15 0.08 -0.08; color: #f59e0b; opacity: 0.8"></a-entity>
+    <a-entity line="start: 0.15 0.08 -0.08; end: 0.15 0.08 0.08; color: #f59e0b; opacity: 0.8"
+              line__2="start: 0.15 0.08 0.08; end: 0.15 -0.08 0.08; color: #f59e0b; opacity: 0.8"
+              line__3="start: 0.15 -0.08 0.08; end: 0.15 -0.08 -0.08; color: #f59e0b; opacity: 0.8"
+              line__4="start: 0.15 -0.08 -0.08; end: 0.15 0.08 -0.08; color: #f59e0b; opacity: 0.8"></a-entity>
+    <a-entity line="start: -0.15 0.08 0.08; end: 0 0 0; color: #ffeaa7; opacity: 0.75"
+              line__2="start: -0.15 -0.08 -0.08; end: 0 0 0; color: #ffeaa7; opacity: 0.75"
+              line__3="start: 0.15 0.08 0.08; end: 0 0 0; color: #ffeaa7; opacity: 0.75"
+              line__4="start: 0.15 -0.08 -0.08; end: 0 0 0; color: #ffeaa7; opacity: 0.75"></a-entity>
+    <a-sphere position="0 0 0" radius="0.015" color="#ff7675"></a-sphere>
+  </a-entity>
+
+  <a-entity line="start: -0.2 1.1 0; end: -0.35 0.95 0.15; color: #ff7675; opacity: 0.6"
+            line__2="start: -0.35 0.95 0.15; end: -0.12 0.9 0.22; color: #ffeaa7; opacity: 0.85"
+            line__3="start: 0.2 1.1 0; end: 0.4 0.95 0.15; color: #ff7675; opacity: 0.6"
+            line__4="start: 0.4 0.95 0.15; end: 0.18 0.9 0.22; color: #ffeaa7; opacity: 0.85"></a-entity>
+
+  <a-entity line="start: 0 0.55 0; end: -0.25 0.2 0.1; color: #ff7675; opacity: 0.7"
+            line__2="start: -0.25 0.2 0.1; end: -0.15 -0.4 0.0; color: #ffffff; opacity: 0.7"
+            line__3="start: 0 0.55 0; end: 0.3 0.1 -0.1; color: #ff7675; opacity: 0.7"
+            line__4="start: 0.3 0.1 -0.1; end: 0.45 -0.3 0.1; color: #ffffff; opacity: 0.8"></a-entity>
+</a-entity>
+
+
+
+
+<a-entity id="pantheru-dancer-xyz" position="0 -2.6 -4" rotation="0 0 0">
+  <a-sphere position="0 1.45 0" radius="0.055" color="#ffeaa7" material="shader: flat; opacity: 0.8"></a-sphere>
+  <a-entity line="start: 0 1.45 0; end: 0 1.65 0.02; color: #ffffff; opacity: 0.7"></a-entity>
+
+  <a-entity line="start: 0 1.35 0; end: 0.05 0.65 0; color: #ffeaa7; opacity: 0.7"
+            line__2="start: -0.25 1.2 0; end: 0.25 1.2 0; color: #ff7675; opacity: 0.6"
+            line__3="start: -0.15 0.7 0; end: 0.15 0.7 0; color: #ff7675; opacity: 0.6"></a-entity>
+
+  <a-entity line="start: 0.25 1.2 0; end: 0.55 1.45 0.2; color: #ff7675; opacity: 0.7"
+            line__2="start: 0.55 1.45 0.2; end: 0.75 1.7 0.35; color: #ffeaa7; opacity: 0.9"></a-entity>
+  
+  <a-entity position="0.75 1.7 0.35" scale="0.14 0.14 0.14">
+    <a-entity line="start: -1 0 0; end: -0.7 0.7 0; color: #ffffff;"
+              line__2="start: -0.7 0.7 0; end: 0 1 0; color: #f59e0b;"
+              line__3="start: 0 1 0; end: 0.7 0.7 0; color: #f59e0b;"
+              line__4="start: 0.7 0.7 0; end: 1 0 0; color: #ffffff;"
+              line__5="start: 1 0 0; end: 0.7 -0.7 0; color: #ffeaa7;"
+              line__6="start: 0.7 -0.7 0; end: 0 -1 0; color: #ffeaa7;"
+              line__7="start: 0 -1 0; end: -0.7 -0.7 0; color: #ffeaa7;"
+              line__8="start: -0.7 -0.7 0; end: -1 0 0; color: #ffffff;"></a-entity>
+  </a-entity>
+
+  <a-entity line="start: -0.25 1.2 0; end: -0.55 0.9 -0.1; color: #ff7675;"
+            line__2="start: -0.55 0.9 -0.1; end: -0.75 0.65 -0.2; color: #ffeaa7;"></a-entity>
+  <a-entity line="start: 0.05 0.65 0; end: -0.3 0.3 -0.1; color: #ff7675;"
+            line__2="start: -0.3 0.3 -0.1; end: -0.1 -0.3 -0.05; color: #ffffff;"
+            line__3="start: 0.05 0.65 0; end: 0.4 0.4 0.1; color: #ff7675;"
+            line__4="start: 0.4 0.4 0.1; end: 0.2 0.0 0.2; color: #ffffff;"></a-entity>
+</a-entity>
+
+      </a-entity>
+
+      
+      <a-plane
+        src="https://cdn.aframe.io/a-grid/images/grid.png"
+        repeat="80 80"
+        position="0 -2 0"
+        rotation="-90 0 0"
+        width="400"
+        height="400"
+        material="color: #f59e0b; opacity: 0.15; shader: flat;"
+        animation="property: material.offset.y; from: 0; to: 1; dur: 20000; loop: true; easing: linear">
+      </a-plane>
+      <a-plane
+        src="https://cdn.aframe.io/a-grid/images/grid.png"
+        repeat="40 40"
+        position="0 -1.98 0"
+        rotation="-90 45 0"
+        width="400"
+        height="400"
+        material="color: #ff7675; opacity: 0.08; shader: flat;"
+        animation="property: material.offset.x; from: 0; to: -1; dur: 35000; loop: true; easing: linear">
+      </a-plane>
+
+      <a-entity light="type: ambient; color: #ffffff; intensity: 0.7"></a-entity>
+      <a-entity light="type: directional; color: #ffeaa7; intensity: 0.8" position="-2 5 3"></a-entity>
+      <a-entity light="type: point; color: #f59e0b; intensity: 0.6; distance: 20" position="0 3 0"></a-entity>
 
       <a-image id="winners-logo-btn" class="clickable" src="#logo-img" position="0 0.15 -2" width="1.5" height="1.2" material="side: double; transparent: true;"
                animation="property: scale; to: 1.08 1.08 1.08; dir: alternate; dur: 1500; loop: true; easing: easeInOutQuad">
