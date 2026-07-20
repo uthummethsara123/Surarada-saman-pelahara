@@ -672,6 +672,37 @@
             });
         }
       });
+
+
+
+// IOS issue fix
+AFRAME.registerComponent('ios-performance-fix', {
+    init: function () {
+      // 1. Strictly check if the user is on an iPhone, iPad, or iPod
+      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        const scene = this.el;
+
+        // 2. Only lower graphics settings for iOS to prevent Safari memory crashes
+        scene.setAttribute('renderer', {
+          antialias: false,
+          precision: 'medium',
+          alpha: true,
+          colorManagement: true
+        });
+
+        // 3. Clamp the Retina display 3x scaling down to a safe 1x canvas size
+        if (scene.renderer) {
+          scene.renderer.setPixelRatio(1);
+        } else {
+          scene.addEventListener('nodeready', () => {
+            if (scene.renderer) scene.renderer.setPixelRatio(1);
+          });
+        }
+      }
+    }
+  });
+
+
     </script>
   </head>
   <body>
@@ -1483,6 +1514,8 @@
         if (closeModalBtn && guideModal) {
           closeModalBtn.addEventListener('click', () => {
             guideModal.style.display = 'none';
+            // Force A-Frame to recalculate sizing post-modal closure for iOS stability
+            document.querySelector('a-scene').resize();
           });
         }
 
