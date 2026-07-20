@@ -401,97 +401,100 @@
                 let currentIndex = window.totalImagesProcessed;
                 window.totalImagesProcessed++;
                 window.loadedImageUrls.add(imgData.src);
-                
+
                 let isLeft = currentIndex % 2 === 0;
                 let side = isLeft ? 'left' : 'right';
                 let trackArray = isLeft ? window.leftTrackItems : window.rightTrackItems;
                 let xPos = isLeft ? '-3' : '3';
                 let rotation = isLeft ? '0 90 0' : '0 -90 0';
-                
-                // REPLACE THE imgAsset CREATION WITH THIS:
-                let safeUrl = getDirectImageUrl(imgData.src); // Convert to WebGL friendly format
-                
+
+                let safeUrl = getDirectImageUrl(imgData.src);
+
+                // 1. Create the blank 3D elements immediately
                 let imgAsset = document.createElement('img');
                 imgAsset.setAttribute('id', `live-img-${Date.now()}-${currentIndex}`);
-                imgAsset.setAttribute('src', safeUrl); // Use the converted URL
-                imgAsset.setAttribute('data-original-src', imgData.src); // Save original for deletion tracking
                 imgAsset.setAttribute('crossorigin', 'anonymous');
-                assetsEl.appendChild(imgAsset);
-                
+                imgAsset.setAttribute('data-original-src', imgData.src);
+
                 let aImg = document.createElement('a-image');
-                aImg.setAttribute('src', `#${imgAsset.id}`);
                 aImg.setAttribute('conveyor-item', `trackSide: ${side}`);
-                if (isLeft) {
-                  aImg.setAttribute('material', 'side: double');
-                }
+                if (isLeft) aImg.setAttribute('material', 'side: double');
 
                 let aText = document.createElement('a-text');
                 let rawAuthorName = imgData.participantName || imgData.name || imgData.author || "Participant";
                 aText.setAttribute('value', formatAuthorName(rawAuthorName));
                 aText.setAttribute('align', 'center');
                 aText.setAttribute('color', '#000000');
-                aText.setAttribute('width', '1.8'); 
-                aText.setAttribute('font', 'dejavu'); 
+                aText.setAttribute('width', '1.8');
+                aText.setAttribute('font', 'dejavu');
                 aText.setAttribute('shader', 'msdf');
                 aText.setAttribute('negate', 'false');
                 aImg.appendChild(aText);
+
+                // 2. SYNCHRONOUS PUSH: Force them into the array in the EXACT order before they even download
+                let newObj = { 
+                    item: aImg, 
+                    asset: imgAsset, 
+                    txt: aText, 
+                    calculatedWidth: 3.2, // Default temporary width
+                    calculatedHeight: 1.8 // Default temporary height
+                };
                 
-                let newObj = { item: aImg, asset: imgAsset, txt: aText };
-                
-                const processAndAppend = () => {
-                  let width = imgAsset.naturalWidth || 16;
-                  let height = imgAsset.naturalHeight || 9;
-                  let aspectRatio = width / height;
+                trackArray.push(newObj);
+                sceneEl.appendChild(aImg);
+
+                // 3. ASYNCHRONOUS UPDATE: Create an isolated loader to download the image in the background
+                let loaderImg = new Image();
+                loaderImg.crossOrigin = "anonymous";
+
+                loaderImg.onload = () => {
+                  // The image is done downloading! Apply it to the 3D frame.
+                  imgAsset.setAttribute('src', safeUrl);
+                  assetsEl.appendChild(imgAsset);
+                  aImg.setAttribute('src', `#${imgAsset.id}`);
+
+                  // Figure out if it's portrait or landscape
+                  let aspect = loaderImg.width / loaderImg.height;
                   let maxBoundaryWidth = 3.2;
                   let maxBoundaryHeight = 1.8;
 
-                  if (aspectRatio > (maxBoundaryWidth / maxBoundaryHeight)) {
+                  if (aspect > (maxBoundaryWidth / maxBoundaryHeight)) {
                     newObj.calculatedWidth = maxBoundaryWidth;
-                    newObj.calculatedHeight = maxBoundaryWidth / aspectRatio;
+                    newObj.calculatedHeight = maxBoundaryWidth / aspect;
                   } else {
                     newObj.calculatedHeight = maxBoundaryHeight;
-                    newObj.calculatedWidth = maxBoundaryHeight * aspectRatio;
+                    newObj.calculatedWidth = maxBoundaryHeight * aspect;
                   }
-                  
+
+                  // Apply the true dimensions
                   aImg.setAttribute('width', newObj.calculatedWidth);
                   aImg.setAttribute('height', newObj.calculatedHeight);
                   aText.setAttribute('position', `0 ${(newObj.calculatedHeight / 2) + 0.12} 0.1`);
-                  
-                  // Position the new image fluidly right behind the current active coordinate of the last item
-                  let targetZ = 0;
-                  let marginBetweenFrames = 1.2;
-                  if (trackArray.length > 0) {
-                    let lastItemObj = trackArray[trackArray.length - 1];
-                    let lastItemPos = lastItemObj.item.getAttribute('position');
-                    
-                    let isCurrentVertical = (newObj.calculatedHeight > newObj.calculatedWidth);
-                    let isPrevVertical = (lastItemObj.calculatedHeight > lastItemObj.calculatedWidth);
-                    if (isCurrentVertical !== isPrevVertical) {
-                      marginBetweenFrames = 1.8;
-                    }
-                    targetZ = lastItemPos.z + (lastItemObj.calculatedWidth / 2) + marginBetweenFrames + (newObj.calculatedWidth / 2);
-                  }
 
-                  aImg.setAttribute('position', `${xPos} 0 ${targetZ}`);
-                  aImg.setAttribute('rotation', rotation);
-                  
-                  sceneEl.appendChild(aImg);
-                  trackArray.push(newObj);
-
-                  // Update track boundaries dynamically without overriding running offsets
+                  // 4. LIVE SPACING FIX: Recalculate static logical spacing with the new true dimensions
                   rearrangeTrackAfterUpdates(trackArray, xPos, rotation, side, false);
+
+                  // 5. Shift all items dynamically relative to the currently moving leader (Item 0)
+                  // This eliminates overlapping instantly when a new image finishes loading without snapping the camera!
+                  if (trackArray.length > 0) {
+                      let leadItemPos = trackArray[0].item.getAttribute('position') || {x: parseFloat(xPos), y: 0, z: 0};
+                      let baseZOffset = trackArray[0].initialZ;
+
+                      trackArray.forEach(obj => {
+                          let relativeDist = obj.initialZ - baseZOffset;
+                          obj.item.setAttribute('position', `${xPos} 0 ${leadItemPos.z + relativeDist}`);
+                          obj.item.setAttribute('rotation', rotation);
+                      });
+                  }
                 };
                 
-                if (imgAsset.complete) {
-                  processAndAppend();
-                } else {
-                  imgAsset.addEventListener('load', processAndAppend);
-                  imgAsset.addEventListener('error', () => {
-                    newObj.calculatedWidth = 3.2;
-                    newObj.calculatedHeight = 1.8;
-                    processAndAppend();
-                  });
-                }
+                // Fallback: If an image is broken, just keep the spacing intact so it doesn't ruin the gallery
+                loaderImg.onerror = () => {
+                  rearrangeTrackAfterUpdates(trackArray, xPos, rotation, side, false);
+                };
+
+                // Trigger the background download
+                loaderImg.src = safeUrl;
               });
             })
             .catch(err => console.error("Live syncing poll cycle failed:", err));
