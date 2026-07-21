@@ -103,6 +103,312 @@ html {
     scrollbar-color: #eab308 #0f172a;
 }
 
+
+/* ==========================================================================
+2. Exhibition section
+========================================================================== */
+
+/* ==========================================================================
+   AR EXHIBITIONS SECTION & NAVBAR STYLING (Holographic Spatial AR Aesthetics)
+   ========================================================================== */
+
+/* Navbar Dropdown AR Styling */
+.ar-nav-link {
+    color: #f59e0b !important;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.ar-pulse-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #10b981;
+    animation: arPulse 1.5s infinite;
+}
+@keyframes arPulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1.2); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+.ar-dropdown-menu {
+    background: rgba(26, 4, 10, 0.95) !important;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 15px rgba(245, 158, 11, 0.15);
+}
+.ar-dropdown-menu .dropdown-item {
+    color: #e5e7eb !important;
+    transition: all 0.2s ease;
+}
+.ar-dropdown-menu .dropdown-item:hover {
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: #f59e0b !important;
+    padding-left: 1.5rem;
+}
+
+/* Main AR Section Container */
+.ar-exhibition-section {
+    position: relative;
+    padding: 90px 0;
+    background: radial-gradient(circle at 50% 30%, #3a0510 0%, #170206 70%, #0a0103 100%);
+    overflow: hidden;
+    border-top: 1px solid rgba(245, 158, 11, 0.25);
+    border-bottom: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+/* 3D / Spatial Grid Backdrop */
+.ar-grid-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: 
+        linear-gradient(rgba(245, 158, 11, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(245, 158, 11, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    perspective: 1000px;
+    transform: rotateX(60deg) scale(2);
+    transform-origin: top center;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Animated Scanning Laser HUD Line */
+.ar-scan-beam {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #f59e0b, #ffffffc0, #f59e0b, transparent);
+    box-shadow: 0 0 15px #f59e0b;
+    opacity: 0.7;
+    animation: arScan 4s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+@keyframes arScan {
+    0% { top: 0%; opacity: 0.2; }
+    50% { opacity: 0.8; }
+    100% { top: 100%; opacity: 0.2; }
+}
+
+/* Radar Tech Badge Header */
+.ar-tech-badge {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    padding: 6px 16px;
+    border-radius: 30px;
+    letter-spacing: 1.5px;
+    font-size: 0.75rem;
+    color: #f59e0b;
+    font-weight: 700;
+    text-transform: uppercase;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+}
+.ar-live-radar {
+    width: 10px;
+    height: 10px;
+    background: #f59e0b;
+    border-radius: 50%;
+    position: relative;
+}
+.ar-live-radar::after {
+    content: '';
+    position: absolute;
+    top: -3px; left: -3px; right: -3px; bottom: -3px;
+    border: 1px solid #f59e0b;
+    border-radius: 50%;
+    animation: radarPing 1.8s infinite;
+}
+@keyframes radarPing {
+    0% { transform: scale(0.8); opacity: 1; }
+    100% { transform: scale(2.2); opacity: 0; }
+}
+
+.ar-section-title {
+    font-size: 2.6rem;
+    font-weight: 800;
+    color: #ffffff;
+    text-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+}
+.ar-section-subtitle {
+    color: #d1d5db;
+    max-width: 680px;
+    margin: 0 auto;
+    font-size: 1.05rem;
+}
+
+/* Spatial Cyber Cards */
+.ar-card {
+    background: rgba(30, 4, 10, 0.75);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+.ar-card:hover {
+    transform: translateY(-8px) scale(1.01);
+    border-color: rgba(245, 158, 11, 0.6);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(245, 158, 11, 0.25);
+}
+
+.ar-card-corner {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-color: #f59e0b;
+    pointer-events: none;
+}
+.ar-card-corner.top-left {
+    top: 12px; left: 12px;
+    border-top: 2px solid #f59e0b;
+    border-left: 2px solid #f59e0b;
+}
+.ar-card-corner.bottom-right {
+    bottom: 12px; right: 12px;
+    border-bottom: 2px solid #f59e0b;
+    border-right: 2px solid #f59e0b;
+}
+
+.ar-pill-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #e5e7eb;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    letter-spacing: 0.8px;
+}
+.ar-pill-tag.gold {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.4);
+}
+
+.ar-hud-code {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: #6b7280;
+    letter-spacing: 1px;
+}
+.ar-hud-code.gold {
+    color: rgba(245, 158, 11, 0.7);
+}
+
+.ar-card-title {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.6rem;
+}
+.ar-card-title.gold-glow {
+    background: linear-gradient(135deg, #ffffff 0%, #f59e0b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.ar-card-desc {
+    color: #9ca3af;
+    line-height: 1.6;
+    font-size: 0.98rem;
+}
+
+/* Call-to-action Buttons */
+.ar-btn-primary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 10px 22px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+.ar-btn-primary:hover {
+    background: #ffffff;
+    color: #1e040a;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+}
+
+.ar-btn-gold {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #000000;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 10px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+.ar-btn-gold:hover {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #000000;
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.6);
+    transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   AR EXHIBITION MOBILE RESPONSIVE SCALING (MOBILE COMPACT CARDS)
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Reduce Section Padding & Header Sizes */
+  .ar-exhibition-section {
+    padding: 40px 0 !important;
+  }
+
+  .ar-section-title h2 {
+    font-size: 1.5rem !important;
+  }
+
+  .ar-section-title p {
+    font-size: 0.82rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  /* Compact Card Layout */
+  .ar-card {
+    padding: 0.85rem 0.6rem !important;
+    border-radius: 12px !important;
+  }
+
+  /* Smaller Icon Circle */
+  .ar-card-icon {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 1rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* Compact Tag Badges */
+  .ar-card-badge {
+    font-size: 0.6rem !important;
+    padding: 2px 6px !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  /* Card Title */
+  .ar-card-title {
+    font-size: 0.92rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  /* Card Description Text */
+  .ar-card-text {
+    font-size: 0.72rem !important;
+    line-height: 1.25 !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  /* Compact Action Buttons */
+  .ar-card-btn {
+    padding: 5px 10px !important;
+    font-size: 0.72rem !important;
+    border-radius: 20px !important;
+  }
+
+  .ar-card-btn i {
+    font-size: 0.7rem !important;
+  }
+}
+
 /* ==========================================================================
 2. APPLE-STYLE GLASS NAVBAR
 ========================================================================== */
