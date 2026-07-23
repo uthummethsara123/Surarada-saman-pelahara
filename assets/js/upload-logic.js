@@ -4,7 +4,7 @@ const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oG
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
 // Use standard hyphens instead of dots so browsers can read it cleanly
-const START_DATE = new Date("2026-07-27T00:00:00").getTime();
+const START_DATE = new Date("2026-07-19T00:00:00").getTime();
 // Admin: Extend this date forward whenever you want to grant extra submission time
 const DEADLINE_DATE = new Date("2026-07-27T02:00:00").getTime();
 
@@ -259,6 +259,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     scope: competitionScope
                 };
 
+                // --- ADD THIS LINE HERE ---
+                if (submitBtn) submitBtn.disabled = true;
+
                 // ONE PHOTO AT A TIME - Circle stays until upload is done
                 for (let i = 0; i < activeSlots.length; i++) {
                     const item = activeSlots[i];
@@ -312,12 +315,25 @@ document.addEventListener("DOMContentLoaded", () => {
                         [slot + "_title"]: item.title
                     };
 
-                    // Now upload this single photo
-                    const response = await fetch(SUBMISSION_API_URL, {
-                        method: "POST",
-                        mode: "cors",
-                        body: JSON.stringify(singlePayload)
-                    });
+                    // Replace standard fetch with an auto-retry loop:
+                    let response;
+                    let retries = 3;
+                    while (retries > 0) {
+                        try {
+                            response = await fetch(SUBMISSION_API_URL, {
+                                method: "POST",
+                                mode: "cors",
+                                body: JSON.stringify(singlePayload)
+                            });
+                            if (response.ok) break;
+                        } catch (err) {
+                            retries--;
+                            if (retries === 0) throw err;
+                            // Wait 1.5 seconds before retrying
+                            await new Promise(res => setTimeout(res, 1500)); 
+                        }
+                    }
+                    
 
                     const result = await response.json();
                     if (result.success !== true) {
