@@ -307,32 +307,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     // FIXED DUPLICATION: We create a brand new payload for THIS photo ONLY.
                     // We do not inject it into the global unifiedPayload, which stops them from stacking up.
-                    const singlePayload = { 
-                        ...unifiedPayload, // Copies email, name, school, etc.
-                        [slot]: base64Content,
-                        [slot + "_name"]: item.file.name,
-                        [slot + "_type"]: item.file.type,
-                        [slot + "_title"]: item.title
-                    };
+                    // Construct single payload for this photo
+            const singlePayload = {
+                ...unifiedPayload,
+                [slot]: base64Content,
+                [slot + "_name"]: item.file.name,
+                [slot + "_type"]: item.file.type,
+                [slot + "_title"]: item.title
+            };
 
-                    // Replace standard fetch with an auto-retry loop:
-                    let response;
-                    let retries = 3;
-                    while (retries > 0) {
-                        try {
-                            response = await fetch(SUBMISSION_API_URL, {
-                                method: "POST",
-                                mode: "cors",
-                                body: JSON.stringify(singlePayload)
-                            });
-                            if (response.ok) break;
-                        } catch (err) {
-                            retries--;
-                            if (retries === 0) throw err;
-                            // Wait 1.5 seconds before retrying
-                            await new Promise(res => setTimeout(res, 1500)); 
+            // High-traffic resilient fetch with auto-retry on server lock/busy response
+            let result = null;
+            let retries = 4;
+            while (retries > 0) {
+                try {
+                    const response = await fetch(SUBMISSION_API_URL, {
+                        method: "POST",
+                        mode: "cors",
+                        body: JSON.stringify(singlePayload)
+                    });
+
+                    if (response.ok) {
+                        const resData = await response.json();
+                        if (resData.success === true) {
+                            result = resData;
+                            break; // Success! Exit loop
+                        } else {
+                            throw new Error(resData.message || "Server busy");
                         }
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
                     }
+                } catch (err) {
+                    retries--;
+                    if (retries === 0) throw err;
+                    // Exponential backoff delay (1.5s, 3s, 4.5s...)
+                    await new Promise(res => setTimeout(res, 1500 * (5 - retries))); 
+                }
+            }
                     
 
                     const result = await response.json();
