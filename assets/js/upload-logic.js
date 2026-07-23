@@ -307,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     // FIXED DUPLICATION: We create a brand new payload for THIS photo ONLY.
                     // We do not inject it into the global unifiedPayload, which stops them from stacking up.
-                    // Construct single payload for this photo
+                    // Single photo upload chunk
             const singlePayload = {
                 ...unifiedPayload,
                 [slot]: base64Content,
@@ -316,7 +316,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 [slot + "_title"]: item.title
             };
 
-            // High-traffic resilient fetch with auto-retry on server lock/busy response
+            // Retry engine: checks JSON result and retries on server busy
             let result = null;
             let retries = 4;
             while (retries > 0) {
@@ -331,7 +331,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         const resData = await response.json();
                         if (resData.success === true) {
                             result = resData;
-                            break; // Success! Exit loop
+                            break; // Success!
                         } else {
                             throw new Error(resData.message || "Server busy");
                         }
@@ -341,8 +341,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 } catch (err) {
                     retries--;
                     if (retries === 0) throw err;
-                    // Exponential backoff delay (1.5s, 3s, 4.5s...)
-                    await new Promise(res => setTimeout(res, 1500 * (5 - retries))); 
+                    // Exponential backoff retry delay (1.5s, 3s, 4.5s...)
+                    await new Promise(res => setTimeout(res, 1500 * (5 - retries)));
                 }
             }
                     
