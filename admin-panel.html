@@ -704,79 +704,99 @@ async function deleteParticipant(email) {
             btn.innerHTML = `<i class="fas fa-sync-alt me-1"></i>Refresh Data`;
         });
 
-        // BULK DOWNLOAD ARCHIVE GENERATOR
+// Helper function to resolve category folder name
+function getCategoryFolderName(item) {
+    const cat = (item.categoryKey || item.categoryDisplay || "").toString().toLowerCase();
+    if (cat.includes("mono") || cat.includes("black")) return "Monochrome";
+    if (cat.includes("slow") || cat.includes("shutter")) return "Slow_Shutter";
+    return "Color";
+}
+
+        // BULK DOWNLOAD ARCHIVE GENERATOR (Categorized into subfolders)
         document.getElementById('downloadBtn').addEventListener('click', async () => {
-            const scriptUrl = document.getElementById('scriptUrl').value.trim();
-            const statusText = document.getElementById('statusText');
-            const statusWrapper = document.getElementById('statusWrapper');
-            const progressBar = document.getElementById('progressBar');
-            const downloadBtn = document.getElementById('downloadBtn');
+        const scriptUrl = document.getElementById('scriptUrl').value.trim();
+        const statusText = document.getElementById('statusText');
+        const statusWrapper = document.getElementById('statusWrapper');
+        const progressBar = document.getElementById('progressBar');
+        const downloadBtn = document.getElementById('downloadBtn');
 
-            if (!scriptUrl) {
-                alert("Please enter a valid Google Apps Script Web App URL.");
-                return;
+        if (!scriptUrl) {
+            showAdminToast("Please enter a valid Google Apps Script Web App URL.", "error");
+            return;
+        }
+
+        downloadBtn.disabled = true;
+        statusWrapper.classList.remove('d-none');
+        statusText.innerText = "Connecting to Google Sheet database...";
+        progressBar.style.width = "5%";
+        progressBar.innerText = "5%";
+
+        try {
+            const success = await fetchDataFromSheet(false);
+            if (!success || cachedImages.length === 0) {
+                throw new Error("No photo records retrieved from Google Sheet database.");
             }
 
-            downloadBtn.disabled = true;
-            statusWrapper.classList.remove('d-none');
-            statusText.innerText = "Connecting to Google Sheet database...";
-            progressBar.style.width = "5%";
-            progressBar.innerText = "5%";
+            const images = cachedImages;
+            const zip = new JSZip();
+            
+            // Create root & category subfolders inside the ZIP archive
+            const rootFolder = zip.folder("Surarada_2026_Photos");
+            const categoryFolders = {
+                "Color": rootFolder.folder("Color"),
+                "Monochrome": rootFolder.folder("Monochrome"),
+                "Slow_Shutter": rootFolder.folder("Slow_Shutter")
+            };
 
-            try {
-                const success = await fetchDataFromSheet(false);
-                if (!success || cachedImages.length === 0) {
-                    throw new Error("No photo records retrieved from Google Sheet database.");
-                }
+            let downloadedCount = 0;
 
-                const images = cachedImages;
-                const zip = new JSZip();
-                const folder = zip.folder("Surarada_2026_Photos");
+            for (let i = 0; i < images.length; i++) {
+                const item = images[i];
+                
+                // Determine target category folder
+                const folderName = getCategoryFolderName(item);
+                const targetFolder = categoryFolders[folderName] || categoryFolders["Color"];
 
-                let downloadedCount = 0;
+                const cleanFileName = sanitizeFileName(item.downloadFileName);
+                const ext = item.url.split('.').pop().split('?')[0] || "jpg";
+                const finalZipFileName = `${cleanFileName}.${ext}`;
 
-                for (let i = 0; i < images.length; i++) {
-                    const item = images[i];
+                statusText.innerText = `[${folderName}] Fetching photo ${i + 1} of ${images.length}: ${finalZipFileName}`;
+
+                try {
+                    const imgRes = await fetch(item.url);
+                    const blob = await imgRes.blob();
                     
-                    const cleanFileName = sanitizeFileName(item.downloadFileName);
-                    const ext = item.url.split('.').pop().split('?')[0] || "jpg";
-                    const finalZipFileName = `${cleanFileName}.${ext}`;
-
-                    statusText.innerText = `Fetching photo ${i + 1} of ${images.length}: ${finalZipFileName}`;
-
-                    try {
-                        const imgRes = await fetch(item.url);
-                        const blob = await imgRes.blob();
-                        
-                        folder.file(finalZipFileName, blob);
-                        downloadedCount++;
-                    } catch (err) {
-                        console.warn(`Failed to fetch image URL: ${item.url}`, err);
-                    }
-
-                    const percent = Math.round(((i + 1) / images.length) * 90);
-                    progressBar.style.width = percent + "%";
-                    progressBar.innerText = percent + "%";
+                    // Add photo to its designated category subfolder
+                    targetFolder.file(finalZipFileName, blob);
+                    downloadedCount++;
+                } catch (err) {
+                    console.warn(`Failed to fetch image URL: ${item.url}`, err);
                 }
 
-                statusText.innerText = "Compressing photos into ZIP archive...";
-                progressBar.style.width = "95%";
-                progressBar.innerText = "95%";
-
-                const zipBlob = await zip.generateAsync({ type: "blob" });
-                saveAs(zipBlob, "Surarada_2026_All_Photos.zip");
-
-                progressBar.style.width = "100%";
-                progressBar.innerText = "100%";
-                statusText.innerText = `Successfully exported ${downloadedCount} renamed photos into ZIP archive!`;
-
-            } catch (err) {
-                statusText.innerText = "Export failed: " + err.message;
-                statusText.style.color = "#fca5a5";
-            } finally {
-                downloadBtn.disabled = false;
+                const percent = Math.round(((i + 1) / images.length) * 90);
+                progressBar.style.width = percent + "%";
+                progressBar.innerText = percent + "%";
             }
-        });
+
+            statusText.innerText = "Compressing categorized photos into ZIP archive...";
+            progressBar.style.width = "95%";
+            progressBar.innerText = "95%";
+
+            const zipBlob = await zip.generateAsync({ type: "blob" });
+            saveAs(zipBlob, "Surarada_2026_Categorized_Photos.zip");
+
+            progressBar.style.width = "100%";
+            progressBar.innerText = "100%";
+            statusText.innerText = `Successfully exported ${downloadedCount} photos into Color, Monochrome, and Slow Shutter folders!`;
+
+        } catch (err) {
+            statusText.innerText = "Export failed: " + err.message;
+            statusText.style.color = "#fca5a5";
+        } finally {
+            downloadBtn.disabled = false;
+        }
+    });
     </script>
 </body>
 </html>
