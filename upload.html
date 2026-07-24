@@ -99,7 +99,9 @@
         </div>
 
         <div class="countdown-container mt-3 mb-4">
-            <div class="timer-title small text-uppercase text-warning-50 font-monospace mb-2">Marathon Submission Deadline</div>
+            <div id="timerTitle" class="timer-title small text-uppercase text-warning-50 font-monospace mb-2">
+                Marathon Submission Deadline
+            </div>
             <div class="d-flex justify-content-center align-items-center gap-3">
                 <div class="time-block">
                     <span id="hours" class="time-num">00</span>
@@ -321,12 +323,28 @@
                 </button>
             </form>
 
+                    <div id="timeIsUpDashboard" class="upcoming-notice-box d-none">
+                        <i class="fas fa-lock"></i>
+                        <h3>Submission Closed</h3>
+                        <p>The submission window for the marathon has officially closed.</p>
+                    </div>
+
+                    <div id="upcomingDashboard" class="upcoming-notice-box d-none">
+                        <i class="fas fa-clock"></i>
+                        <h3>Marathon Upload Form</h3>
+                        <p>The marathon upload form will open on <strong>July 27th at 2:00 AM</strong>.</p>
+                    </div>
+
             <div id="uploadSubmittedDashboard" class="text-center p-4 border border-warning rounded glass-panel d-none">
                 <i class="fas fa-cloud-upload-alt text-success mb-3" style="font-size: 3.5rem;"></i>
                 <h3 class="text-white mb-2">Portfolio Securely Uploaded!</h3>
                 <p class="text-white mb-4">Your photographic entries have been successfully saved and linked to your email address.</p>
                 
-                <!-- <hr class="border-secondary my-4"> -->
+                <hr class="border-secondary my-4">
+
+                <button id="requestResubmitBtn" class="btn btn-outline-danger w-100 mt-3">
+                    <i class="fas fa-undo-alt me-2"></i>Request to Resubmit Form
+                </button>
                 
                 <!-- <p class="text-warning small mb-3"><i class="fas fa-info-circle me-1"></i> Need to correct or change your submissions?</p>
                 <button type="button" id="triggerUploadDeleteBtn" class="btn btn-danger btn-sm px-4 py-2">
@@ -340,6 +358,8 @@
             
             <div id="uploadFeedback" class="text-center mt-3 d-none"></div>
         </div>
+
+
 
     </div>
 </section>
