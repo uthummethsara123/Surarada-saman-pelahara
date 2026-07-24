@@ -4,7 +4,7 @@ const IMGBB_API_KEY = "19135fc89f58f414226e584b18e545a9";
 // ==========================================================
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
-const START_DATE = new Date("2026-07-27T02:00:00").getTime();
+const START_DATE = new Date("2026-07-23T02:00:00").getTime();
 const DEADLINE_DATE = new Date("2026-07-27T04:15:00").getTime();
 
 let userIsActivelyWorking = false; 
@@ -811,7 +811,7 @@ function startRemotePurgeListener(email) {
         } catch (err) {
             console.warn("Background state sync check failed:", err);
         }
-    }, 4000); // 4-second interval
+    }, 3000); // 3-second interval
 }
 
 /**
