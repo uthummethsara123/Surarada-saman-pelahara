@@ -4,8 +4,8 @@ const IMGBB_API_KEY = "19135fc89f58f414226e584b18e545a9";
 // ==========================================================
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
-const START_DATE = new Date("2026-07-27T02:00:00").getTime();
-const DEADLINE_DATE = new Date("2026-07-27T04:15:00").getTime();
+const START_DATE = new Date("2026-07-27T00:00:00").getTime();
+const DEADLINE_DATE = new Date("2026-07-27T02:00:00").getTime();
 
 let userIsActivelyWorking = false; 
 let submissionFinishedTime = null; 
@@ -124,6 +124,35 @@ styleSheet.innerText = `
     .custom-alert-toast.error .custom-alert-icon { color: #ef4444; }
     .custom-alert-toast.success .custom-alert-icon { color: #10b981; }
     .custom-alert-toast.warning .custom-alert-icon { color: #f59e0b; }
+    /* UPCOMING ANNOUNCEMENT BOX STYLE */
+    .upcoming-notice-box {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(245, 158, 11, 0.35);
+        border-radius: 16px;
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+        max-width: 650px;
+        margin: 2rem auto;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+    .upcoming-notice-box i {
+        font-size: 2.8rem;
+        color: #f59e0b;
+        margin-bottom: 1rem;
+    }
+    .upcoming-notice-box h3 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 0.5rem;
+    }
+    .upcoming-notice-box p {
+        color: #cbd5e1;
+        font-size: 1rem;
+        margin: 0;
+    }
 `;
 document.head.appendChild(styleSheet);
 
@@ -293,9 +322,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const emailField = document.getElementById('participantEmail') || document.getElementById('email');
     const submitBtn = document.getElementById('uploadSubmitBtn') || document.getElementById('submitBtn');
 
+    // TO THIS (Only show form if timeline is already active):
     if (uploadForm) {
-        uploadForm.classList.remove("d-none");
-        
+        const now = new Date().getTime();
+        if (now >= START_DATE && now < DEADLINE_DATE) {
+            uploadForm.classList.remove("d-none");
+        } else {
+            uploadForm.classList.add("d-none");
+        }
+
         const markAsActive = () => { 
             if (submissionFinishedTime === null) {
                 userIsActivelyWorking = true; 
@@ -530,7 +565,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================================
-// MARATHON TIMELINE COUNTDOWN ENGINE
+// MARATHON TIMELINE COUNTDOWN & NOTICE ENGINE
 // ==========================================================
 const runTimelineEngine = () => {
     const now = new Date().getTime();
@@ -539,13 +574,56 @@ const runTimelineEngine = () => {
     const secondsEl = document.getElementById("seconds");
     const uploadForm = document.getElementById("uploadForm");
     const timerTitle = document.getElementById("timerTitle");
+    let noticeBox = document.getElementById("upcomingNoticeBox");
 
+    // Helper to ensure Notice Box exists in DOM
+    const showNoticeBox = () => {
+        if (!noticeBox && uploadForm && uploadForm.parentNode) {
+            noticeBox = document.createElement("div");
+            noticeBox.id = "upcomingNoticeBox";
+            noticeBox.className = "upcoming-notice-box";
+            noticeBox.innerHTML = `
+                <i class="fas fa-clock"></i>
+                <h3>Marathon Upload Form</h3>
+                <p>The marathon upload form will open on <strong>July 27th at 2:00 AM</strong>.</p>
+            `;
+            uploadForm.parentNode.insertBefore(noticeBox, uploadForm);
+        }
+        if (noticeBox) noticeBox.style.display = "block";
+    };
+
+    const hideNoticeBox = () => {
+        if (noticeBox) noticeBox.style.display = "none";
+    };
+
+    // 1. BEFORE START DATE: Hide Form, Show Notice Box & Count Down to Start
     if (now < START_DATE) {
-        if (timerTitle) timerTitle.innerText = "Marathon starts on July 19th";
+        if (timerTitle) timerTitle.innerText = "Marathon Upload Form Opens In:";
+        
+        if (uploadForm) uploadForm.classList.add("d-none");
+        showNoticeBox();
+
+        const distanceToStart = START_DATE - now;
+        const hours = Math.floor(distanceToStart / (1000 * 60 * 60));
+        const minutes = Math.floor((distanceToStart % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distanceToStart % (1000 * 60)) / 1000);
+
+        if (hoursEl) hoursEl.innerText = hours < 10 ? "0" + hours : hours;
+        if (minutesEl) minutesEl.innerText = minutes < 10 ? "0" + minutes : minutes;
+        if (secondsEl) secondsEl.innerText = seconds < 10 ? "0" + seconds : seconds;
         return;
     }
 
+    // 2. DURING MARATHON: Show Form, Hide Notice Box & Count Down to Deadline
     if (now >= START_DATE && now < DEADLINE_DATE) {
+        if (timerTitle) timerTitle.innerText = "Submissions Closing In:";
+        hideNoticeBox();
+
+        const savedUploadEmail = localStorage.getItem("submittedUploadEmail");
+        if (uploadForm && !savedUploadEmail) {
+            uploadForm.classList.remove("d-none");
+        }
+
         const distance = DEADLINE_DATE - now;
         const hours = Math.floor(distance / (1000 * 60 * 60));
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
@@ -554,7 +632,10 @@ const runTimelineEngine = () => {
         if (hoursEl) hoursEl.innerText = hours < 10 ? "0" + hours : hours;
         if (minutesEl) minutesEl.innerText = minutes < 10 ? "0" + minutes : minutes;
         if (secondsEl) secondsEl.innerText = seconds < 10 ? "0" + seconds : seconds;
-    } else {
+    } 
+    // 3. AFTER DEADLINE: Closed
+    else {
+        hideNoticeBox();
         if (hoursEl) hoursEl.innerText = "00";
         if (minutesEl) minutesEl.innerText = "00";
         if (secondsEl) secondsEl.innerText = "00";
@@ -566,6 +647,7 @@ const runTimelineEngine = () => {
             }
         } else {
             if (timerTitle) timerTitle.innerText = "Submissions Closed";
+            if (uploadForm) uploadForm.classList.add("d-none");
         }
     }
 };
@@ -574,6 +656,8 @@ document.addEventListener("DOMContentLoaded", () => {
     runTimelineEngine();
     window.timelineInterval = setInterval(runTimelineEngine, 1000);
 });
+
+
 
 // ==========================================================
 // LOADER CLEANUP ENGINE
