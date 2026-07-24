@@ -4,8 +4,8 @@ const IMGBB_API_KEY = "19135fc89f58f414226e584b18e545a9";
 // ==========================================================
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
-const START_DATE = new Date("2026-07-27T00:00:00").getTime();
-const DEADLINE_DATE = new Date("2026-07-27T02:00:00").getTime();
+const START_DATE = new Date("2026-07-27T02:00:00").getTime();
+const DEADLINE_DATE = new Date("2026-07-27T04:15:00").getTime();
 
 let userIsActivelyWorking = false; 
 let submissionFinishedTime = null; 
@@ -523,9 +523,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 }
 
-                submissionFinishedTime = Date.now();
-                userIsActivelyWorking = false;
+                // RECORD FINISHED TIME ON SUCCESSFUL SUBMISSION
+                submissionFinishedTime = new Date().getTime();
+                userIsActivelyWorking = false; // Stop grace period active state
+
                 localStorage.setItem("submittedUploadEmail", currentEmail);
+
+                // Run timeline engine immediately to update UI without waiting for next second tick
+                runTimelineEngine();
 
                 showCustomAlert(`Successfully submitted ${uploadedCount} photo(s)!`, "success");
 
@@ -565,93 +570,154 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================================
-// MARATHON TIMELINE COUNTDOWN & NOTICE ENGINE
+// MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
+// Track user activity (typing or selecting files)
+document.addEventListener("input", () => { userIsActivelyWorking = true; });
+document.addEventListener("change", () => { userIsActivelyWorking = true; });
+
+// MAIN LIVE TIMELINE ENGINE
 const runTimelineEngine = () => {
     const now = new Date().getTime();
+
+    const daysEl = document.getElementById("days");
     const hoursEl = document.getElementById("hours");
     const minutesEl = document.getElementById("minutes");
     const secondsEl = document.getElementById("seconds");
-    const uploadForm = document.getElementById("uploadForm");
     const timerTitle = document.getElementById("timerTitle");
-    let noticeBox = document.getElementById("upcomingNoticeBox");
 
-    // Helper to ensure Notice Box exists in DOM
-    const showNoticeBox = () => {
-        if (!noticeBox && uploadForm && uploadForm.parentNode) {
-            noticeBox = document.createElement("div");
-            noticeBox.id = "upcomingNoticeBox";
-            noticeBox.className = "upcoming-notice-box";
-            noticeBox.innerHTML = `
-                <i class="fas fa-clock"></i>
-                <h3>Marathon Upload Form</h3>
-                <p>The marathon upload form will open on <strong>July 27th at 2:00 AM</strong>.</p>
-            `;
-            uploadForm.parentNode.insertBefore(noticeBox, uploadForm);
+    const uploadForm = document.getElementById("uploadForm");
+    const uploadDashboard = document.getElementById("uploadSubmittedDashboard");
+    const timeIsUpBox = document.getElementById("timeIsUpDashboard");
+
+    const isSubmitted = !!localStorage.getItem("submittedUploadEmail");
+
+    // Helper to update clock display
+    const updateClockDisplay = (diffMs) => {
+        if (diffMs <= 0) {
+            if (daysEl) daysEl.innerText = "00";
+            if (hoursEl) hoursEl.innerText = "00";
+            if (minutesEl) minutesEl.innerText = "00";
+            if (secondsEl) secondsEl.innerText = "00";
+            return;
         }
-        if (noticeBox) noticeBox.style.display = "block";
-    };
+        const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
 
-    const hideNoticeBox = () => {
-        if (noticeBox) noticeBox.style.display = "none";
-    };
-
-    // 1. BEFORE START DATE: Hide Form, Show Notice Box & Count Down to Start
-    if (now < START_DATE) {
-        if (timerTitle) timerTitle.innerText = "Marathon Upload Form Opens In:";
-        
-        if (uploadForm) uploadForm.classList.add("d-none");
-        showNoticeBox();
-
-        const distanceToStart = START_DATE - now;
-        const hours = Math.floor(distanceToStart / (1000 * 60 * 60));
-        const minutes = Math.floor((distanceToStart % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distanceToStart % (1000 * 60)) / 1000);
-
+        if (daysEl) daysEl.innerText = days < 10 ? "0" + days : days;
         if (hoursEl) hoursEl.innerText = hours < 10 ? "0" + hours : hours;
         if (minutesEl) minutesEl.innerText = minutes < 10 ? "0" + minutes : minutes;
         if (secondsEl) secondsEl.innerText = seconds < 10 ? "0" + seconds : seconds;
+    };
+
+    // ------------------------------------------------------
+    // STATE 1: BEFORE START TIME (Portal locked)
+    // ------------------------------------------------------
+    if (now < START_DATE) {
+        if (timerTitle) timerTitle.innerText = "Portal Open In";
+        updateClockDisplay(START_DATE - now);
+
+        const upcomingBox = document.getElementById("upcomingDashboard");
+
+        // Hide active upload form & registration closed box, show upcoming box
+        if (uploadForm) uploadForm.classList.add("d-none");
+        if (timeIsUpBox) timeIsUpBox.classList.add("d-none");
+        if (uploadDashboard) uploadDashboard.classList.add("d-none");
+        if (upcomingBox) upcomingBox.classList.remove("d-none");
         return;
     }
 
-    // 2. DURING MARATHON: Show Form, Hide Notice Box & Count Down to Deadline
+    // ------------------------------------------------------
+    // STATE 2: ACTIVE SUBMISSION WINDOW
+    // ------------------------------------------------------
     if (now >= START_DATE && now < DEADLINE_DATE) {
-        if (timerTitle) timerTitle.innerText = "Submissions Closing In:";
-        hideNoticeBox();
+        if (timerTitle) timerTitle.innerText = "Submission Portal Opened";
+        updateClockDisplay(DEADLINE_DATE - now);
 
-        const savedUploadEmail = localStorage.getItem("submittedUploadEmail");
-        if (uploadForm && !savedUploadEmail) {
-            uploadForm.classList.remove("d-none");
+        if (isSubmitted) {
+            // User submitted earlier than deadline -> show portfolio
+            if (uploadForm) uploadForm.classList.add("d-none");
+            if (timeIsUpBox) timeIsUpBox.classList.add("d-none");
+            if (uploadDashboard) uploadDashboard.classList.remove("d-none");
+        } else {
+            // Unsubmitted user -> show active form
+            if (uploadForm) {
+                uploadForm.classList.remove("d-none");
+                const inputs = uploadForm.querySelectorAll("input, select, button");
+                inputs.forEach(el => el.disabled = false);
+            }
+            if (timeIsUpBox) timeIsUpBox.classList.add("d-none");
+            if (uploadDashboard) uploadDashboard.classList.add("d-none");
+            const upcomingBox = document.getElementById("upcomingDashboard");
+            if (upcomingBox) upcomingBox.classList.add("d-none");
+        }
+        return;
+    }
+
+    // ------------------------------------------------------
+    // STATE 3 & 4: AFTER DEADLINE
+    // ------------------------------------------------------
+    if (now >= DEADLINE_DATE) {
+        // CASE A: User submitted AFTER deadline (during Grace Period)
+        if (isSubmitted && submissionFinishedTime && submissionFinishedTime >= DEADLINE_DATE) {
+            const timeSinceSubmit = now - submissionFinishedTime;
+            
+            if (timeSinceSubmit < 4000) {
+                // Show portfolio secured view for exactly 4 seconds
+                if (timerTitle) timerTitle.innerText = "Submission Portal Closed";
+                updateClockDisplay(0);
+                if (uploadForm) uploadForm.classList.add("d-none");
+                if (timeIsUpBox) timeIsUpBox.classList.add("d-none");
+                if (uploadDashboard) uploadDashboard.classList.remove("d-none");
+            } else {
+                // After 4 seconds -> Switch live to Registration Closed
+                if (timerTitle) timerTitle.innerText = "Submission Portal Closed";
+                updateClockDisplay(0);
+                if (uploadForm) uploadForm.classList.add("d-none");
+                if (uploadDashboard) uploadDashboard.classList.add("d-none");
+                if (timeIsUpBox) timeIsUpBox.classList.remove("d-none");
+            }
+            return;
         }
 
-        const distance = DEADLINE_DATE - now;
-        const hours = Math.floor(distance / (1000 * 60 * 60));
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        // CASE B: User submitted EARLIER than deadline -> Switch to Registration Closed immediately when deadline hits
+        if (isSubmitted) {
+            if (timerTitle) timerTitle.innerText = "Submission Portal Closed";
+            updateClockDisplay(0);
+            if (uploadForm) uploadForm.classList.add("d-none");
+            if (uploadDashboard) uploadDashboard.classList.add("d-none");
+            if (timeIsUpBox) timeIsUpBox.classList.remove("d-none");
+            return;
+        }
 
-        if (hoursEl) hoursEl.innerText = hours < 10 ? "0" + hours : hours;
-        if (minutesEl) minutesEl.innerText = minutes < 10 ? "0" + minutes : minutes;
-        if (secondsEl) secondsEl.innerText = seconds < 10 ? "0" + seconds : seconds;
-    } 
-    // 3. AFTER DEADLINE: Closed
-    else {
-        hideNoticeBox();
-        if (hoursEl) hoursEl.innerText = "00";
-        if (minutesEl) minutesEl.innerText = "00";
-        if (secondsEl) secondsEl.innerText = "00";
-
+        // CASE C: Unsubmitted user actively typing/uploading -> GRACE PERIOD
         if (userIsActivelyWorking) {
             if (timerTitle) timerTitle.innerText = "GRACE PERIOD: Complete submission now!";
-            if (uploadForm && !uploadForm.classList.contains("late-flashing-container")) {
-                uploadForm.classList.add("late-flashing-container");
+            updateClockDisplay(0);
+            
+            if (uploadForm) {
+                uploadForm.classList.remove("d-none");
+                if (!uploadForm.classList.contains("late-flashing-container")) {
+                    uploadForm.classList.add("late-flashing-container");
+                }
             }
-        } else {
-            if (timerTitle) timerTitle.innerText = "Submissions Closed";
-            if (uploadForm) uploadForm.classList.add("d-none");
+            if (timeIsUpBox) timeIsUpBox.classList.add("d-none");
+            if (uploadDashboard) uploadDashboard.classList.add("d-none");
+            return;
         }
+
+        // CASE D: Inactive unsubmitted user -> Registration Closed
+        if (timerTitle) timerTitle.innerText = "Submission Portal Closed";
+        updateClockDisplay(0);
+        if (uploadForm) uploadForm.classList.add("d-none");
+        if (uploadDashboard) uploadDashboard.classList.add("d-none");
+        if (timeIsUpBox) timeIsUpBox.classList.remove("d-none");
     }
 };
 
+// INITIALIZE REAL-TIME INTERVAL
 document.addEventListener("DOMContentLoaded", () => {
     runTimelineEngine();
     window.timelineInterval = setInterval(runTimelineEngine, 1000);
@@ -687,3 +753,124 @@ if (typeof ScrollReveal !== 'undefined') {
         origin: 'bottom'
     });
 }
+
+
+// ==========================================================
+// REAL-TIME PARTICIPANT SYNC & REMOTE PURGE LISTENER
+// ==========================================================
+let participantSyncTimer = null;
+
+/**
+ * Background polling listener that checks whether the participant's 
+ * submission record still exists in Google Sheets.
+ * When Admin clicks "Delete & Allow Resubmit", the endpoint returns { found: false }.
+ * The device then automatically purges local storage and reloads the browser.
+ */
+function startRemotePurgeListener(email) {
+    if (participantSyncTimer) clearInterval(participantSyncTimer);
+
+    // Polls the backend every 4 seconds
+    participantSyncTimer = setInterval(async () => {
+        try {
+            const response = await fetch(SUBMISSION_API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({
+                    action: "checkExisting",
+                    participantEmail: email
+                })
+            });
+
+            const result = await response.json();
+
+            // SENSING ADMIN DELETION:
+            // Record no longer exists in Google Sheets -> Purge local storage and force page reload
+            if (result.success && result.found === false) {
+                clearInterval(participantSyncTimer);
+                console.log("Admin deletion detected! Purging local credentials & refreshing...");
+                
+                // EXECUTE AUTOMATIC PURGE AND RELOAD
+                localStorage.removeItem("submittedUploadEmail");
+                location.reload();
+            } else if (result.success && result.found && result.data.resubmitRequested) {
+                // Update UI state if request was already flagged
+                const reqBtn = document.getElementById("requestResubmitBtn");
+                if (reqBtn && !reqBtn.disabled) {
+                    reqBtn.disabled = true;
+                    reqBtn.className = "btn btn-outline-warning disabled w-100 mt-3";
+                    reqBtn.innerHTML = `<i class="fas fa-clock me-2"></i>Resubmit Request Pending Admin Review...`;
+                }
+            }
+        } catch (err) {
+            console.warn("Background state sync check failed:", err);
+        }
+    }, 4000); // 4-second interval
+}
+
+/**
+ * Handles participant request to unlock submission form.
+ */
+async function triggerResubmitRequest() {
+    const savedEmail = localStorage.getItem("submittedUploadEmail");
+    const reqBtn = document.getElementById("requestResubmitBtn");
+
+    if (!savedEmail) return;
+
+    if (reqBtn) {
+        reqBtn.disabled = true;
+        reqBtn.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i>Sending Request to Admin...`;
+    }
+
+    try {
+        const response = await fetch(SUBMISSION_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+                action: "requestResubmit",
+                participantEmail: savedEmail
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showCustomAlert("Resubmit request sent to Admin panel! Page will automatically reload once approved.", "warning");
+            if (reqBtn) {
+                reqBtn.className = "btn btn-outline-warning disabled w-100 mt-3";
+                reqBtn.innerHTML = `<i class="fas fa-clock me-2"></i>Resubmit Request Pending Admin Review...`;
+            }
+        } else {
+            showCustomAlert("Failed to transmit request. Please try again.", "error");
+            if (reqBtn) {
+                reqBtn.disabled = false;
+                reqBtn.innerHTML = `<i class="fas fa-undo-alt me-2"></i>Request to Resubmit Form`;
+            }
+        }
+    } catch (err) {
+        showCustomAlert("Network error: " + err.message, "error");
+        if (reqBtn) {
+            reqBtn.disabled = false;
+            reqBtn.innerHTML = `<i class="fas fa-undo-alt me-2"></i>Request to Resubmit Form`;
+        }
+    }
+}
+
+// INITIALIZATION HOOK
+document.addEventListener("DOMContentLoaded", () => {
+    const savedEmail = localStorage.getItem("submittedUploadEmail");
+    const uploadDashboard = document.getElementById('uploadSubmittedDashboard');
+    const uploadForm = document.getElementById('uploadForm');
+
+    if (savedEmail) {
+        if (uploadForm) uploadForm.classList.add("d-none");
+        if (uploadDashboard) uploadDashboard.classList.remove("d-none");
+
+        // START LIVE POLLING ENGINE FOR INSTANT AUTO-RELOAD ON ADMIN DELETION
+        startRemotePurgeListener(savedEmail);
+    }
+
+    const reqBtn = document.getElementById("requestResubmitBtn");
+    if (reqBtn) {
+        reqBtn.addEventListener("click", triggerResubmitRequest);
+    }
+});
