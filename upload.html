@@ -87,7 +87,7 @@
         <div class="section-title text-center">
             <h2>Submission Portal</h2>
             <p>Upload your edited masterpieces. Maximum 3 files per category.</p>
-            <p class="text-warning small"><i class="fas fa-info-circle me-1"></i> Please export your edited entries as compressed JPEGs (*Size: Under 5MB per image*).</p>
+            <p class="text-warning small"><i class="fas fa-info-circle me-1"></i> Please export your edited entries as compressed JPEGs (*Size: Under 10MB per image*).</p>
             <div class="mb-4">
                 <a href="index.html" class="btn btn-outline-light back-btn">
                     <i class="fas fa-arrow-left me-2"></i> Back to Home
@@ -138,7 +138,7 @@
                     <p>4. Ensure all photography work submitted is completely genuine and captured within the requested timeline parameters.</p>
                     
                     <h6 class="text-white fw-semibold mt-4 mb-3"><i class="fas fa-image text-info me-2"></i> Technical Requirements</h6>
-                    <p>1. Maximum images size should be (<span class="text-warning">Under 5MB per upload</span>). You can use your preferred resolution.</p>
+                    <p>1. Maximum images size should be (<span class="text-warning">Under 10MB per upload</span>). You can use your preferred resolution.</p>
                     <p>2. Only basic global adjustments (Contrast, exposure, saturation) are permitted. Heavy digital composite manipulations are subject to evaluation parameters.</p>
                     <p>3. You can mask the photo but cannot entirely manipulate the Image. Color correction is allowes</p>
                     <p>4. AI Noise reduction is allowed.</p>
@@ -157,7 +157,7 @@
                 <h4 class="form-group-title text-warning mb-3"><i class="fas fa-user me-2"></i>Participant Identity</h4>
                 
                 <div class="mb-4">
-                    <label class="form-label">Email Address (Must match Registration mail) <span class="text-danger">*</span></label>
+                    <label class="form-label">Email Address<span class="text-danger">*</span></label>
                     <input type="email" class="form-control glass-input" id="participantEmail" name="participantEmail" placeholder="example@gmail.com" required>
                 </div>
 
@@ -185,7 +185,7 @@
                     </select>
                 </div>
 
-                <h5 class="form-group-title text-warning mt-4 mb-3">*Maximum 5MB File Size</h5>
+                <h5 class="form-group-title text-warning mt-4 mb-3">*Maximum 10MB File Size</h5>
                 
                 <h4 class="form-group-title text-warning mt-4 mb-3"><i class="fas fa-palette me-2"></i>Colour Category Submissions</h4>
                 <div class="mb-4">
@@ -273,7 +273,7 @@
                     </div>
                 </div>
 
-                <h4 class="form-group-title text-warning mt-4 mb-3"><i class="fas fa-images me-2"></i>Storytelling Category Submissions</h4>
+                <h4 class="form-group-title text-warning mt-4 mb-3"><i class="fas fa-images me-2"></i>Slowshutter Category Submissions</h4>
                 <div class="mb-4">
                     <label class="form-label font-monospace small text-white-50">IMAGE 01</label>
                     <input type="file" class="form-control glass-input preview-trigger" name="story_1" accept="image/*">
@@ -326,12 +326,16 @@
                 <h3 class="text-white mb-2">Portfolio Securely Uploaded!</h3>
                 <p class="text-white mb-4">Your photographic entries have been successfully saved and linked to your email address.</p>
                 
-                <hr class="border-secondary my-4">
+                <!-- <hr class="border-secondary my-4"> -->
                 
-                <p class="text-warning small mb-3"><i class="fas fa-info-circle me-1"></i> Need to correct or change your submissions?</p>
+                <!-- <p class="text-warning small mb-3"><i class="fas fa-info-circle me-1"></i> Need to correct or change your submissions?</p>
                 <button type="button" id="triggerUploadDeleteBtn" class="btn btn-danger btn-sm px-4 py-2">
                     <i class="fas fa-trash-alt me-2"></i>Delete Submission & Re-upload Files
-                </button>
+                </button> -->
+                <!-- <button type="button" onclick="localStorage.removeItem('submittedUploadEmail'); location.reload();" 
+                        style="position: fixed; bottom: 20px; right: 20px; z-index: 99999; padding: 10px 18px; background: #ef4444; color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                    🧪 Reset Form for Testing
+                </button> -->
             </div>
             
             <div id="uploadFeedback" class="text-center mt-3 d-none"></div>
