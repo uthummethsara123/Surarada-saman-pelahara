@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Admin Management Portal - Surarada 2026</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link rel="icon" type="image/png" href="/assets/img/logo.png">
+
+
+    <style>
+        :root {
+            --bg-dark: #12090d;
+            --card-bg: rgba(28, 14, 21, 0.88);
+            --gold-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --burgundy-glow: rgba(153, 27, 27, 0.35);
+            --border-color: rgba(245, 158, 11, 0.25);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #0f0508;
+            background-image: 
+                radial-gradient(at 20% 20%, rgba(120, 20, 40, 0.4) 0px, transparent 50%),
+                radial-gradient(at 80% 80%, rgba(180, 80, 20, 0.25) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px var(--burgundy-glow);
+            width: 100%;
+            max-width: 520px;
+            padding: 2.5rem;
+            transition: all 0.4s ease;
+        }
+
+        .glass-card.dashboard-mode {
+            max-width: 980px;
+        }
+
+        .brand-header {
+            text-align: center;
+            margin-bottom: 1.75rem;
+        }
+
+        .brand-icon {
+            width: 65px;
+            height: 65px;
+            background: var(--gold-gradient);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: #0f0508;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+            margin-bottom: 1rem;
+        }
+
+        .brand-title {
+            font-weight: 800;
+            font-size: 1.6rem;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff 0%, #fcd34d 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-subtitle {
+            color: #a1a1aa;
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        .form-control {
+            background: rgba(15, 8, 12, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #fff;
+            border-radius: 12px;
+            padding: 0.8rem 1.1rem;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            background: rgba(20, 10, 16, 0.9);
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
+            color: #fff;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #d4d4d8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-gold {
+            background: var(--gold-gradient);
+            color: #0f0508;
+            font-weight: 700;
+            border: none;
+            border-radius: 12px;
+            padding: 0.85rem 1.5rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.25);
+        }
+
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
+            color: #000;
+        }
+
+        .login-error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            margin-bottom: 1.25rem;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            height: 22px;
+        }
+
+        .progress-bar {
+            background: var(--gold-gradient);
+            color: #000;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        .status-badge {
+            font-size: 0.9rem;
+            color: #fcd34d;
+            font-weight: 600;
+        }
+
+        /* LIVE SYNC PULSE BADGES */
+        .live-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #34d399;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .live-pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #10b981;
+            animation: pulseGlow 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: scale(0.9); opacity: 0.5; }
+            50% { transform: scale(1.3); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.5; }
+        }
+
+        .glass-section {
+            background: rgba(15, 8, 12, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .custom-table {
+            color: #f8fafc;
+            margin-bottom: 0;
+        }
+
+        .custom-table th {
+            background: rgba(245, 158, 11, 0.12);
+            color: #fbbf24;
+            border-bottom: 1px solid rgba(245, 158, 11, 0.25);
+            font-weight: 700;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px;
+        }
+
+        .custom-table td {
+            background: transparent;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            vertical-align: middle;
+            font-size: 0.88rem;
+            padding: 12px;
+        }
+
+        .badge-resubmit-alert {
+            background: rgba(245, 158, 11, 0.25);
+            color: #fbbf24;
+            border: 1px solid #f59e0b;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.73rem;
+            font-weight: 700;
+            animation: warningPulse 1.2s infinite;
+        }
+
+        @keyframes warningPulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        .btn-resubmit-delete {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+            font-weight: 600;
+            font-size: 0.8rem;
+            border-radius: 8px;
+            padding: 6px 12px;
+            transition: all 0.25s ease;
+        }
+
+        .btn-resubmit-delete:hover {
+            background: rgba(239, 68, 68, 0.85);
+            color: #ffffff;
+            box-shadow: 0 0 14px rgba(239, 68, 68, 0.5);
+        }
+
+        .sync-timestamp {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+
+        /* CUSTOM TOAST & MODAL STYLES */
+#customToastContainer {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.custom-toast {
+    background: rgba(24, 12, 18, 0.95);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid #f59e0b;
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.custom-toast.error { border-left-color: #ef4444; }
+.custom-toast.success { border-left-color: #10b981; }
+
+@keyframes toastIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.custom-modal-backdrop {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px);
+    z-index: 999990;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+.custom-modal-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+.custom-modal-box {
+    background: rgba(28, 14, 21, 0.95);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.8rem;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+    transform: scale(0.9);
+    transition: transform 0.25s ease;
+}
+.custom-modal-backdrop.active .custom-modal-box {
+    transform: scale(1);
+}
+    </style>
+</head>
+<body>
+
+    <div class="glass-card" id="cardContainer">
+
+        <div id="loginPanel">
+            <div class="brand-header">
+                <div class="brand-icon">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <h2 class="brand-title">Admin Access Portal</h2>
+                <p class="brand-subtitle">Surarada 2026 Live Management System</p>
+            </div>
+
+            <div class="login-error" id="loginError">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="loginErrorMsg">Invalid credentials.</span>
+            </div>
+
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-user me-2"></i>Username</label>
+                    <input type="text" id="adminUser" class="form-control" placeholder="Enter username" required autocomplete="off">
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label"><i class="fas fa-lock me-2"></i>Password</label>
+                    <input type="password" id="adminPass" class="form-control" placeholder="Enter password" required>
+                </div>
+
+                <button type="submit" class="btn btn-gold w-100">
+                    <i class="fas fa-sign-in-alt me-2"></i>Authenticate Admin
+                </button>
+            </form>
+        </div>
+
+        <div id="downloaderPanel" class="d-none">
+            <div class="brand-header text-center">
+                <div class="live-status-pill">
+                    <span class="live-pulse-dot"></span> LIVE AUTO-SYNC ACTIVE
+                </div>
+                <h2 class="brand-title">Admin Live Command Dashboard</h2>
+                <p class="brand-subtitle">Real-time submission monitor & instant resubmit authorization engine.</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label"><i class="fas fa-link me-2"></i>Google Apps Script Web App Endpoint</label>
+                <input type="text" id="scriptUrl" class="form-control" value="https://script.google.com/macros/s/AKfycbzTFVn_7u_oGEeijewaNR0t8a5vARJkiuBWpOuMJVcowQdkDdaWGofaar8BRuG88VGGtQ/exec">
+            </div>
+
+            <button id="downloadBtn" class="btn btn-gold w-100 py-3 mb-2">
+                <i class="fas fa-cloud-download-alt me-2"></i>Fetch & Download All Submitted Photos (.ZIP)
+            </button>
+
+            <div class="mt-3 d-none" id="statusWrapper">
+                <div class="progress mb-2">
+                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%">0%</div>
+                </div>
+                <div id="statusText" class="status-badge text-center">Initializing export engine...</div>
+            </div>
+
+            <div class="glass-section">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+                    <div>
+                        <h5 class="mb-0 text-warning fw-bold"><i class="fas fa-users-cog me-2"></i>Live Participants Control</h5>
+                        <p class="text-secondary small mb-0">Deleting a participant immediately triggers an automatic reload on their device.</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="sync-timestamp" id="lastSyncTime">Last Sync: Never</span>
+                        <button id="refreshDataBtn" class="btn btn-sm btn-outline-warning fw-semibold">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh Data
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <input type="text" id="searchParticipant" class="form-control" placeholder="🔍 Search by email, name, or school...">
+                </div>
+
+                <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                    <table class="table custom-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Email Address</th>
+                                <th>Name</th>
+                                <th>School</th>
+                                <th class="text-center">Photos</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="participantsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">Connecting to live database stream...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <button id="logoutBtn" class="btn btn-link text-secondary text-decoration-none btn-sm">
+                    <i class="fas fa-power-off me-1"></i>Logout Admin Session
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="custom-modal-backdrop" id="customConfirmModal">
+    <div class="custom-modal-box">
+        <h5 class="text-warning fw-bold mb-2"><i class="fas fa-exclamation-triangle me-2"></i>Confirm Action</h5>
+        <p class="text-light small mb-4" id="customConfirmMessage">Are you sure you want to proceed?</p>
+        <div class="d-flex justify-content-end gap-2">
+            <button class="btn btn-sm btn-outline-secondary px-3" id="customConfirmCancel">Cancel</button>
+            <button class="btn btn-sm btn-danger px-3" id="customConfirmOk">Proceed</button>
+        </div>
+    </div>
+</div>
+
+    <script>
+        const LOGIN_USER = "Suraradasaman";
+        const LOGIN_PASS = "Uthum@1234";
+
+        const loginForm = document.getElementById('loginForm');
+        const loginPanel = document.getElementById('loginPanel');
+        const downloaderPanel = document.getElementById('downloaderPanel');
+        const cardContainer = document.getElementById('cardContainer');
+        const loginError = document.getElementById('loginError');
+        const loginErrorMsg = document.getElementById('loginErrorMsg');
+
+        let cachedParticipants = [];
+        let cachedImages = [];
+        let liveSyncInterval = null;
+        let isFetching = false;
+
+        // AUTHENTICATION CONTROLLER
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const userVal = document.getElementById('adminUser').value.trim();
+            const passVal = document.getElementById('adminPass').value;
+
+            if (userVal === LOGIN_USER && passVal === LOGIN_PASS) {
+                loginError.style.display = 'none';
+                loginPanel.classList.add('d-none');
+                downloaderPanel.classList.remove('d-none');
+                cardContainer.classList.add('dashboard-mode');
+                sessionStorage.setItem("suraradaAdminAuth", "true");
+                initLiveDashboard();
+            } else {
+                loginErrorMsg.innerText = "Incorrect username or password.";
+                loginError.style.display = 'flex';
+            }
+        });
+
+        if (sessionStorage.getItem("suraradaAdminAuth") === "true") {
+            loginPanel.classList.add('d-none');
+            downloaderPanel.classList.remove('d-none');
+            cardContainer.classList.add('dashboard-mode');
+            initLiveDashboard();
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if (liveSyncInterval) clearInterval(liveSyncInterval);
+            sessionStorage.removeItem("suraradaAdminAuth");
+            location.reload();
+        });
+
+        function sanitizeFileName(str) {
+            if (!str) return "Photo";
+            return str.replace(/[^a-zA-Z0-9\s-_]/g, "").trim().replace(/\s+/g, "_");
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+
+        function escapeJs(str) {
+            if (!str) return '';
+            return str.replace(/['"\\]/g, '\\$&');
+        }
+
+        // INITIALIZE LIVE POLLING DASHBOARD
+        function initLiveDashboard() {
+            fetchDataFromSheet(false);
+            
+            // Set up non-overlapping 5-second polling interval
+            if (liveSyncInterval) clearInterval(liveSyncInterval);
+            liveSyncInterval = setInterval(() => {
+                fetchDataFromSheet(true);
+            }, 5000);
+        }
+
+        // FETCH DATA FROM GOOGLE SHEETS
+        async function fetchDataFromSheet(isBackgroundSync = false) {
+            if (isFetching) return;
+            isFetching = true;
+
+            const scriptUrl = document.getElementById('scriptUrl').value.trim();
+            const tbody = document.getElementById('participantsTableBody');
+            const syncTimeLabel = document.getElementById('lastSyncTime');
+
+            if (!scriptUrl) {
+                isFetching = false;
+                return false;
+            }
+
+            try {
+                const response = await fetch(scriptUrl);
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error || "Failed to query database.");
+                }
+
+                cachedImages = result.images || [];
+                cachedParticipants = result.participants || [];
+
+                const searchTerm = document.getElementById('searchParticipant').value.toLowerCase().trim();
+                if (searchTerm) {
+                    filterAndRenderTable(searchTerm);
+                } else {
+                    renderParticipantsTable(cachedParticipants);
+                }
+
+                const now = new Date();
+                syncTimeLabel.innerText = `Last Sync: ${now.toLocaleTimeString()}`;
+                isFetching = false;
+                return true;
+            } catch (err) {
+                if (!isBackgroundSync) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">Connection Error: ${escapeHtml(err.message)}</td></tr>`;
+                }
+                isFetching = false;
+                return false;
+            }
+        }
+
+        // RENDER PARTICIPANTS TABLE
+        function renderParticipantsTable(list) {
+            const tbody = document.getElementById('participantsTableBody');
+            tbody.innerHTML = '';
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No uploaded participants found.</td></tr>`;
+                return;
+            }
+
+            list.forEach((p, idx) => {
+                const tr = document.createElement('tr');
+                const reqBadge = p.resubmitRequested 
+                    ? `<span class="badge-resubmit-alert ms-2"><i class="fas fa-exclamation-triangle me-1"></i>RESUBMIT REQUESTED</span>` 
+                    : '';
+
+                tr.innerHTML = `
+                    <td>${idx + 1}</td>
+                    <td class="fw-bold text-warning">${escapeHtml(p.email)} ${reqBadge}</td>
+                    <td>${escapeHtml(p.name)}</td>
+                    <td class="text-secondary small">${escapeHtml(p.school)}</td>
+                    <td class="text-center"><span class="badge bg-dark border border-warning text-warning">${p.photoCount}</span></td>
+                    <td class="text-end">
+                        <button class="btn-resubmit-delete" onclick="deleteParticipant('${escapeJs(p.email)}')">
+                            <i class="fas fa-trash-alt me-1"></i>Delete & Allow Resubmit
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // CUSTOM TOAST NOTIFIER (REPLACES alert())
+function showAdminToast(msg, type = "warning") {
+    let container = document.getElementById("customToastContainer");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "customToastContainer";
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement("div");
+    toast.className = `custom-toast ${type}`;
+    let icon = type === "error" ? "fa-exclamation-circle" : type === "success" ? "fa-check-circle" : "fa-info-circle";
+    toast.innerHTML = `<i class="fas ${icon} text-warning"></i> <span>${msg}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+// CUSTOM CONFIRMATION DIALOG (REPLACES confirm())
+function showAdminConfirm(msg) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById("customConfirmModal");
+        const msgEl = document.getElementById("customConfirmMessage");
+        const cancelBtn = document.getElementById("customConfirmCancel");
+        const okBtn = document.getElementById("customConfirmOk");
+
+        msgEl.innerText = msg;
+        modal.classList.add("active");
+
+        const cleanup = (result) => {
+            modal.classList.remove("active");
+            cancelBtn.onclick = null;
+            okBtn.onclick = null;
+            resolve(result);
+        };
+
+        cancelBtn.onclick = () => cleanup(false);
+        okBtn.onclick = () => cleanup(true);
+    });
+}
+
+// 🔄 UPDATED DELETE FUNCTION USING CUSTOM ALERTS
+async function deleteParticipant(email) {
+    const scriptUrl = document.getElementById('scriptUrl').value.trim();
+
+    const confirmDelete = await showAdminConfirm(
+        `Delete submission record for ${email}?\n\nThis will instantly clear their local storage and reload their screen.`
+    );
+    if (!confirmDelete) return;
+
+    try {
+        const response = await fetch(scriptUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+                action: "deleteParticipant",
+                participantEmail: email
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showAdminToast(`Deleted ${email}. Participant device reloaded automatically.`, "success");
+            await fetchDataFromSheet(false);
+        } else {
+            showAdminToast("Deletion failed: " + (result.message || "Unknown error"), "error");
+        }
+    } catch (err) {
+        showAdminToast("Network communication error: " + err.message, "error");
+    }
+}
+
+        // SEARCH FILTER ENGINE
+        function filterAndRenderTable(term) {
+            if (!term) {
+                renderParticipantsTable(cachedParticipants);
+                return;
+            }
+
+            const filtered = cachedParticipants.filter(p => 
+                p.email.toLowerCase().includes(term) ||
+                p.name.toLowerCase().includes(term) ||
+                p.school.toLowerCase().includes(term)
+            );
+            renderParticipantsTable(filtered);
+        }
+
+        document.getElementById('searchParticipant').addEventListener('input', function(e) {
+            filterAndRenderTable(e.target.value.toLowerCase().trim());
+        });
+
+        // MANUAL REFRESH BUTTON
+        document.getElementById('refreshDataBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('refreshDataBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin me-1"></i>Syncing...`;
+            await fetchDataFromSheet(false);
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fas fa-sync-alt me-1"></i>Refresh Data`;
+        });
+
+        // BULK DOWNLOAD ARCHIVE GENERATOR
+        document.getElementById('downloadBtn').addEventListener('click', async () => {
+            const scriptUrl = document.getElementById('scriptUrl').value.trim();
+            const statusText = document.getElementById('statusText');
+            const statusWrapper = document.getElementById('statusWrapper');
+            const progressBar = document.getElementById('progressBar');
+            const downloadBtn = document.getElementById('downloadBtn');
+
+            if (!scriptUrl) {
+                alert("Please enter a valid Google Apps Script Web App URL.");
+                return;
+            }
+
+            downloadBtn.disabled = true;
+            statusWrapper.classList.remove('d-none');
+            statusText.innerText = "Connecting to Google Sheet database...";
+            progressBar.style.width = "5%";
+            progressBar.innerText = "5%";
+
+            try {
+                const success = await fetchDataFromSheet(false);
+                if (!success || cachedImages.length === 0) {
+                    throw new Error("No photo records retrieved from Google Sheet database.");
+                }
+
+                const images = cachedImages;
+                const zip = new JSZip();
+                const folder = zip.folder("Surarada_2026_Photos");
+
+                let downloadedCount = 0;
+
+                for (let i = 0; i < images.length; i++) {
+                    const item = images[i];
+                    
+                    const cleanFileName = sanitizeFileName(item.downloadFileName);
+                    const ext = item.url.split('.').pop().split('?')[0] || "jpg";
+                    const finalZipFileName = `${cleanFileName}.${ext}`;
+
+                    statusText.innerText = `Fetching photo ${i + 1} of ${images.length}: ${finalZipFileName}`;
+
+                    try {
+                        const imgRes = await fetch(item.url);
+                        const blob = await imgRes.blob();
+                        
+                        folder.file(finalZipFileName, blob);
+                        downloadedCount++;
+                    } catch (err) {
+                        console.warn(`Failed to fetch image URL: ${item.url}`, err);
+                    }
+
+                    const percent = Math.round(((i + 1) / images.length) * 90);
+                    progressBar.style.width = percent + "%";
+                    progressBar.innerText = percent + "%";
+                }
+
+                statusText.innerText = "Compressing photos into ZIP archive...";
+                progressBar.style.width = "95%";
+                progressBar.innerText = "95%";
+
+                const zipBlob = await zip.generateAsync({ type: "blob" });
+                saveAs(zipBlob, "Surarada_2026_All_Photos.zip");
+
+                progressBar.style.width = "100%";
+                progressBar.innerText = "100%";
+                statusText.innerText = `Successfully exported ${downloadedCount} renamed photos into ZIP archive!`;
+
+            } catch (err) {
+                statusText.innerText = "Export failed: " + err.message;
+                statusText.style.color = "#fca5a5";
+            } finally {
+                downloadBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
