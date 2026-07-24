@@ -592,22 +592,25 @@ const runTimelineEngine = () => {
 
     const isSubmitted = !!localStorage.getItem("submittedUploadEmail");
 
-    // Helper to update clock display
+    // HELPER TO CONVERT ALL DAYS INTO TOTAL CUMULATIVE HOURS
     const updateClockDisplay = (diffMs) => {
         if (diffMs <= 0) {
-            if (daysEl) daysEl.innerText = "00";
-            if (hoursEl) hoursEl.innerText = "00";
-            if (minutesEl) minutesEl.innerText = "00";
-            if (secondsEl) secondsEl.innerText = "00";
+            if (document.getElementById("hours")) document.getElementById("hours").innerText = "00";
+            if (document.getElementById("minutes")) document.getElementById("minutes").innerText = "00";
+            if (document.getElementById("seconds")) document.getElementById("seconds").innerText = "00";
             return;
         }
-        const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+        // Calculate total hours across all remaining days
+        const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
         const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
 
-        if (daysEl) daysEl.innerText = days < 10 ? "0" + days : days;
-        if (hoursEl) hoursEl.innerText = hours < 10 ? "0" + hours : hours;
+        const hoursEl = document.getElementById("hours");
+        const minutesEl = document.getElementById("minutes");
+        const secondsEl = document.getElementById("seconds");
+
+        if (hoursEl) hoursEl.innerText = totalHours < 10 ? "0" + totalHours : totalHours;
         if (minutesEl) minutesEl.innerText = minutes < 10 ? "0" + minutes : minutes;
         if (secondsEl) secondsEl.innerText = seconds < 10 ? "0" + seconds : seconds;
     };
