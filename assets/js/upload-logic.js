@@ -10,8 +10,8 @@ const DEADLINE_DATE = new Date("2026-07-27T04:15:00").getTime();
 let userIsActivelyWorking = false; 
 let submissionFinishedTime = null; 
 
-// Maximum file size cap set to 10MB
-const MAX_FILE_SIZE = 10 * 1024 * 1024; 
+// Maximum file size cap set to 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024; 
 
 // Injecting layout, progress animation, custom alerts, and file-name hiding styles
 const styleSheet = document.createElement("style");
@@ -376,7 +376,7 @@ document.addEventListener("DOMContentLoaded", () => {
         uploadDashboard.classList.remove("d-none");
     }
 
-    // 10MB limit check with CUSTOM ALERT, preview trigger, and filename hiding
+    // 5MB limit check with CUSTOM ALERT, preview trigger, and filename hiding
     document.querySelectorAll('.preview-trigger, input[type="file"]').forEach(input => {
         input.addEventListener('change', function() {
             const inputName = this.name || this.id;
@@ -386,9 +386,9 @@ document.addEventListener("DOMContentLoaded", () => {
             if (this.files && this.files[0]) {
                 const file = this.files[0];
 
-                // CUSTOM 10MB OVERSIZE ALERT
+                // CUSTOM 5MB OVERSIZE ALERT
                 if (file.size > MAX_FILE_SIZE) {
-                    showCustomAlert("Photo exceeds the maximum 10MB limit. Please select a smaller file.", "error");
+                    showCustomAlert("Photo exceeds the maximum 5MB limit. Please select a smaller file.", "error");
                     this.value = '';
                     this.classList.remove('file-selected');
                     if (previewImg) previewImg.style.display = 'none';
@@ -445,8 +445,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (input.files && input.files[0]) {
                     const file = input.files[0];
                     if (file.size > MAX_FILE_SIZE) {
-                        showCustomAlert(`Photo "${file.name}" exceeds 10MB limit.`, "error");
-                        throw new Error(`Photo exceeds maximum 10MB limit.`);
+                        showCustomAlert(`Photo "${file.name}" exceeds 5MB limit.`, "error");
+                        throw new Error(`Photo exceeds maximum 5MB limit.`);
                     }
                     const slot = input.name || input.id;
                     const photoTitle = getPhotoTitle(slot);
