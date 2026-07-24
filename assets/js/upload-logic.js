@@ -1,18 +1,19 @@
 const SUBMISSION_API_URL = "https://script.google.com/macros/s/AKfycbzTFVn_7u_oGEeijewaNR0t8a5vARJkiuBWpOuMJVcowQdkDdaWGofaar8BRuG88VGGtQ/exec";
+const IMGBB_API_KEY = "19135fc89f58f414226e584b18e545a9";
 
 // ==========================================================
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
-// Use standard hyphens instead of dots so browsers can read it cleanly
 const START_DATE = new Date("2026-07-19T00:00:00").getTime();
-// Admin: Extend this date forward whenever you want to grant extra submission time
 const DEADLINE_DATE = new Date("2026-07-27T02:00:00").getTime();
 
-let userIsActivelyWorking = false; // Tracks if they are typing, changing inputs, or selecting photos
-let submissionFinishedTime = null; // Tracks when a successful submit occurs
-let completedAfterDeadline = false; // Flags whether the user finished late to apply the 5-sec rule
+let userIsActivelyWorking = false; 
+let submissionFinishedTime = null; 
 
-// Injecting flashing container background and inline layout alignment styles dynamically
+// Maximum file size cap set to 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; 
+
+// Injecting layout, progress animation, custom alerts, and file-name hiding styles
 const styleSheet = document.createElement("style");
 styleSheet.innerText = `
     @keyframes lateWarningFlash {
@@ -53,7 +54,7 @@ styleSheet.innerText = `
         stroke-width: 3.5;
         stroke-dasharray: 88;
         stroke-dashoffset: 88;
-        transition: stroke-dashoffset 1.2s ease-in-out;   /* ← Updated */
+        transition: stroke-dashoffset 0.1s linear;
     }
     .upload-success-tick {
         color: #10b981 !important;
@@ -62,27 +63,239 @@ styleSheet.innerText = `
         margin-left: 8px;
         vertical-align: middle;
     }
+
+    /* HIDES FILE NAME ONLY AFTER A FILE IS SELECTED */
+    input[type="file"].file-selected {
+        color: transparent !important;
+    }
+    input[type="file"].file-selected::-webkit-file-upload-button {
+        color: #000000 !important;
+    }
+    input[type="file"].file-selected::file-selector-button {
+        color: #000000 !important;
+    }
+
+    /* ========================================================= */
+    /* CUSTOM TOAST ALERT SYSTEM (NO NATIVE ALERTS)              */
+    /* ========================================================= */
+    #customAlertContainer {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 999999;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-width: 380px;
+        pointer-events: none;
+    }
+    .custom-alert-toast {
+        pointer-events: auto;
+        background: #1e293b;
+        color: #f8fafc;
+        border-left: 5px solid #ef4444;
+        border-radius: 8px;
+        padding: 14px 18px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: inherit;
+        font-size: 0.92rem;
+        line-height: 1.4;
+        transform: translateX(120%);
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+        opacity: 0;
+    }
+    .custom-alert-toast.show {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    .custom-alert-toast.success {
+        border-left-color: #10b981;
+    }
+    .custom-alert-toast.warning {
+        border-left-color: #f59e0b;
+    }
+    .custom-alert-icon {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+    .custom-alert-toast.error .custom-alert-icon { color: #ef4444; }
+    .custom-alert-toast.success .custom-alert-icon { color: #10b981; }
+    .custom-alert-toast.warning .custom-alert-icon { color: #f59e0b; }
 `;
 document.head.appendChild(styleSheet);
 
+// CUSTOM TOAST NOTIFICATION ENGINE
+function showCustomAlert(message, type = "error") {
+    let container = document.getElementById("customAlertContainer");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "customAlertContainer";
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement("div");
+    toast.className = `custom-alert-toast ${type}`;
+    
+    let iconClass = "fa-exclamation-circle";
+    if (type === "success") iconClass = "fa-check-circle";
+    if (type === "warning") iconClass = "fa-exclamation-triangle";
+
+    toast.innerHTML = `
+        <i class="fas ${iconClass} custom-alert-icon"></i>
+        <div>${message}</div>
+    `;
+
+    container.appendChild(toast);
+
+    // Trigger enter animation
+    setTimeout(() => toast.classList.add("show"), 10);
+
+    // Remove notification automatically after 4 seconds
+    setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 400);
+    }, 4000);
+}
+
+// Clean string for filename format
+function sanitizeFileNamePart(str) {
+    if (!str) return "";
+    return str.replace(/[^a-zA-Z0-9\s-_]/g, "").trim().replace(/\s+/g, " ");
+}
+
+// ==========================================================
+// UNIFIED HIGH-RELIABILITY FORM SUBMISSION ENGINE
+// ==========================================================
+async function sendWithRetry(payload, maxRetries = 5) {
+    const jitter = Math.floor(Math.random() * 1000);
+    await new Promise(r => setTimeout(r, jitter));
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await fetch(SUBMISSION_API_URL, {
+                method: "POST",
+                mode: "cors",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                const resData = await response.json();
+                if (resData.success === true) return resData;
+            }
+        } catch (err) {
+            console.warn(`Attempt ${attempt} failed, retrying...`);
+        }
+        if (attempt < maxRetries) {
+            await new Promise(r => setTimeout(r, attempt * 1500));
+        }
+    }
+    throw new Error("Server is currently busy. Please try submitting again.");
+}
+
+async function uploadImageToImgBB(file, customTitle, maxRetries = 3) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const formData = new FormData();
+            formData.append("image", file);
+            formData.append("name", customTitle || "Photo");
+
+            const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                method: "POST",
+                body: formData
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.data && result.data.url) {
+                    return {
+                        url: result.data.url,
+                        deleteUrl: result.data.delete_url || ""
+                    };
+                }
+            }
+        } catch (err) {
+            console.warn(`ImgBB upload attempt ${attempt} failed for "${customTitle}", retrying...`);
+        }
+        if (attempt < maxRetries) {
+            await new Promise(r => setTimeout(r, attempt * 1500));
+        }
+    }
+
+    throw new Error(`Failed to upload photo "${customTitle}". Please check your connection.`);
+}
+
+// Helper function to animate smooth progress bar updates
+function setProgressCircle(circleBar, percent) {
+    if (!circleBar) return;
+    const clamped = Math.max(0, Math.min(100, percent));
+    const offset = 88 * (1 - (clamped / 100));
+    circleBar.style.strokeDashoffset = offset;
+}
+
+// Frame-by-frame smooth progress animation helper function
+function animateCircleTo(circleBar, startPct, endPct, durationMs) {
+    return new Promise(resolve => {
+        const startTime = performance.now();
+        function step(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / durationMs, 1);
+            const currentPct = startPct + (endPct - startPct) * progress;
+            setProgressCircle(circleBar, currentPct);
+            if (progress < 1) {
+                requestAnimationFrame(step);
+            } else {
+                resolve();
+            }
+        }
+        requestAnimationFrame(step);
+    });
+}
+
+// Helper function for smooth scrolling to an element
+function scrollToElement(el) {
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+// Helper function to safely extract Photo Title from any input layout structure
+function getPhotoTitle(slot) {
+    const titleEl = document.querySelector(`input[name="${slot}_title"]`) ||
+                    document.querySelector(`input[id="${slot}_title"]`) ||
+                    document.querySelector(`input[name="title_${slot}"]`) ||
+                    document.querySelector(`input[id="title_${slot}"]`);
+    
+    if (titleEl && titleEl.value.trim() !== "") {
+        return titleEl.value.trim();
+    }
+
+    const wrapper = document.getElementById("wrapper_" + slot);
+    if (wrapper) {
+        const textInput = wrapper.querySelector('input[type="text"]');
+        if (textInput && textInput.value.trim() !== "") {
+            return textInput.value.trim();
+        }
+    }
+
+    return "Untitled Photo";
+}
+
+// ==========================================================
+// DOM CONTENT LOADED INITIALIZATION ENGINE
+// ==========================================================
 document.addEventListener("DOMContentLoaded", () => {
     const uploadForm = document.getElementById('uploadForm');
     const uploadDashboard = document.getElementById('uploadSubmittedDashboard');
-    const emailField = document.getElementById('participantEmail');
-    const submitBtn = document.getElementById('uploadSubmitBtn');
-    const feedback = document.getElementById('uploadFeedback');
-    
-    const triggerDeleteBtn = document.getElementById('triggerUploadDeleteBtn');
-    const confirmDeletionBtn = document.getElementById('confirmUploadDeletionBtn');
+    const emailField = document.getElementById('participantEmail') || document.getElementById('email');
+    const submitBtn = document.getElementById('uploadSubmitBtn') || document.getElementById('submitBtn');
 
-    let uploadModalObj = null;
-    const modalEl = document.getElementById('uploadDeleteModal');
-    if (modalEl && typeof bootstrap !== 'undefined') {
-        uploadModalObj = new bootstrap.Modal(modalEl);
-    }
-
-    // --- ACTIVELY MONITOR USER ENGAGEMENT ---
     if (uploadForm) {
+        uploadForm.classList.remove("d-none");
+        
         const markAsActive = () => { 
             if (submissionFinishedTime === null) {
                 userIsActivelyWorking = true; 
@@ -93,694 +306,267 @@ document.addEventListener("DOMContentLoaded", () => {
         uploadForm.addEventListener('click', markAsActive);
     }
 
-    // Wrap the remove button and tracking indicators together dynamically to guarantee inline placement on the right side
+    // Insert progress circle & checkmark wrappers next to remove buttons
     document.querySelectorAll('.remove-btn').forEach(btn => {
+        const targetAttr = btn.getAttribute('data-target') || btn.dataset.target;
+        if (!targetAttr) return;
+
         const wrapper = document.createElement('div');
         wrapper.className = 'remove-btn-wrapper';
-        btn.parentNode.insertBefore(wrapper, btn);
+        if (btn.parentNode) btn.parentNode.insertBefore(wrapper, btn);
         wrapper.appendChild(btn);
         
         const indicators = document.createElement('span');
         indicators.className = 'd-inline-flex align-items-center';
         indicators.innerHTML = `
-            <div class="progress-circle-container d-none" id="circle_container_${btn.getAttribute('data-target')}">
+            <div class="progress-circle-container d-none" id="circle_container_${targetAttr}">
                 <svg class="progress-circle-svg">
                     <circle class="progress-circle-bg" cx="14" cy="14" r="12"></circle>
-                    <circle class="progress-circle-bar" id="circle_bar_${btn.getAttribute('data-target')}" cx="14" cy="14" r="12"></circle>
+                    <circle class="progress-circle-bar" id="circle_bar_${targetAttr}" cx="14" cy="14" r="12"></circle>
                 </svg>
             </div>
-            <i class="fas fa-check-circle upload-success-tick" id="tick_${btn.getAttribute('data-target')}"></i>
+            <i class="fas fa-check-circle upload-success-tick" id="tick_${targetAttr}"></i>
         `;
         wrapper.appendChild(indicators);
     });
 
-    // Initial check on load
+    // Check saved state
     const savedUploadEmail = localStorage.getItem("submittedUploadEmail");
-    if (savedUploadEmail && uploadDashboard) {
-        if (uploadForm) uploadForm.classList.add("d-none");
+    if (savedUploadEmail && uploadDashboard && uploadForm) {
+        uploadForm.classList.add("d-none");
         uploadDashboard.classList.remove("d-none");
     }
 
-    document.querySelectorAll('.preview-trigger').forEach(input => {
+    // 10MB limit check with CUSTOM ALERT, preview trigger, and filename hiding
+    document.querySelectorAll('.preview-trigger, input[type="file"]').forEach(input => {
         input.addEventListener('change', function() {
-            const inputName = this.name;
+            const inputName = this.name || this.id;
             const wrapper = document.getElementById("wrapper_" + inputName);
             const previewImg = document.getElementById("prev_" + inputName);
-            const titleField = document.getElementById("title_" + inputName);
-            
-            if (this.files.length > 0) {
+
+            if (this.files && this.files[0]) {
                 const file = this.files[0];
 
-            // =========================================================================
-            // BOOTSTRAP 5 CUSTOM MODAL VALIDATION FOR 5MB IMAGE LIMITS
-            // =========================================================================
-            const maxSizeBytes = 5 * 1024 * 1024; // 5MB
-            if (file.size > maxSizeBytes) {
-                this.value = ""; // Clear file selection instantly
-
-                // 1. Check if our custom modal structural container exists. If not, generate it.
-                let warningModalEl = document.getElementById('sizeWarningModal');
-                if (!warningModalEl) {
-                    const modalHtml = `
-                    <div class="modal fade" id="sizeWarningModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content text-white" style="background-color: #1e1b4b; border: 2px solid #ef4444; border-radius: 12px;">
-                                <div class="modal-header border-0 pb-0" style="padding: 20px 20px 10px 20px;">
-                                    <h5 class="modal-title d-flex align-items-center text-danger fw-bold" style="font-size: 1.25rem;">
-                                        <i class="bi bi-exclamation-triangle-fill me-2" style="font-size: 1.5rem;"></i> File Too Large
-                                    </h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body py-3" style="padding: 0 20px; font-size: 0.95rem; line-height: 1.6; color: #cbd5e1;">
-                                    <p class="mb-2">The image you selected, <span class="text-warning fw-medium">"${file.name}"</span>, exceeds our allowed file size limit.</p>
-                                    <p class="mb-0">Please reduce or compress your image to <span class="text-success fw-bold">under 5MB</span> before uploading. This ensures your data processes instantly and prevents server traffic jams.</p>
-                                </div>
-                                <div class="modal-footer border-0 pt-0" style="padding: 10px 20px 20px 20px;">
-                                    <button type="button" class="btn btn-danger w-100 fw-semibold" data-bs-dismiss="modal" style="border-radius: 6px; padding: 8px 16px;">Got it</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>`;
-                    document.body.insertAdjacentHTML('beforeend', modalHtml);
-                    warningModalEl = document.getElementById('sizeWarningModal');
+                // CUSTOM 10MB OVERSIZE ALERT
+                if (file.size > MAX_FILE_SIZE) {
+                    showCustomAlert("Photo exceeds the maximum 10MB limit. Please select a smaller file.", "error");
+                    this.value = '';
+                    this.classList.remove('file-selected');
+                    if (previewImg) previewImg.style.display = 'none';
+                    if (wrapper) wrapper.classList.add('d-none');
+                    return;
                 }
 
-                // 2. Safely trigger the Bootstrap 5 Modal API instance directly via script
-                const bsModal = new bootstrap.Modal(warningModalEl);
-                bsModal.show();
-                
-                return; // Stop execution
-            }
-            // =========================================================================
+                this.classList.add('file-selected');
 
                 const reader = new FileReader();
-                
                 reader.onload = function(e) {
-                    previewImg.src = e.target.result;
-                    wrapper.classList.remove('d-none');
+                    if (previewImg) {
+                        previewImg.src = e.target.result;
+                        previewImg.style.display = 'block';
+                    }
+                    if (wrapper) wrapper.classList.remove('d-none');
                     
-                    const cleanNameWithoutExtension = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-                    titleField.value = cleanNameWithoutExtension; 
-                    input.classList.add('d-none');
-
                     const container = document.getElementById(`circle_container_${inputName}`);
-                    if(container) container.classList.add('d-none');
+                    if (container) container.classList.add('d-none');
                     const tick = document.getElementById(`tick_${inputName}`);
-                    if(tick) tick.style.display = 'none';
-                }
+                    if (tick) tick.style.display = 'none';
+                };
                 reader.readAsDataURL(file);
+            } else {
+                this.classList.remove('file-selected');
             }
         });
     });
 
-    // =========================================================================
-    // UNIFIED HIGH-RELIABILITY FORM SUBMISSION ENGINE WITH AUTOSCROLL
-    // =========================================================================
-
-            if (uploadForm) {
-        uploadForm.addEventListener("submit", async function (e) {
+    // Handle Form Submission
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const submitBtn = document.getElementById("uploadSubmitBtn");
-            const participantEmail = document.getElementById("participantEmail")?.value.trim();
-            const participantName = document.getElementById("participantName")?.value.trim();
-            const certificateName = document.getElementById("certificateName")?.value.trim();
-            const schoolName = document.getElementById("schoolName")?.value.trim();
-            const competitionScope = document.getElementById("competitionScope")?.value;
+            const currentEmail = (emailField ? emailField.value : '').trim();
+            const rawParticipantName = (document.getElementById('participantName') || document.getElementById('name'))?.value.trim() || 'Participant';
+            const certName = (document.getElementById('certificateName'))?.value.trim() || '';
+            const rawSchoolName = (document.getElementById('schoolName') || document.getElementById('school'))?.value.trim() || 'School';
+            
+            const scopeRadio = document.querySelector('input[name="scope"]:checked') || 
+                               document.querySelector('input[name="competitionScope"]:checked') ||
+                               document.querySelector('input[name="inter_inner"]:checked');
+            const scope = scopeRadio ? scopeRadio.value.trim() : 'Inter-School';
 
-            if (!participantEmail || !participantName || !schoolName) {
-                let missingInfoModal = document.getElementById('missingInfoModal');
-                if (!missingInfoModal) {
-                    const html = `<div class="modal fade" id="missingInfoModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content text-white" style="background-color: #1e1b4b; border: 2px solid #ef4444; border-radius: 12px;"><div class="modal-header border-0"><h5 class="modal-title text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Missing Information</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body">Please fill out all identity and school information fields.</div><div class="modal-footer border-0"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">OK</button></div></div></div></div>`;
-                    document.body.insertAdjacentHTML('beforeend', html);
-                    missingInfoModal = document.getElementById('missingInfoModal');
-                }
-                new bootstrap.Modal(missingInfoModal).show();
+            if (!currentEmail) {
+                showCustomAlert("Please enter a valid email address.", "warning");
                 return;
             }
 
-            const fileInputs = document.querySelectorAll('.preview-trigger');
-            const activeSlots = [];
+            const fileInputs = uploadForm.querySelectorAll('input[type="file"]');
+            const queue = [];
 
             fileInputs.forEach(input => {
-                if (input.files && input.files.length > 0) {
-                    const slotId = input.name;
-                    const titleField = document.getElementById("title_" + slotId);
-                    activeSlots.push({
-                        slot: slotId,
-                        file: input.files[0],
-                        title: titleField ? titleField.value.trim() : "Untitled"
-                    });
+                if (input.files && input.files[0]) {
+                    const file = input.files[0];
+                    if (file.size > MAX_FILE_SIZE) {
+                        showCustomAlert(`Photo "${file.name}" exceeds 10MB limit.`, "error");
+                        throw new Error(`Photo exceeds maximum 10MB limit.`);
+                    }
+                    const slot = input.name || input.id;
+                    const photoTitle = getPhotoTitle(slot);
+                    const cat = slot.includes('color') ? "Colour" : (slot.includes('mono') ? "Monochrome" : "Slowshutter");
+
+                    queue.push({ file, slot, photoTitle, cat, element: input });
                 }
             });
 
-            if (activeSlots.length === 0) {
-                let emptyPortfolioModal = document.getElementById('emptyPortfolioModal');
-                if (!emptyPortfolioModal) {
-                    const html = `<div class="modal fade" id="emptyPortfolioModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content text-white" style="background-color: #1e1b4b; border: 2px solid #ef4444; border-radius: 12px;"><div class="modal-header border-0"><h5 class="modal-title text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Empty Portfolio</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body">Your portfolio is empty! Please select at least one photograph to submit.</div><div class="modal-footer border-0"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">OK</button></div></div></div></div>`;
-                    document.body.insertAdjacentHTML('beforeend', html);
-                    emptyPortfolioModal = document.getElementById('emptyPortfolioModal');
-                }
-                new bootstrap.Modal(emptyPortfolioModal).show();
+            const totalPhotos = queue.length;
+
+            if (totalPhotos === 0) {
+                showCustomAlert("Please select at least one photo to upload.", "warning");
                 return;
             }
 
             if (submitBtn) {
                 submitBtn.disabled = true;
-                submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Processing Portfolio...`;
+                submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i>Uploading Photos...`;
             }
 
             try {
-                const unifiedPayload = {
-                    email: participantEmail,
-                    name: participantName,
-                    certName: certificateName,
-                    school: schoolName,
-                    scope: competitionScope
-                };
+                let uploadedCount = 0;
 
-                // --- ADD THIS LINE HERE ---
-                if (submitBtn) submitBtn.disabled = true;
+                for (let i = 0; i < totalPhotos; i++) {
+                    const item = queue[i];
+                    const photoNo = i + 1; 
+                    const isLastPhoto = (i === totalPhotos - 1);
+                    
+                    const containerCircle = document.getElementById(`circle_container_${item.slot}`);
+                    const circleBar = document.getElementById(`circle_bar_${item.slot}`);
+                    const tickMark = document.getElementById(`tick_${item.slot}`);
 
-                // ONE PHOTO AT A TIME - Circle stays until upload is done
-                for (let i = 0; i < activeSlots.length; i++) {
-                    const item = activeSlots[i];
-                    const slot = item.slot;
+                    const downloadFileName = `${sanitizeFileNamePart(item.photoTitle)}_${sanitizeFileNamePart(rawParticipantName)}_${sanitizeFileNamePart(rawSchoolName)}_${sanitizeFileNamePart(scope)}_${sanitizeFileNamePart(item.cat)}_${photoNo}`;
+                    
+                    const targetRow = document.getElementById(`wrapper_${item.slot}`) || item.element;
+                    scrollToElement(targetRow);
+                    await new Promise(r => setTimeout(r, 300));
 
-                    if (submitBtn) {
-                        submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Processing Photo ${i + 1}/${activeSlots.length}...`;
-                    }
-
-                    // FIXED: Removed the lines that were hiding previous green ticks!
-                    // We only want to manipulate the specific circle for THIS slot.
-                    const containerCircle = document.getElementById(`circle_container_${slot}`);
-                    const circleBar = document.getElementById(`circle_bar_${slot}`);
-                    const tickMark = document.getElementById(`tick_${slot}`);
-
-                    // Show current circle
                     if (containerCircle) {
                         containerCircle.classList.remove('d-none');
                         containerCircle.style.display = 'inline-block';
                     }
+                    if (tickMark) tickMark.style.display = 'none';
 
-                    // Slow fill to 90%
-                    if (circleBar) {
-                        circleBar.style.transition = 'stroke-dashoffset 5s linear';
-                        circleBar.style.strokeDashoffset = '88';
-                        setTimeout(() => {
-                            circleBar.style.strokeDashoffset = '9';
-                        }, 100);
-                    }
+                    const smoothAnimationPromise = animateCircleTo(circleBar, 0, 90, 3000);
+                    const imgbbUploadPromise = uploadImageToImgBB(item.file, item.photoTitle);
 
-                    containerCircle.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    const [_, imgbbResult] = await Promise.all([smoothAnimationPromise, imgbbUploadPromise]);
 
-                    // Base64
-                    const base64Content = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.readAsDataURL(item.file);
-                        reader.onload = () => resolve(reader.result.split(',')[1]);
-                        reader.onerror = reject;
+                    await sendWithRetry({
+                        action: "recordMetadata",
+                        participantEmail: currentEmail,
+                        participantName: rawParticipantName,
+                        certificateName: certName,
+                        schoolName: rawSchoolName,
+                        competitionScope: scope,
+                        categoryDisplay: item.cat,
+                        photoTitle: item.photoTitle,
+                        downloadFileName: downloadFileName,
+                        photoNo: photoNo,
+                        totalPhotos: totalPhotos,
+                        fileUrl: imgbbResult.url,
+                        deleteUrl: imgbbResult.deleteUrl
                     });
 
-                    // Wait a bit so user sees 90%
-                    await new Promise(resolve => setTimeout(resolve, 800));
+                    await animateCircleTo(circleBar, 90, 100, 400);
 
-                    // FIXED DUPLICATION: We create a brand new payload for THIS photo ONLY.
-                    // We do not inject it into the global unifiedPayload, which stops them from stacking up.
-                    // Single photo upload chunk
-            const singlePayload = {
-                ...unifiedPayload,
-                [slot]: base64Content,
-                [slot + "_name"]: item.file.name,
-                [slot + "_type"]: item.file.type,
-                [slot + "_title"]: item.title
-            };
+                    if (containerCircle) containerCircle.style.display = 'none';
+                    if (tickMark) tickMark.style.display = 'inline-block';
 
-            // Retry engine: checks JSON result and retries on server busy
-            let result = null;
-            let retries = 4;
-            while (retries > 0) {
-                try {
-                    const response = await fetch(SUBMISSION_API_URL, {
-                        method: "POST",
-                        mode: "cors",
-                        body: JSON.stringify(singlePayload)
-                    });
+                    uploadedCount++;
 
-                    if (response.ok) {
-                        const resData = await response.json();
-                        if (resData.success === true) {
-                            result = resData;
-                            break; // Success!
-                        } else {
-                            throw new Error(resData.message || "Server busy");
-                        }
+                    if (isLastPhoto) {
+                        await new Promise(r => setTimeout(r, 2000));
                     } else {
-                        throw new Error(`HTTP ${response.status}`);
+                        await new Promise(r => setTimeout(r, 600));
                     }
-                } catch (err) {
-                    retries--;
-                    if (retries === 0) throw err;
-                    // Exponential backoff retry delay (1.5s, 3s, 4.5s...)
-                    await new Promise(res => setTimeout(res, 1500 * (5 - retries)));
-                }
-            }
-                    
-
-                    const result = await response.json();
-                    if (result.success !== true) {
-                        throw new Error(result.message || "Upload failed");
-                    }
-
-                    // Now show green tick
-                    if (circleBar) {
-                        circleBar.style.transition = 'stroke-dashoffset 0.6s ease';
-                        circleBar.style.strokeDashoffset = '0';
-                    }
-
-                    if (containerCircle) {
-                        setTimeout(() => {
-                            containerCircle.classList.add('d-none');
-                            containerCircle.style.display = 'none';
-                        }, 200);
-                    }
-
-                    if (tickMark) {
-                        tickMark.style.display = 'inline-block';
-                        tickMark.style.color = '#22c55e'; // Keeps the tick perfectly green and visible
-                    }
-
-                    await new Promise(resolve => setTimeout(resolve, 900));
                 }
 
-                // Final Success
-                submissionFinishedTime = new Date().getTime();
+                submissionFinishedTime = Date.now();
                 userIsActivelyWorking = false;
+                localStorage.setItem("submittedUploadEmail", currentEmail);
 
-                if (submitBtn) {
-                    submitBtn.innerHTML = `<i class="fas fa-check-double me-2"></i>Portfolio Uploaded!`;
-                    submitBtn.className = "btn btn-success w-100 py-2 fw-semibold";
-                    submitBtn.disabled = true;
-                }
+                showCustomAlert(`Successfully submitted ${uploadedCount} photo(s)!`, "success");
 
-                localStorage.setItem("submittedUploadEmail", participantEmail);
-                localStorage.setItem("submittedUploadName", participantName);
+                if (uploadForm) uploadForm.classList.add('d-none');
+                if (uploadDashboard) uploadDashboard.classList.remove('d-none');
 
-                const uploadFormEl = document.getElementById('uploadForm');
-                const uploadDashboardEl = document.getElementById('uploadSubmittedDashboard');
-                if (uploadFormEl) uploadFormEl.classList.add('d-none');
-                if (uploadDashboardEl) uploadDashboardEl.classList.remove('d-none');
-
-            } catch (error) {
-                console.error("Submission Error:", error);
-                let uploadFailModal = document.getElementById('uploadFailModal');
-                if (!uploadFailModal) {
-                    const html = `<div class="modal fade" id="uploadFailModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content text-white" style="background-color: #1e1b4b; border: 2px solid #ef4444; border-radius: 12px;"><div class="modal-header border-0"><h5 class="modal-title text-danger fw-bold"><i class="bi bi-x-circle-fill me-2"></i>Upload Failed</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body">Upload failed: ${error.message}<br><br>Please try again.</div><div class="modal-footer border-0"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">OK</button></div></div></div></div>`;
-                    document.body.insertAdjacentHTML('beforeend', html);
-                    uploadFailModal = document.getElementById('uploadFailModal');
-                }
-                new bootstrap.Modal(uploadFailModal).show();
-                
+            } catch (err) {
+                showCustomAlert("Submission Failed: " + err.message, "error");
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = `<i class="fas fa-redo-alt me-2"></i>Retry Submission`;
-                    submitBtn.className = "btn btn-danger w-100 py-2 fw-semibold";
                 }
             }
         });
     }
 
+    // Handle File Input Removal Actions
     document.querySelectorAll('.remove-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            const targetInputName = this.getAttribute('data-target');
-            const fileInput = document.querySelector(`input[name="${targetInputName}"]`);
-            const wrapper = document.getElementById("wrapper_" + targetInputName);
-            const previewImg = document.getElementById("prev_" + targetInputName);
-            const titleField = document.getElementById("title_" + targetInputName);
-            
-            fileInput.value = ""; 
-            fileInput.classList.remove('d-none');
-            previewImg.src = "";
-            titleField.value = "";
-            wrapper.classList.add('d-none');
+            const target = this.getAttribute('data-target') || this.dataset.target;
+            const input = document.querySelector(`input[name="${target}"]`) || document.getElementById(target);
+            const wrapper = document.getElementById("wrapper_" + target);
+            const previewImg = document.getElementById("prev_" + target);
+            const containerCircle = document.getElementById(`circle_container_${target}`);
+            const tickMark = document.getElementById(`tick_${target}`);
 
-            const container = document.getElementById(`circle_container_${targetInputName}`);
-            if(container) container.classList.add('d-none');
-            const tick = document.getElementById(`tick_${targetInputName}`);
-            if(tick) tick.style.display = 'none';
+            if (input) {
+                input.value = '';
+                input.classList.remove('file-selected');
+            }
+            if (previewImg) previewImg.style.display = 'none';
+            if (wrapper) wrapper.classList.add('d-none');
+            if (containerCircle) containerCircle.style.display = 'none';
+            if (tickMark) tickMark.style.display = 'none';
         });
     });
-
-
-    if (triggerDeleteBtn && uploadModalObj) {
-        triggerDeleteBtn.addEventListener("click", () => {
-            uploadModalObj.show();
-        });
-    }
-
-        if (confirmDeletionBtn) {
-        confirmDeletionBtn.addEventListener("click", async () => {
-            const currentActiveKey = localStorage.getItem("submittedUploadEmail");
-            const currentActiveName = localStorage.getItem("submittedUploadName");
-            if (!currentActiveKey) return;
-
-            confirmDeletionBtn.disabled = true;
-            confirmDeletionBtn.innerText = "Deleting previous Submission...";
-
-            const delPayload = {
-                action: "deleteUpload",
-                email: currentActiveKey,
-                participantName: currentActiveName
-            };
-
-            try {
-                await fetch(SUBMISSION_API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(delPayload)
-                });
-
-                // Clear localStorage
-                localStorage.removeItem("submittedUploadEmail");
-                localStorage.removeItem("submittedUploadName");
-
-                submissionFinishedTime = null;
-                userIsActivelyWorking = false;
-                completedAfterDeadline = false;
-
-                //FULL RESET
-                if (uploadForm) {
-                    uploadForm.reset();
-                    uploadForm.classList.remove('d-none');
-                }
-
-                // Reset all file inputs and previews
-                document.querySelectorAll('.preview-trigger').forEach(input => {
-                    input.value = "";
-                    input.classList.remove('d-none');
-                });
-
-                document.querySelectorAll('.preview-control-box').forEach(wrapper => {
-                    wrapper.classList.add('d-none');
-                });
-
-                document.querySelectorAll('input[id^="title_"]').forEach(title => {
-                    title.value = "";
-                });
-
-                // Reset circles and ticks (this is the important part)
-                document.querySelectorAll('.progress-circle-container').forEach(el => {
-                    el.classList.add('d-none');
-                });
-                document.querySelectorAll('.upload-success-tick').forEach(tick => {
-                    tick.style.display = 'none';
-                });
-
-                // Reset submit button
-                const submitBtn = document.getElementById('uploadSubmitBtn');
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = `Upload & Submit Portfolio`;
-                    submitBtn.className = "btn btn-light submit-btn w-100 mt-4";
-                }
-
-                // Hide dashboard
-                const uploadDashboard = document.getElementById('uploadSubmittedDashboard');
-                if (uploadDashboard) uploadDashboard.classList.add('d-none');
-
-                if (uploadModalObj) uploadModalObj.hide();
-
-
-            } catch (err) {
-                console.error("Deletion Error:", err);
-                // Custom Alert: Delete Failed
-let deleteFailModal = document.getElementById('deleteFailModal');
-if (!deleteFailModal) {
-    const html = `
-    <div class="modal fade" id="deleteFailModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content text-white" style="background-color: #1e1b4b; border: 2px solid #ef4444; border-radius: 12px;">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Delete Failed</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">Could not process data reset. Please try again.</div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">OK</button>
-                </div>
-            </div>
-        </div>
-    </div>`;
-    document.body.insertAdjacentHTML('beforeend', html);
-    deleteFailModal = document.getElementById('deleteFailModal');
-}
-new bootstrap.Modal(deleteFailModal).show();
-            } finally {
-                confirmDeletionBtn.disabled = false;
-                confirmDeletionBtn.innerText = "Yes, Clear and Reset";
-            }
-        });
-    }
 });
 
+// ==========================================================
+// MARATHON TIMELINE COUNTDOWN ENGINE
+// ==========================================================
 const runTimelineEngine = () => {
     const now = new Date().getTime();
-    
     const hoursEl = document.getElementById("hours");
     const minutesEl = document.getElementById("minutes");
     const secondsEl = document.getElementById("seconds");
     const uploadForm = document.getElementById("uploadForm");
-    const uploadDashboard = document.getElementById("uploadSubmittedDashboard");
-    const feedback = document.getElementById("uploadFeedback");
-    const countdownContainer = document.querySelector(".countdown-container");
-    const timerTitle = document.querySelector(".timer-title");
-    const submitBtn = document.getElementById('uploadSubmitBtn');
-    const formWrapper = document.querySelector(".form-wrapper"); // Target the main form container box
-
-    const isCurrentlyUploading = submitBtn && submitBtn.disabled === true;
-    const initialSubmissionDetected = localStorage.getItem("submittedUploadEmail") !== null;
-
-    // RULE 1: Handle users who have already submitted previously
-    if (initialSubmissionDetected) {
-        if (uploadForm) uploadForm.classList.remove("late-flashing-container");
-        if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
-
-        // If they refresh AFTER the deadline has completely passed, force the Closed State!
-        if (now >= DEADLINE_DATE && !isCurrentlyUploading) {
-            clearInterval(window.timelineInterval);
-            if (hoursEl) hoursEl.innerText = "00";
-            if (minutesEl) minutesEl.innerText = "00";
-            if (secondsEl) secondsEl.innerText = "00";
-            
-            if (uploadForm) {
-                uploadForm.innerHTML = ""; 
-                uploadForm.classList.add('d-none');
-            }
-            if (uploadDashboard) uploadDashboard.classList.add('d-none');
-            
-            if (feedback) {
-                feedback.className = "text-center mt-4 p-4 text-danger fw-bold border border-danger rounded bg-dark";
-                feedback.innerHTML = `
-                    <i class="fas fa-lock fa-2x mb-3 text-danger"></i>
-                    <h3>Marathon Closed</h3>
-                    <p class="mb-0 mt-2 text-white-50">The official submission window has closed! The portal is now securely locked.</p>
-                `;
-                feedback.classList.remove('d-none');
-            }
-
-            // Remove announcement text box if closed early
-            const infoBox = document.querySelector('.official-portal-announcement');
-            if (infoBox) infoBox.remove();
-
-            return;
-        }
-
-        // If deadline hasn't passed, lock form to dashboard, but let countdown flow below
-        if (!completedAfterDeadline) {
-            if (uploadForm) uploadForm.classList.add('d-none');
-            if (uploadDashboard) uploadDashboard.classList.remove('d-none');
-            if (feedback) feedback.classList.add('d-none');
-        }
-    }
-
-    if (now >= DEADLINE_DATE) {
-        // CONDITION A: If they are actively filling data or uploading late, let them finish
-        if (userIsActivelyWorking || isCurrentlyUploading) {
-            if (hoursEl) hoursEl.innerText = "00";
-            if (minutesEl) minutesEl.innerText = "00";
-            if (secondsEl) secondsEl.innerText = "00";
-            if (timerTitle) {
-                timerTitle.innerText = isCurrentlyUploading ? "Finishing Upload..." : "Complete Your Submission...";
-                timerTitle.style.color = "#ef4444";
-            }
-
-            if (userIsActivelyWorking && !isCurrentlyUploading) {
-                if (uploadForm) uploadForm.classList.add("late-flashing-container");
-                if (countdownContainer) countdownContainer.classList.add("late-flashing-container");
-            } else {
-                if (uploadForm) uploadForm.classList.remove("late-flashing-container");
-                if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
-            }
-
-            // Remove announcement text box if in grace upload configuration
-            const infoBox = document.querySelector('.official-portal-announcement');
-            if (infoBox) infoBox.remove();
-
-            return; 
-        }
-
-        // CONDITION B: Late submission finished! Run 5-second window
-        const isWithinFiveSecondGrace = completedAfterDeadline && submissionFinishedTime !== null && (now - submissionFinishedTime < 5000);
-        if (isWithinFiveSecondGrace) {
-            if (uploadForm) uploadForm.classList.remove("late-flashing-container");
-            if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
-            if (hoursEl) hoursEl.innerText = "00";
-            if (minutesEl) minutesEl.innerText = "00";
-            if (secondsEl) secondsEl.innerText = "00";
-            if (timerTitle) {
-                timerTitle.innerText = "Closing Portal...";
-                timerTitle.style.color = "#ef4444";
-            }
-
-            // Clean announcement layout box
-            const infoBox = document.querySelector('.official-portal-announcement');
-            if (infoBox) infoBox.remove();
-
-            return; 
-        }
-
-        // CONDITION C: Otherwise, clean up and close portal
-        if (uploadForm) uploadForm.classList.remove("late-flashing-container");
-        if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
-        clearInterval(window.timelineInterval);
-        
-        if (hoursEl) hoursEl.innerText = "00";
-        if (minutesEl) minutesEl.innerText = "00";
-        if (secondsEl) secondsEl.innerText = "00";
-        
-        if (uploadForm) {
-            uploadForm.innerHTML = ""; 
-            uploadForm.classList.add('d-none');
-        }
-        if (uploadDashboard) {
-            uploadDashboard.classList.add('d-none');
-        }
-        
-        if (feedback) {
-            feedback.className = "text-center mt-4 p-4 text-danger fw-bold border border-danger rounded bg-dark";
-            feedback.innerHTML = `
-                <i class="fas fa-lock fa-2x mb-3 text-danger"></i>
-                <h3>Marathon Closed</h3>
-                <p class="mb-0 mt-2 text-white-50">The official submission window has closed! The portal is now securely locked.</p>
-            `;
-            feedback.classList.remove('d-none');
-        }
-
-        // Wipe text box on portal exit close tracking
-        const infoBox = document.querySelector('.official-portal-announcement');
-        if (infoBox) infoBox.remove();
-
-        return; 
-    }
-
-    // Default running countdown configuration
-    if (uploadForm) uploadForm.classList.remove("late-flashing-container");
-    if (countdownContainer) countdownContainer.classList.remove("late-flashing-container");
-    if (!hoursEl || !minutesEl || !secondsEl) return;
+    const timerTitle = document.getElementById("timerTitle");
 
     if (now < START_DATE) {
-        if (uploadForm) uploadForm.classList.add('d-none');
-        if (countdownContainer) countdownContainer.classList.remove('d-none');
-        
-        const timeToOpen = START_DATE - now;
-        const hours = Math.floor(timeToOpen / (1000 * 60 * 60));
-        const minutes = Math.floor((timeToOpen % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((timeToOpen % (1000 * 60)) / 1000);
+        if (timerTitle) timerTitle.innerText = "Marathon starts on July 19th";
+        return;
+    }
 
-        hoursEl.innerText = hours < 10 ? "0" + hours : hours;
-        minutesEl.innerText = minutes < 10 ? "0" + minutes : minutes;
-        secondsEl.innerText = seconds < 10 ? "0" + seconds : seconds;
-
-        if (timerTitle) {
-            timerTitle.innerText = "Portal Opens In...";
-            timerTitle.style.color = "#38bdf8"; 
-        }
-
-        // =========================================================================
-        // ADDED STATE: BEFORE TIMER HITS (TEXT BOX GENERATOR & INLINE DISPLAY)
-        // =========================================================================
-        let infoBox = document.querySelector('.official-portal-announcement');
-        if (!infoBox) {
-            infoBox = document.createElement('div');
-            infoBox.className = 'official-portal-announcement text-center mb-4 p-3 rounded fw-bold w-100';
-            infoBox.style.backgroundColor = 'rgba(56, 189, 248, 0.1)'; 
-            infoBox.style.border = '1px solid rgba(56, 189, 248, 0.2)';
-            infoBox.style.color = '#38bdf8';
-            infoBox.style.fontSize = '0.95rem';
-            
-            // Render at the absolute top layout header inside the main active template wrapper
-            const insertionContext = formWrapper || countdownContainer || document.body;
-            if (insertionContext) {
-                insertionContext.insertBefore(infoBox, insertionContext.firstChild);
-            }
-        }
-
-        // Dynamically compute exact date formatting patterns mapping from the START_DATE constant
-        const openingDateTime = new Date(START_DATE);
-        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        const monthName = months[openingDateTime.getMonth()];
-        const dayNum = openingDateTime.getDate();
-        
-        let daySuffix = "th";
-        if (dayNum % 10 === 1 && dayNum !== 11) daySuffix = "st";
-        else if (dayNum % 10 === 2 && dayNum !== 12) daySuffix = "nd";
-        else if (dayNum % 10 === 3 && dayNum !== 13) daySuffix = "rd";
-
-        let hoursValue = openingDateTime.getHours();
-        const minutesValue = String(openingDateTime.getMinutes()).padStart(2, '0');
-        const ampm = hoursValue >= 12 ? 'pm' : 'am';
-        hoursValue = hoursValue % 12;
-        hoursValue = hoursValue ? hoursValue : 12; 
-        const formattedTime = `${hoursValue}.${minutesValue}${ampm}`;
-
-        infoBox.innerHTML = `<i class="fas fa-calendar-alt me-2"></i>Submission portal opens on ${monthName} ${dayNum}${daySuffix} at ${formattedTime}`;
-        // =========================================================================
-
-    } else {
-        if (uploadForm && !initialSubmissionDetected) {
-            uploadForm.classList.remove('d-none');
-        }
-        if (countdownContainer) countdownContainer.classList.remove('d-none');
-        if (feedback) feedback.classList.add('d-none'); 
-
-        if (timerTitle) {
-            if (initialSubmissionDetected) {
-                timerTitle.innerText = "Portfolio Secured! (Time Left)";
-                timerTitle.style.color = "#10b981"; 
-            } else {
-                timerTitle.innerText = "Portal Closes in...";
-                timerTitle.style.color = "#f59e0b"; 
-            }
-        }
-
+    if (now >= START_DATE && now < DEADLINE_DATE) {
         const distance = DEADLINE_DATE - now;
         const hours = Math.floor(distance / (1000 * 60 * 60));
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-        hoursEl.innerText = hours < 10 ? "0" + hours : hours;
-        minutesEl.innerText = minutes < 10 ? "0" + minutes : minutes;
-        secondsEl.innerText = seconds < 10 ? "0" + seconds : seconds;
+        if (hoursEl) hoursEl.innerText = hours < 10 ? "0" + hours : hours;
+        if (minutesEl) minutesEl.innerText = minutes < 10 ? "0" + minutes : minutes;
+        if (secondsEl) secondsEl.innerText = seconds < 10 ? "0" + seconds : seconds;
+    } else {
+        if (hoursEl) hoursEl.innerText = "00";
+        if (minutesEl) minutesEl.innerText = "00";
+        if (secondsEl) secondsEl.innerText = "00";
 
-        // =========================================================================
-        // ADDED STATE: AFTER TIMER HITS (DESTRUCTIVE ANNOUNCEMENT HIDING RULE)
-        // =========================================================================
-        const infoBox = document.querySelector('.official-portal-announcement');
-        if (infoBox) {
-            infoBox.remove(); // Safely clears the textbox elements instantly from the DOM structure
+        if (userIsActivelyWorking) {
+            if (timerTitle) timerTitle.innerText = "GRACE PERIOD: Complete submission now!";
+            if (uploadForm && !uploadForm.classList.contains("late-flashing-container")) {
+                uploadForm.classList.add("late-flashing-container");
+            }
+        } else {
+            if (timerTitle) timerTitle.innerText = "Submissions Closed";
         }
-        // =========================================================================
     }
 };
 
@@ -789,6 +575,9 @@ document.addEventListener("DOMContentLoaded", () => {
     window.timelineInterval = setInterval(runTimelineEngine, 1000);
 });
 
+// ==========================================================
+// LOADER CLEANUP ENGINE
+// ==========================================================
 const forceUnlockTimeout = setTimeout(() => {
     cleanUpAndDestroyLoader("Safety Timeout Triggered");
 }, 3500);
@@ -811,7 +600,6 @@ if (typeof ScrollReveal !== 'undefined') {
     ScrollReveal().reveal('.section-title, .about-section, .gallery-section, .schools-bar', {
         distance: '60px',
         duration: 1200,
-        origin: 'bottom',
-        interval: 200
+        origin: 'bottom'
     });
 }
