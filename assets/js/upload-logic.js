@@ -4,8 +4,8 @@ const IMGBB_API_KEY = "19135fc89f58f414226e584b18e545a9";
 // ==========================================================
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
-const START_DATE = new Date("2026-07-27T02:00:00").getTime();
-const DEADLINE_DATE = new Date("2026-07-27T04:15:00").getTime();
+const START_DATE = new Date("2026-07-27T02:00:00:00+05:30").getTime();
+const DEADLINE_DATE = new Date("2026-07-27T04:15:00:00+05:30").getTime();
 
 let userIsActivelyWorking = false; 
 let submissionFinishedTime = null; 
@@ -198,8 +198,10 @@ function sanitizeFileNamePart(str) {
 // ==========================================================
 // UNIFIED HIGH-RELIABILITY FORM SUBMISSION ENGINE
 // ==========================================================
-async function sendWithRetry(payload, maxRetries = 5) {
-    const jitter = Math.floor(Math.random() * 1000);
+// UPDATED HIGH-CONCURRENCY RETRY ENGINE
+async function sendWithRetry(payload, maxRetries = 10) {
+    // Increased initial random jitter (0 to 3 seconds) to spread out simultaneous clicks
+    const jitter = Math.floor(Math.random() * 3000);
     await new Promise(r => setTimeout(r, jitter));
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -216,13 +218,15 @@ async function sendWithRetry(payload, maxRetries = 5) {
                 if (resData.success === true) return resData;
             }
         } catch (err) {
-            console.warn(`Attempt ${attempt} failed, retrying...`);
+            console.warn(`Attempt ${attempt} hit concurrency queue, retrying...`);
         }
+        
+        // Exponential backoff: Waits longer between each attempt (2s, 4s, 6s... up to 20s)
         if (attempt < maxRetries) {
-            await new Promise(r => setTimeout(r, attempt * 1500));
+            await new Promise(r => setTimeout(r, attempt * 2000));
         }
     }
-    throw new Error("Server is currently busy. Please try submitting again.");
+    throw new Error("Server is experiencing high traffic. Please tap Retry Submission.");
 }
 
 async function uploadImageToImgBB(file, customTitle, maxRetries = 3) {
