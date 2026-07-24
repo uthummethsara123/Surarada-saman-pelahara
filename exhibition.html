@@ -316,12 +316,36 @@
         }
       });
 
+      function getDirectImageUrl(url) {
+        if (!url) return '';
+        let cleanUrl = url.trim();
+        // Ensure protocol is present
+        if (cleanUrl.startsWith('//')) {
+          cleanUrl = 'https:' + cleanUrl;
+        }
+        return cleanUrl;
+      }
+
       // Background Poller to update the layout automatically every 10 seconds without resetting view
       function startLivePollingEngine(sceneEl, assetsEl) {
         setInterval(() => {
           fetch(LIVE_GET_API_URL)
             .then(res => res.json())
-            .then(images => {
+            .then(data => {
+              
+              // 🔴 FLEXIBLE ARRAY EXTRACTION LOGIC
+              let images = [];
+              if (Array.isArray(data)) {
+                images = data;
+              } else if (data && Array.isArray(data.exhibition)) {
+                images = data.exhibition;
+              } else if (data && Array.isArray(data.images)) {
+                images = data.images.map(img => ({
+                  src: img.url || img.src,
+                  participantName: img.participantName || img.email || "Participant"
+                }));
+              }
+
               const connectionStatus = document.getElementById('connection-status');
               const overlayDesc = document.getElementById('overlay-desc');
               const modeSelectionArea = document.getElementById('mode-selection-area');
@@ -337,11 +361,12 @@
                   window.galleryState.leftTrackMaxSpan = 0;
                   window.galleryState.rightTrackMaxSpan = 0;
                 }
-                if (connectionStatus) {
-                  if (overlayDesc) overlayDesc.innerText = "Waiting for participants to upload images...";
-                  connectionStatus.innerText = "Gallery Empty";
-                  connectionStatus.style.display = "block";
-                  if (modeSelectionArea) modeSelectionArea.style.display = "none";
+                if (!images || !Array.isArray(images) || images.length === 0) {
+                  const overlayDesc = document.getElementById('overlay-desc');
+                  const connStatus = document.getElementById('connection-status');
+                  if (overlayDesc) overlayDesc.innerText = "No photos submitted yet. Check back soon!";
+                  if (connStatus) connStatus.innerText = "Exhibition Empty";
+                  return;
                 }
                 return;
               }
@@ -546,9 +571,25 @@
 
           connectionStatus.innerText = "Connecting Live Feed...";
 
-          fetch(LIVE_GET_API_URL)
+            fetch(LIVE_GET_API_URL)
             .then(res => res.json())
-            .then(images => {
+            .then(data => {
+              // 🔴 FLEXIBLE ARRAY EXTRACTION LOGIC
+              let images = [];
+              if (Array.isArray(data)) {
+                images = data; // Direct array (exhibition stream)
+              } else if (data && Array.isArray(data.exhibition)) {
+                images = data.exhibition; // Full payload containing exhibition bucket
+              } else if (data && Array.isArray(data.images)) {
+                // Legacy compatibility fallback
+                images = data.images.map(img => ({
+                  src: img.url || img.src,
+                  participantName: img.participantName || img.email || "Participant",
+                  photoTitle: img.photoTitle || "Untitled",
+                  categoryDisplay: img.categoryDisplay || ""
+                }));
+              }
+
               if(!images || images.length === 0) {
                 document.getElementById('overlay-desc').innerText = "No submitted pictures found in database yet.";
                 connectionStatus.innerText = "Gallery Empty";
