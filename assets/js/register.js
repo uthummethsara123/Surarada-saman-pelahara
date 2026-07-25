@@ -12,7 +12,7 @@ const INNER_SCHOOL_ADDRESSES = {
 
 const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycbxGNZPK9jYGNTyXYwDmONDu03wXPIg-LnWVIx2PA0n5XQDYWieJ01cVrVry5ML6VFLS/exec";
 const OPENING_DATE = new Date(2026, 6, 12, 0, 0, 0).getTime();      // July 13th, 2026
-const CLOSING_DEADLINE = new Date(2026, 6, 25, 24, 0, 0).getTime();   // July 24th, 2026 (End of Day)
+const CLOSING_DEADLINE = new Date(2026, 6, 26, 11, 0, 0).getTime();   // July 24th, 2026 (End of Day)
 
 // --- REGISTRATION COUNTDOWN ENGINE ---
 const countdownInterval = setInterval(function() {
