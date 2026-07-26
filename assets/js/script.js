@@ -439,7 +439,7 @@ function updatePortalStatesLive() {
     const REGISTRATION_DEADLINE = new Date(2026, 6, 26, 12, 0, 0).getTime(); // July 24th Midnight (24:00)
     const UPLOAD_START_TIME     = new Date(2026, 6, 26, 14, 0, 0).getTime();  // July 26th (14:00)
     const UPLOAD_GRAY_TIME      = new Date(2026, 6, 27, 4, 0, 0).getTime();  // July 27th 2:00 AM
-    const AR_EXHIBITION_START   = new Date(2026, 6, 27, 4, 0, 0).getTime();   // July 27th 2:00 AM
+    const AR_EXHIBITION_START   = new Date(2026, 6, 27, 3, 0, 0).getTime();   // July 27th 2:00 AM
 
     // --- Part A: Handle Live Registration Button States ---
     if (now > REGISTRATION_DEADLINE) {
