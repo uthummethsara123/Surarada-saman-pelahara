@@ -11,7 +11,7 @@ let userIsActivelyWorking = false;
 let submissionFinishedTime = null; 
 
 // Maximum file size cap set to 5MB
-const MAX_FILE_SIZE = 5 * 1024 * 1024; 
+const MAX_FILE_SIZE = 9 * 1024 * 1024; 
 
 // Injecting layout, progress animation, custom alerts, and file-name hiding styles
 const styleSheet = document.createElement("style");
