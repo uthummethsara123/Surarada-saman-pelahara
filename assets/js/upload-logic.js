@@ -4,7 +4,7 @@ const IMGBB_API_KEY = "19135fc89f58f414226e584b18e545a9";
 // ==========================================================
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
-const START_DATE = new Date("2026-07-27T02:00:00").getTime();
+const START_DATE = new Date("2026-07-26T02:00:00").getTime();
 const DEADLINE_DATE = new Date("2026-07-27T04:30:00").getTime();
 
 let userIsActivelyWorking = false; 
@@ -464,7 +464,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             // ==========================================================
-            // NEW STRICT 3-PHOTO PER CATEGORY VALIDATION
+            // HYBRID VALIDATION: Strict 3 for Colour/Mono, 1-3 for Slowshutter
             // ==========================================================
             const categoryCounts = {
                 "Colour": 0,
@@ -479,32 +479,40 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
 
-            const validCategories = [];
             const invalidCategories = [];
+            const validCategories = [];
 
-            // Sort categories into valid (exactly 3 or 0) and invalid (1 or 2)
+            // Evaluate the rules per category
             for (const [cat, count] of Object.entries(categoryCounts)) {
-                if (count === 3) {
-                    validCategories.push(cat);
-                } else if (count > 0 && count < 3) {
-                    invalidCategories.push({ cat, count });
+                if (count > 0) { // Only check categories they actually tried to enter
+                    if (cat === "Slowshutter") {
+                        // Slowshutter allows 1, 2, or 3 photos safely
+                        validCategories.push(cat);
+                    } else {
+                        // Colour and Monochrome strictly require exactly 3
+                        if (count === 3) {
+                            validCategories.push(cat);
+                        } else {
+                            invalidCategories.push({ cat, count });
+                        }
+                    }
                 }
             }
 
-            // If there are any categories with 1 or 2 photos, block submission
+            // If Colour or Monochrome have 1 or 2 photos, block submission
             if (invalidCategories.length > 0) {
                 let errorMsg = "";
                 
                 // Acknowledge the categories they did correctly (if any)
                 if (validCategories.length > 0) {
-                    errorMsg += `You have 3 photos for ${validCategories.join(" & ")}, but `;
+                    errorMsg += `You met the requirements for ${validCategories.join(" & ")}, but `;
                 } else {
-                    errorMsg += `You must upload exactly 3 photos per chosen category. `;
+                    errorMsg += `Colour and Monochrome categories require exactly 3 photos. `;
                 }
                 
                 // Point out exactly which categories are missing photos
                 const invalidDetails = invalidCategories.map(ic => `only ${ic.count} for ${ic.cat}`).join(" and ");
-                errorMsg += `you uploaded ${invalidDetails}. Please select 3 photos for each category you enter.`;
+                errorMsg += `you uploaded ${invalidDetails}. Please select exactly 3 photos for Colour/Monochrome. (Slowshutter allows 1-3).`;
 
                 showCustomAlert(errorMsg, "warning");
                 return; // Stop the upload process
