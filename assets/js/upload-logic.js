@@ -5,7 +5,7 @@ const IMGBB_API_KEY = "19135fc89f58f414226e584b18e545a9";
 // MARATHON TIMELINE CONFIGURATION & GRACE ENGINES
 // ==========================================================
 const START_DATE = new Date("2026-07-27T02:00:00").getTime();
-const DEADLINE_DATE = new Date("2026-07-27T03:15:00").getTime();
+const DEADLINE_DATE = new Date("2026-07-27T04:00:00").getTime();
 
 let userIsActivelyWorking = false; 
 let submissionFinishedTime = null; 
