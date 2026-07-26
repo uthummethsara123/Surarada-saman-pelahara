@@ -452,7 +452,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     const photoTitle = getPhotoTitle(slot);
                     const cat = slot.includes('color') ? "Colour" : (slot.includes('mono') ? "Monochrome" : "Slowshutter");
 
-                    queue.push({ file, slot, photoTitle, cat, element: input });
+                    queue.push({ file, slot, cat, element: input });
                 }
             });
 
@@ -462,6 +462,54 @@ document.addEventListener("DOMContentLoaded", () => {
                 showCustomAlert("Please select at least one photo to upload.", "warning");
                 return;
             }
+
+            // ==========================================================
+            // NEW STRICT 3-PHOTO PER CATEGORY VALIDATION
+            // ==========================================================
+            const categoryCounts = {
+                "Colour": 0,
+                "Monochrome": 0,
+                "Slowshutter": 0
+            };
+
+            // Count how many photos were added for each category
+            queue.forEach(item => {
+                if (categoryCounts[item.cat] !== undefined) {
+                    categoryCounts[item.cat]++;
+                }
+            });
+
+            const validCategories = [];
+            const invalidCategories = [];
+
+            // Sort categories into valid (exactly 3 or 0) and invalid (1 or 2)
+            for (const [cat, count] of Object.entries(categoryCounts)) {
+                if (count === 3) {
+                    validCategories.push(cat);
+                } else if (count > 0 && count < 3) {
+                    invalidCategories.push({ cat, count });
+                }
+            }
+
+            // If there are any categories with 1 or 2 photos, block submission
+            if (invalidCategories.length > 0) {
+                let errorMsg = "";
+                
+                // Acknowledge the categories they did correctly (if any)
+                if (validCategories.length > 0) {
+                    errorMsg += `You have 3 photos for ${validCategories.join(" & ")}, but `;
+                } else {
+                    errorMsg += `You must upload exactly 3 photos per chosen category. `;
+                }
+                
+                // Point out exactly which categories are missing photos
+                const invalidDetails = invalidCategories.map(ic => `only ${ic.count} for ${ic.cat}`).join(" and ");
+                errorMsg += `you uploaded ${invalidDetails}. Please select 3 photos for each category you enter.`;
+
+                showCustomAlert(errorMsg, "warning");
+                return; // Stop the upload process
+            }
+            // ==========================================================
 
             if (submitBtn) {
                 submitBtn.disabled = true;
