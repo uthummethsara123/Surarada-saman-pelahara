@@ -174,11 +174,6 @@
       window.rightTrackItems = [];
       window.loadedImageUrls = new Set();
       window.totalImagesProcessed = 0;
-      // NEW MEMORY GLOBALS
-      window.allExhibitionData = []; 
-      window.currentBatchIndex = 0;
-      window.BATCH_SIZE = 20; 
-      window.batchRotationInterval = null;
 
       // Helper function to format author name: if length > 10 characters, split into 2 lines near middle space
       function formatAuthorName(name) {
@@ -216,6 +211,36 @@
       // Passed directly through since Google Apps Script handles formatting at the data layer
       function getDirectImageUrl(url) {
         return url;
+      }
+
+      // CLIENT-SIDE IMAGE DOWNSCALING & COMPRESSION ENGINE FOR EXHIBITION
+      function getOptimizedDataUrl(imgElement, maxDimension = 1024) {
+        try {
+          const canvas = document.createElement('canvas');
+          let width = imgElement.naturalWidth || imgElement.width;
+          let height = imgElement.naturalHeight || imgElement.height;
+
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(imgElement, 0, 0, width, height);
+          
+          // Compress to lightweight JPEG (80% quality) to eliminate mobile memory crashes
+          return canvas.toDataURL('image/jpeg', 0.8);
+        } catch (err) {
+          console.warn("Canvas downscale fallback triggered:", err);
+          return imgElement.src;
+        }
       }
 
       window.addEventListener('touchstart', (e) => {
@@ -331,131 +356,188 @@
         return cleanUrl;
       }
 
-      function clearCurrentGallery(sceneEl, assetsEl) {
-        sceneEl.querySelectorAll('[conveyor-item]').forEach(frame => {
-          if (frame.parentNode) frame.parentNode.removeChild(frame);
-        });
-        assetsEl.querySelectorAll('img[id^="live-img-"]').forEach(asset => {
-          asset.removeAttribute('src'); 
-          if (asset.parentNode) asset.parentNode.removeChild(asset);
-        });
-        window.leftTrackItems = [];
-        window.rightTrackItems = [];
-        window.loadedImageUrls.clear();
-        window.galleryState.leftTrackMaxSpan = 0;
-        window.galleryState.rightTrackMaxSpan = 0;
-      }
-
-      function renderGalleryBatch(sceneEl, assetsEl) {
-        clearCurrentGallery(sceneEl, assetsEl);
-        if (window.allExhibitionData.length === 0) return;
-
-        let startIdx = window.currentBatchIndex * window.BATCH_SIZE;
-        let endIdx = Math.min(startIdx + window.BATCH_SIZE, window.allExhibitionData.length);
-        let batchImages = window.allExhibitionData.slice(startIdx, endIdx);
-        
-        if (batchImages.length === 0) {
-          window.currentBatchIndex = 0;
-          startIdx = 0;
-          endIdx = Math.min(window.BATCH_SIZE, window.allExhibitionData.length);
-          batchImages = window.allExhibitionData.slice(startIdx, endIdx);
-        }
-
-        let processedCount = 0;
-        batchImages.forEach((imgData, index) => {
-          window.loadedImageUrls.add(imgData.src);
-          let safeUrl = getDirectImageUrl(imgData.src);
-
-          let imgAsset = document.createElement('img');
-          imgAsset.setAttribute('id', `live-img-${Date.now()}-${index}`);
-          imgAsset.setAttribute('src', safeUrl);
-          imgAsset.setAttribute('crossorigin', 'anonymous');
-          assetsEl.appendChild(imgAsset);
-
-          let aImg = document.createElement('a-image');
-          let isLeft = index % 2 === 0;
-          aImg.setAttribute('src', `#${imgAsset.id}`);
-          aImg.setAttribute('conveyor-item', `trackSide: ${isLeft ? 'left' : 'right'}`);
-          if (isLeft) aImg.setAttribute('material', 'side: double');
-
-          let aText = document.createElement('a-text');
-          let rawAuthorName = imgData.participantName || imgData.name || imgData.author || "Participant";
-          aText.setAttribute('value', formatAuthorName(rawAuthorName));
-          aText.setAttribute('align', 'center'); 
-          aText.setAttribute('color', '#ffffff');
-          aText.setAttribute('width', '1.8'); 
-          aText.setAttribute('font', 'dejavu');
-          aText.setAttribute('shader', 'msdf'); 
-          aText.setAttribute('negate', 'false');
-          aImg.appendChild(aText);
-
-          let newObj = { item: aImg, asset: imgAsset, txt: aText, calculatedWidth: 3.2, calculatedHeight: 1.8 };
-          if (isLeft) window.leftTrackItems.push(newObj);
-          else window.rightTrackItems.push(newObj);
-          sceneEl.appendChild(aImg);
-
-          const finalizeLayout = () => {
-            processedCount++;
-            if (processedCount === batchImages.length) {
-              rearrangeTrackAfterUpdates(window.leftTrackItems, '-3', '0 90 0', 'left');
-              rearrangeTrackAfterUpdates(window.rightTrackItems, '3', '0 -90 0', 'right');
-            }
-          };
-
-          if (imgAsset.complete) {
-            calculateTargetDimensions(newObj);
-            finalizeLayout();
-          } else {
-            imgAsset.addEventListener('load', () => { calculateTargetDimensions(newObj); finalizeLayout(); });
-            imgAsset.addEventListener('error', finalizeLayout);
-          }
-        });
-      }
-
+      // Background Poller to update the layout automatically every 10 seconds without resetting view
       function startLivePollingEngine(sceneEl, assetsEl) {
         setInterval(() => {
-          fetch(LIVE_GET_API_URL).then(res => res.json()).then(data => {
-            let images = [];
-            if (Array.isArray(data)) images = data;
-            else if (data && Array.isArray(data.exhibition)) images = data.exhibition;
-            else if (data && Array.isArray(data.images)) images = data.images.map(img => ({ src: img.url || img.src, participantName: img.participantName || img.email || "Participant" }));
-            
-            if (images && images.length > 0) window.allExhibitionData = images;
-          }).catch(e => console.warn("Live fetch error", e));
-        }, 30000);
+          fetch(LIVE_GET_API_URL)
+            .then(res => res.json())
+            .then(data => {
+              
+              // 🔴 FLEXIBLE ARRAY EXTRACTION LOGIC
+              let images = [];
+              if (Array.isArray(data)) {
+                images = data;
+              } else if (data && Array.isArray(data.exhibition)) {
+                images = data.exhibition;
+              } else if (data && Array.isArray(data.images)) {
+                images = data.images.map(img => ({
+                  src: img.url || img.src,
+                  participantName: img.participantName || img.email || "Participant"
+                }));
+              }
 
-        window.batchRotationInterval = setInterval(() => {
-          if (window.allExhibitionData.length <= window.BATCH_SIZE) return;
-          window.currentBatchIndex++;
-          if (window.currentBatchIndex * window.BATCH_SIZE >= window.allExhibitionData.length) window.currentBatchIndex = 0; 
-          
-          const connStatus = document.getElementById('connection-status');
-          const overlayDesc = document.getElementById('overlay-desc');
-          const overlay = document.getElementById('overlay');
-          
-          if (connStatus && overlay) {
-            overlay.style.display = 'flex';
-            overlay.style.background = 'transparent';
-            const titleEl = document.getElementById('overlay-title');
-            const logoEl = document.querySelector('.overlay-logo');
-            const modeArea = document.getElementById('mode-selection-area');
-            
-            if(titleEl) titleEl.style.display = 'none';
-            if(logoEl) logoEl.style.display = 'none';
-            if(modeArea) modeArea.style.display = 'none';
-            
-            overlayDesc.innerText = `Loading Gallery Section ${window.currentBatchIndex + 1}...`;
-            connStatus.innerText = "";
-            connStatus.style.display = "block";
-            
-            setTimeout(() => { 
-                overlay.style.display = 'none';
-                if(titleEl) titleEl.style.display = 'block';
-                if(logoEl) logoEl.style.display = 'block';
-            }, 2500);
-          }
-          renderGalleryBatch(sceneEl, assetsEl);
-        }, 35000);
+              const connectionStatus = document.getElementById('connection-status');
+              const overlayDesc = document.getElementById('overlay-desc');
+              const modeSelectionArea = document.getElementById('mode-selection-area');
+              
+              if (!images || images.length === 0) {
+                if (window.loadedImageUrls.size > 0) {
+                  let activeConveyorFrames = sceneEl.querySelectorAll('[conveyor-item]');
+                  activeConveyorFrames.forEach(frame => frame.parentNode.removeChild(frame));
+                  window.leftTrackItems = [];
+                  window.rightTrackItems = [];
+                  window.loadedImageUrls.clear();
+                  window.totalImagesProcessed = 0;
+                  window.galleryState.leftTrackMaxSpan = 0;
+                  window.galleryState.rightTrackMaxSpan = 0;
+                }
+                if (!images || !Array.isArray(images) || images.length === 0) {
+                  const overlayDesc = document.getElementById('overlay-desc');
+                  const connStatus = document.getElementById('connection-status');
+                  if (overlayDesc) overlayDesc.innerText = "No photos submitted yet. Check back soon!";
+                  if (connStatus) connStatus.innerText = "Exhibition Empty";
+                  return;
+                }
+                return;
+              }
+
+              const serverSrcSet = new Set(images.map(img => img.src));
+              let tracksChanged = false;
+
+              // LIVE DELETION ENGINE: Filter out removed entries seamlessly without track snaps
+              const processTrackPurge = (trackArray) => {
+                let indexesToRemove = [];
+                for (let i = trackArray.length - 1; i >= 0; i--) {
+                  // CHANGE THIS LINE to read data-original-src:
+                  let src = trackArray[i].asset.getAttribute('data-original-src');
+                  
+                  if (!serverSrcSet.has(src)) {
+                    if (trackArray[i].item && trackArray[i].item.parentNode) {
+                      trackArray[i].item.parentNode.removeChild(trackArray[i].item);
+                    }
+                    if (trackArray[i].asset && trackArray[i].asset.parentNode) {
+                      trackArray[i].asset.parentNode.removeChild(trackArray[i].asset);
+                    }
+                    window.loadedImageUrls.delete(src);
+                    indexesToRemove.push(i);
+                    tracksChanged = true;
+                  }
+                }
+                indexesToRemove.forEach(idx => trackArray.splice(idx, 1));
+              };
+
+              processTrackPurge(window.leftTrackItems);
+              processTrackPurge(window.rightTrackItems);
+
+              let newImages = images.filter(img => !window.loadedImageUrls.has(img.src));
+              window.totalImagesProcessed = window.leftTrackItems.length + window.rightTrackItems.length;
+
+              if (newImages.length === 0) {
+                if (tracksChanged) {
+                  // Only re-calculate spans for wrapping limits, do NOT snap active positions
+                  rearrangeTrackAfterUpdates(window.leftTrackItems, '-3', '0 90 0', 'left', false);
+                  rearrangeTrackAfterUpdates(window.rightTrackItems, '3', '0 -90 0', 'right', false);
+                }
+                return;
+              }
+              
+              newImages.forEach(imgData => {
+                let currentIndex = window.totalImagesProcessed;
+                window.totalImagesProcessed++;
+                window.loadedImageUrls.add(imgData.src);
+
+                let isLeft = currentIndex % 2 === 0;
+                let side = isLeft ? 'left' : 'right';
+                let trackArray = isLeft ? window.leftTrackItems : window.rightTrackItems;
+                let xPos = isLeft ? '-3' : '3';
+                let rotation = isLeft ? '0 90 0' : '0 -90 0';
+
+                let safeUrl = getDirectImageUrl(imgData.src);
+
+                // 1. Create the blank 3D elements immediately
+                let imgAsset = document.createElement('img');
+                imgAsset.setAttribute('id', `live-img-${Date.now()}-${currentIndex}`);
+                imgAsset.setAttribute('crossorigin', 'anonymous');
+                imgAsset.setAttribute('data-original-src', imgData.src);
+
+                let aImg = document.createElement('a-image');
+                aImg.setAttribute('conveyor-item', `trackSide: ${side}`);
+                if (isLeft) aImg.setAttribute('material', 'side: double');
+
+                let aText = document.createElement('a-text');
+                let rawAuthorName = imgData.participantName || imgData.name || imgData.author || "Participant";
+                aText.setAttribute('value', formatAuthorName(rawAuthorName));
+                aText.setAttribute('align', 'center');
+                aText.setAttribute('color', '#000000');
+                aText.setAttribute('width', '1.8');
+                aText.setAttribute('font', 'dejavu');
+                aText.setAttribute('shader', 'msdf');
+                aText.setAttribute('negate', 'false');
+                aImg.appendChild(aText);
+
+                // 2. SYNCHRONOUS PUSH: Force them into the array in the EXACT order before they even download
+                let newObj = { 
+                    item: aImg, 
+                    asset: imgAsset, 
+                    txt: aText, 
+                    calculatedWidth: 3.2, // Default temporary width
+                    calculatedHeight: 1.8 // Default temporary height
+                };
+                
+                trackArray.push(newObj);
+                sceneEl.appendChild(aImg);
+
+                // 3. ASYNCHRONOUS UPDATE: Create an isolated loader to download the image in the background
+                let loaderImg = new Image();
+                loaderImg.crossOrigin = "anonymous";
+
+                loaderImg.onload = () => {
+                  let optimizedUrl = getOptimizedDataUrl(loaderImg, 1024);
+                  imgAsset.setAttribute('src', optimizedUrl);
+                  assetsEl.appendChild(imgAsset);
+                  aImg.setAttribute('src', `#${imgAsset.id}`);
+
+                  let aspect = loaderImg.width / loaderImg.height;
+                  let maxBoundaryWidth = 3.2;
+                  let maxBoundaryHeight = 1.8;
+
+                  if (aspect > (maxBoundaryWidth / maxBoundaryHeight)) {
+                    newObj.calculatedWidth = maxBoundaryWidth;
+                    newObj.calculatedHeight = maxBoundaryWidth / aspect;
+                  } else {
+                    newObj.calculatedHeight = maxBoundaryHeight;
+                    newObj.calculatedWidth = maxBoundaryHeight * aspect;
+                  }
+
+                  aImg.setAttribute('width', newObj.calculatedWidth);
+                  aImg.setAttribute('height', newObj.calculatedHeight);
+                  aText.setAttribute('position', `0 ${(newObj.calculatedHeight / 2) + 0.12} 0.1`);
+
+                  rearrangeTrackAfterUpdates(trackArray, xPos, rotation, side, false);
+
+                  if (trackArray.length > 0) {
+                      let leadItemPos = trackArray[0].item.getAttribute('position') || {x: parseFloat(xPos), y: 0, z: 0};
+                      let baseZOffset = trackArray[0].initialZ;
+
+                      trackArray.forEach(obj => {
+                          let relativeDist = obj.initialZ - baseZOffset;
+                          obj.item.setAttribute('position', `${xPos} 0 ${leadItemPos.z + relativeDist}`);
+                          obj.item.setAttribute('rotation', rotation);
+                      });
+                  }
+                };
+                
+                // Fallback: If an image is broken, just keep the spacing intact so it doesn't ruin the gallery
+                loaderImg.onerror = () => {
+                  rearrangeTrackAfterUpdates(trackArray, xPos, rotation, side, false);
+                };
+
+                // Trigger the background download
+                loaderImg.src = safeUrl;
+              });
+            })
+            .catch(err => console.error("Live syncing poll cycle failed:", err));
+        }, 10000);
       }
 
       // Macro positioning alignment algorithm ensuring strict gaps and handling vertical-landscape collisions
@@ -541,17 +623,60 @@
 
               window.totalImagesProcessed = images.length;
 
-              window.allExhibitionData = images;
-            window.currentBatchIndex = 0;
-            renderGalleryBatch(sceneEl, assetsEl); // Builds the first 20
+              
+              images.forEach((imgData, index) => {
+    window.loadedImageUrls.add(imgData.src);
+    let safeUrl = getDirectImageUrl(imgData.src);
 
-            connStatus.style.display = "none";
-            modeArea.style.display = "block";
-            const guideText = document.getElementById('loading-guide-text');
-            if (guideText) guideText.innerHTML = (typeof isMobile !== 'undefined' && isMobile) ? window.exhibitionGuides['mobile-loading'] : window.exhibitionGuides['laptop'];
-            
-            if (typeof checkHardwareGyroscope === 'function') checkHardwareGyroscope();
-            startLivePollingEngine(sceneEl, assetsEl);
+    let imgAsset = document.createElement('img');
+    imgAsset.setAttribute('id', `live-img-${index}`);
+    imgAsset.setAttribute('data-original-src', imgData.src);
+    imgAsset.setAttribute('crossorigin', 'anonymous');
+    assetsEl.appendChild(imgAsset);
+
+    let aImg = document.createElement('a-image');
+    let isLeft = index % 2 === 0;
+    aImg.setAttribute('conveyor-item', `trackSide: ${isLeft ? 'left' : 'right'}`);
+    if (isLeft) aImg.setAttribute('material', 'side: double');
+
+    let aText = document.createElement('a-text');
+    let rawInitialAuthorName = imgData.participantName || imgData.name || imgData.author || "Participant";
+    aText.setAttribute('value', formatAuthorName(rawInitialAuthorName));
+    aText.setAttribute('align', 'center');
+    aText.setAttribute('color', '#ffffff');
+    aText.setAttribute('width', '1.8');
+    aText.setAttribute('font', 'dejavu');
+    aText.setAttribute('shader', 'msdf');
+    aText.setAttribute('negate', 'false');
+    aImg.appendChild(aText);
+
+    let trackObj = { item: aImg, asset: imgAsset, txt: aText, calculatedWidth: 3.2, calculatedHeight: 1.8 };
+    if (isLeft) {
+      window.leftTrackItems.push(trackObj);
+    } else {
+      window.rightTrackItems.push(trackObj);
+    }
+    sceneEl.appendChild(aImg);
+
+    // Downscale via canvas when loaded
+    let tempLoader = new Image();
+    tempLoader.crossOrigin = "anonymous";
+    tempLoader.onload = () => {
+      let optimizedUrl = getOptimizedDataUrl(tempLoader, 1024);
+      imgAsset.setAttribute('src', optimizedUrl);
+      aImg.setAttribute('src', `#${imgAsset.id}`); // Fixed quote here
+      calculateTargetDimensions(trackObj);
+      checkProcessingComplete();
+    };
+    tempLoader.onerror = () => {
+      imgAsset.setAttribute('src', safeUrl);
+      aImg.setAttribute('src', `#${imgAsset.id}`);
+      trackObj.calculatedWidth = 3.2;
+      trackObj.calculatedHeight = 1.8;
+      checkProcessingComplete();
+    };
+    tempLoader.src = safeUrl;
+});
 
               let processedCount = 0;
               const totalToProcess = images.length;
